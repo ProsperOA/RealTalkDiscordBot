@@ -1,8 +1,8 @@
 export interface Command {
-  name: string,
-  description: string,
-  func: string,
-  arg: string,
+  name: string;
+  description: string;
+  func: string;
+  arg: string;
 }
 
 const commands: Command[] = [{

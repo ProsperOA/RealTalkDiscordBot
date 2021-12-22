@@ -1,0 +1,14 @@
+{
+  "extends": "tslint:recommended",
+  "defaultSeverity": "error",
+  "rules": {
+    "no-console": false,
+    "no-trailing-whitespace": true,
+    "semicolon": true,
+    "quotemark": [ true, "single" ],
+    "indent": [ true, "spaces" ]
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

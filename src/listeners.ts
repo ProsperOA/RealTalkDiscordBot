@@ -1,10 +1,10 @@
-import _ from 'lodash';
+import { find } from 'lodash';
 import { CacheType, Client, Interaction } from 'discord.js';
 
 import commands, { Command } from './commands';
 
 const getCommand = (commandName: string): any =>
-  _.find(commands, { name: commandName })
+  find(commands, { name: commandName });
 
 export const register = (client: Client): void => {
 
@@ -17,4 +17,4 @@ export const register = (client: Client): void => {
     await (interaction as any)[command.func](command.arg);
   });
 
-}
+};

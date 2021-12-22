@@ -1,6 +1,6 @@
 import { Client, ClientOptions, Intents } from 'discord.js';
-import dotenv from 'dotenv';
-dotenv.config();
+import { config } from 'dotenv';
+config({ debug: true });
 
 import * as commandInterface from './command-interface';
 
@@ -8,11 +8,11 @@ const clientOptions: ClientOptions = {
   intents: [
     Intents.FLAGS.DIRECT_MESSAGES,
     Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES
-  ]
+    Intents.FLAGS.GUILD_MESSAGES,
+  ],
 };
 
-const client: Client = new Client(clientOptions);;
+const client: Client = new Client(clientOptions);
 commandInterface.init(client);
 
 client.on('ready', (): void => {
