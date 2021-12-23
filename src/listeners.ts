@@ -1,20 +1,15 @@
-import { find } from 'lodash';
-import { CacheType, Client, Interaction } from 'discord.js';
+import { Client, CommandInteraction } from 'discord.js';
 
-import commands, { Command } from './commands';
-
-const getCommand = (commandName: string): any =>
-  find(commands, { name: commandName });
+import commandInterface from './command-interface';
 
 export const register = (client: Client): void => {
 
-  client.on('interactionCreate', async (interaction: Interaction<CacheType>) => {
+  client.on('interactionCreate', async (interaction: CommandInteraction) => {
     if (!interaction.isCommand()) {
       return;
     }
 
-    const command: Command = getCommand(interaction.commandName);
-    await (interaction as any)[command.func](command.arg);
+    (commandInterface as any)[interaction.commandName](client, interaction);
   });
 
 };

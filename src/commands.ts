@@ -1,15 +1,19 @@
-export interface Command {
-  name: string;
-  description: string;
-  func: string;
-  arg: string;
-}
+import { SlashCommandBuilder } from '@discordjs/builders';
 
-const commands: Command[] = [{
-  name: 'realtalk',
-  description: 'Replies with #RealTalk?',
-  func: 'reply',
-  arg: '#RealTalk?'
-}];
+const realTalk = new SlashCommandBuilder()
+  .setName('realtalk')
+  .setDescription('#RealTalk?')
+  .addStringOption(option =>
+    option.setName('who')
+      .setDescription('Who they is?')
+      .setRequired(true)
+  )
+  .addStringOption(option =>
+    option.setName('what')
+      .setDescription('What they said?')
+      .setRequired(true)
+  );
 
-export default commands;
+export default [
+  realTalk
+].map(command => command.toJSON());
