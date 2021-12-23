@@ -1,5 +1,8 @@
-.env
+# Files
+*.env
 .DS_Store
-node_modules/
 .vscode
+
+# Directories
+node_modules/
 dist/
