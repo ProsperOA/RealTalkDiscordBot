@@ -1,23 +1,58 @@
-import { Client, CommandInteraction } from 'discord.js';
+import { find } from 'lodash';
+import { Client, CommandInteraction, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 
 import * as listeners from './listeners';
 import commands from './commands';
+import { getUsers } from './helpers';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
-const realTalk = (client: Client, interaction: CommandInteraction) => {
-  const today: string = new Date().toLocaleString();
-  const targetUser: string = interaction.options.get('who').value as string;
+const USER_TAG_REGEX: RegExp = /^<@!/;
+
+const getTimestamp = (): string => {
+  const parts = new Date().toLocaleString().split(':');
+  const suffix = parts.pop().split(' ')[1];
+
+  return `${parts.join(':')} ${suffix}`;
+};
+
+const isUserTag = (tag: string): boolean => USER_TAG_REGEX.test(tag);
+
+const cleanUserTag = (tag: string): string => tag.slice(3).slice(0, -1);
+
+const buildMentionTagFromUserId = (id: string): string => `<@${id}>`;
+
+const findUser = (users: User[]) => (filter: object) =>
+  find(users, filter) as User;
+
+const realTalk = (client: Client, interaction: CommandInteraction): void => {
+  const targetUsername: string = interaction.options.get('who', true).value as string;
+  const userFinder = findUser(getUsers(client));
+
+  const targetUser: User = isUserTag(targetUsername)
+    ? userFinder({ id: cleanUserTag(targetUsername) })
+    : userFinder({ username: targetUsername });
+
+  if (!targetUser) {
+    interaction.reply({
+      content: `**#RealTalk**, ${targetUsername} doesn't exist in this server.`,
+      ephemeral: true,
+    });
+
+    return;
+  }
+
+  const timestamp: string = getTimestamp();
   const statement: string = interaction.options.get('what').value as string;
 
   // smh... 🤦🏿‍♂️
   const incriminatingEvidence: string = `**The following is provided under the terms of #RealTalk**
-    Date: ${today}
-    ${targetUser}: "${statement}"`;
+    Date: ${timestamp}
+    ${buildMentionTagFromUserId(targetUser.id)}: "${statement}"`;
 
   interaction.reply(incriminatingEvidence);
 };
