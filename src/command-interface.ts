@@ -1,6 +1,7 @@
 import { find } from 'lodash';
 import { Client, CommandInteraction, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
+import { memberNicknameMention, time } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 
 import * as listeners from './listeners';
@@ -12,18 +13,6 @@ const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
 const USER_TAG_REGEX: Readonly<RegExp> = /^<@!/;
-
-/**
- * Returns today's date in locale string format without seconds.
- *
- * @returns {string}
- */
-const getTimestamp = (): string => {
-  const parts = new Date().toLocaleString().split(':');
-  const suffix = parts.pop().split(' ')[1];
-
-  return `${parts.join(':')} ${suffix}`;
-};
 
 /**
  * Returns whether a user tag is valid.
@@ -40,14 +29,6 @@ const isUserTag = (tag: string): boolean => USER_TAG_REGEX.test(tag);
  * @returns {string}
  */
 const cleanUserTag = (tag: string): string => tag.slice(3).slice(0, -1);
-
-/**
- * Returns a mention formatted user tag.
- *
- * @param   {string} id - user id to format.
- * @returns {string}
- */
-const buildMentionTagFromUserId = (id: string): string => `<@${id}>`;
 
 /**
  * Curried function that returns a {User} matching a filter.
@@ -82,13 +63,13 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
     return;
   }
 
-  const timestamp: string = getTimestamp();
-  const statement: string = interaction.options.get('what').value as string;
-
   // smh... 🤦🏿‍♂️
-  const incriminatingEvidence: string = `**The following is provided under the terms of #RealTalk**
-    Date: ${timestamp}
-    ${buildMentionTagFromUserId(targetUser.id)}: "${statement}"`;
+  const statement: string = interaction.options.get('what').value as string;
+  const incriminatingEvidence: string =
+    `**The following is provided under the terms of #RealTalk**
+    Date: ${time(new Date())}
+    ${memberNicknameMention(targetUser.id)}: _"${statement}"_`
+
 
   interaction.reply(incriminatingEvidence);
 };
