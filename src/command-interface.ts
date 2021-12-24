@@ -12,23 +12,23 @@ const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
-const USER_TAG_REGEX: Readonly<RegExp> = /^<@!/;
-
 /**
- * Returns whether a user tag is valid.
+ * Tests whether a tag is in nickname mention format.
  *
- * @param   {string} tag - user tag to test.
+ * @param   {string} mention - tag to test.
  * @returns {boolean}
  */
-const isUserTag = (tag: string): boolean => USER_TAG_REGEX.test(tag);
+const isNicknameMention = (mention: string): boolean =>
+  /^<@![0-9]{18}>$/.test(mention);
 
 /**
- * Returns an extracted user id from a user tag.
+ * Extracts a user id from nickname mention.
  *
- * @param   {string} tag - user tag to format.
+ * @param   {string} mention - user tag to format.
  * @returns {string}
  */
-const cleanUserTag = (tag: string): string => tag.slice(3).slice(0, -1);
+const extractUserIdFromNicknameMention = (mention: string): string =>
+  mention.slice(3).slice(0, -1);
 
 /**
  * Curried function that returns a {User} matching a filter.
@@ -48,10 +48,11 @@ const findUser = (users: User[]) => (filter: object) =>
  */
 const realTalk = (client: Client, interaction: CommandInteraction): void => {
   const targetUsername: string = interaction.options.get('who', true).value as string;
+  console.log({ targetUsername })
   const userFinder = findUser(getUsers(client));
 
-  const targetUser: User = isUserTag(targetUsername)
-    ? userFinder({ id: cleanUserTag(targetUsername) })
+  const targetUser: User = isNicknameMention(targetUsername)
+    ? userFinder({ id: extractUserIdFromNicknameMention(targetUsername) })
     : userFinder({ username: targetUsername });
 
   if (!targetUser) {
