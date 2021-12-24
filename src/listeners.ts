@@ -5,7 +5,7 @@ import commandInterface from './command-interface';
 /**
  * Registers client listeners and calls commands.
  *
- * @param   {Client} - Reference to client object.
+ * @param {Client} - Reference to client object.
  */
 export const register = (client: Client): void => {
 

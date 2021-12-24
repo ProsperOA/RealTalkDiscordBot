@@ -50,7 +50,7 @@ const cleanUserTag = (tag: string): string => tag.slice(3).slice(0, -1);
 const buildMentionTagFromUserId = (id: string): string => `<@${id}>`;
 
 /**
- * Curried function that returns a {User} in an array using filter.
+ * Curried function that returns a {User} matching a filter.
  *
  * @param   {User[]} users  - List of users.
  * @param   {object} filter - Key/value to filter by.
