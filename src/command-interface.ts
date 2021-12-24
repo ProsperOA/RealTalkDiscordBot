@@ -48,7 +48,6 @@ const findUser = (users: User[]) => (filter: object) =>
  */
 const realTalk = (client: Client, interaction: CommandInteraction): void => {
   const targetUsername: string = interaction.options.get('who', true).value as string;
-  console.log({ targetUsername })
   const userFinder = findUser(getUsers(client));
 
   const targetUser: User = isNicknameMention(targetUsername)
