@@ -7,7 +7,7 @@
     "tsc": "tsc",
     "postinstall": "npm run tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "export SERVICE_ENV=dev && nodemon src/index.ts",
     "lint": "tslint --fix -c tslint.json './src/**/*.ts'"
   },
   "author": "",
@@ -18,10 +18,14 @@
     "discord-api-types": "^0.25.2",
     "discord.js": "^13.3.1",
     "dotenv": "^10.0.0",
-    "lodash": "^4.17.21"
+    "knex": "^0.95.15",
+    "lodash": "^4.17.21",
+    "pg": "^8.7.1"
   },
   "devDependencies": {
+    "@types/knex": "^0.16.1",
     "@types/lodash": "^4.14.178",
+    "@types/pg": "^8.6.3",
     "@typescript-eslint/eslint-plugin": "^5.8.0",
     "@typescript-eslint/parser": "^5.8.0",
     "eslint": "^8.5.0",

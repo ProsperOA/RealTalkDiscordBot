@@ -6,7 +6,7 @@ import { REST } from '@discordjs/rest';
 
 import * as listeners from './listeners';
 import commands from './commands';
-import { getUsers } from './helpers';
+import { getUsers } from './utils/helpers';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
