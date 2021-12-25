@@ -7,6 +7,7 @@ import { REST } from '@discordjs/rest';
 import * as listeners from './listeners';
 import commands from './commands';
 import { getUsers } from './utils/helpers';
+import { isDev } from './utils';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
@@ -92,7 +93,7 @@ const init = async (client: Client): Promise<any> => {
       body: commands,
     });
 
-    listeners.register(client);
+    listeners.register(client, isDev);
 
     console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
