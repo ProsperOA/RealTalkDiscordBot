@@ -12,14 +12,18 @@ const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
+const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
+const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
+
 /**
- * Tests whether a tag is in nickname mention format.
+ * Tests whether a mention is a valid user or nickname mention.
  *
- * @param   {string} mention - tag to test.
+ * @param   {string} mention - mention to test.
  * @returns {boolean}
  */
-const isNicknameMention = (mention: string): boolean =>
-  /^<@![0-9]{18}>$/.test(mention);
+const isMention = (mention: string): boolean =>
+  new RegExp(`${USER_MENTION_REGEX.source}|${NICKNAME_MENTION_REGEX}`)
+    .test(mention);
 
 /**
  * Extracts a user id from nickname mention.
@@ -27,8 +31,8 @@ const isNicknameMention = (mention: string): boolean =>
  * @param   {string} mention - user tag to format.
  * @returns {string}
  */
-const extractUserIdFromNicknameMention = (mention: string): string =>
-  mention.slice(3).slice(0, -1);
+const extractUserIdFromMention = (mention: string): string =>
+  mention.match(/[0-9]{18}/)[0];
 
 /**
  * Curried function that returns a {User} matching a filter.
@@ -50,8 +54,8 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
   const targetUsername: string = interaction.options.get('who', true).value as string;
   const userFinder = findUser(getUsers(client));
 
-  const targetUser: User = isNicknameMention(targetUsername)
-    ? userFinder({ id: extractUserIdFromNicknameMention(targetUsername) })
+  const targetUser: User = isMention(targetUsername)
+    ? userFinder({ id: extractUserIdFromMention(targetUsername) })
     : userFinder({ username: targetUsername });
 
   if (!targetUser) {
@@ -64,7 +68,7 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
   }
 
   // smh... 🤦🏿‍♂️
-  const statement: string = interaction.options.get('what').value as string;
+  const statement: string = interaction.options.get('what', true).value as string;
   const incriminatingEvidence: string =
     `**The following is provided under the terms of #RealTalk**
     Date: ${time(new Date())}
