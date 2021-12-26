@@ -6,8 +6,7 @@ import { REST } from '@discordjs/rest';
 
 import * as listeners from './listeners';
 import commands from './commands';
-import logger from './utils/logger';
-import { getUsers } from './utils/helpers';
+import { getUsers, logger } from './utils';
 import { isDev } from './utils';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
@@ -75,7 +74,6 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
     `**The following is provided under the terms of #RealTalk**
     Date: ${time(new Date())}
     ${memberNicknameMention(targetUser.id)}: _"${statement}"_`;
-
 
   interaction.reply(incriminatingEvidence);
 };

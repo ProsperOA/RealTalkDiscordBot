@@ -1,7 +1,7 @@
 import { Client, ClientOptions, Intents } from 'discord.js';
 
 import commandInterface from './command-interface';
-import logger from './utils/logger';
+import { logger } from './utils';
 
 const clientOptions: ClientOptions = {
   intents: [

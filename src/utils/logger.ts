@@ -22,6 +22,13 @@ const OUTPUT_COLORS: Readonly<OutputColors> = {
   error: '\x1b[31m%s\x1b[0m',
 };
 
+/**
+ * Logs output to console.
+ *
+ * @param   {LogType}        type    - type of log message.
+ * @param   {string | Error} message - message to log to console.
+ * @param   {any[]}          opts    - additional logging options.
+ */
 const baseLogger = (
   type: LogType,
   message: string | Error,
@@ -42,7 +49,7 @@ const baseLogger = (
   log(...output);
 };
 
-export default {
+export const logger = {
   info: (message: string, ...opts: any[]) =>
     baseLogger(LOG_TYPE_INFO, message, opts),
   warn: (message: string, ...opts: any[]) =>
