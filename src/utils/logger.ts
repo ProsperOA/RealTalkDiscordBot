@@ -1,5 +1,7 @@
 import { isEmpty } from 'lodash';
 
+import { config } from '../constants';
+
 type LogTypeInfo = 'info';
 type LogTypeWarn = 'warn';
 type LogTypeError = 'error';
@@ -34,19 +36,16 @@ const baseLogger = (
   message: string | Error,
   opts: any[]
 ): void => {
-  const log = (console as any)[type];
-  const time: string = new Date().toISOString().split('T')[1];
-
   const output: any[] = [
     OUTPUT_COLORS[type],
-    `[${time}] ${type.toUpperCase()} ${message}`
+    `[${config.serviceName}] ${type.toUpperCase()} ${message}`
   ];
 
   if (!isEmpty(opts)) {
     output.push(...opts);
   }
 
-  log(...output);
+  (console as any)[type](...output);
 };
 
 export const logger = {
