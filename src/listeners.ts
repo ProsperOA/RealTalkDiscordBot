@@ -31,6 +31,10 @@ export const register = (client: Client, debug?: boolean): void => {
       return;
     }
 
+    if (debug) {
+      logger.interaction(interaction);
+    }
+
     await (commandInterface as any)[interaction.commandName](client, interaction);
   });
 

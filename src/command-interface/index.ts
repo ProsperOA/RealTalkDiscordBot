@@ -5,8 +5,7 @@ import { REST } from '@discordjs/rest';
 
 import * as listeners from '../listeners';
 import commands from './commands';
-import { getUsers, logger } from '../utils';
-import { isDev } from '../utils';
+import { getUsers, isDev, logger } from '../utils';
 import { realTalkBuilder } from './reply-builder';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
