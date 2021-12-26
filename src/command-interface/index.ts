@@ -1,13 +1,13 @@
 import { find } from 'lodash';
 import { Client, CommandInteraction, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
-import { memberNicknameMention, time } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 
-import * as listeners from './listeners';
+import * as listeners from '../listeners';
 import commands from './commands';
-import { getUsers, logger } from './utils';
-import { isDev } from './utils';
+import { getUsers, logger } from '../utils';
+import { isDev } from '../utils';
+import { realTalkBuilder } from './reply-builder';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
@@ -60,20 +60,16 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
     : userFinder({ username: targetUsername });
 
   if (!targetUser) {
-    interaction.reply({
-      content: `**#RealTalk**, ${targetUsername} doesn't exist in this server.`,
-      ephemeral: true,
-    });
-
+    interaction.reply(realTalkBuilder.fail(targetUsername));
     return;
   }
 
   // smh... 🤦🏿‍♂️
   const statement: string = interaction.options.get('what', true).value as string;
-  const incriminatingEvidence: string =
-    `**The following is provided under the terms of #RealTalk**
-    Date: ${time(new Date())}
-    ${memberNicknameMention(targetUser.id)}: _"${statement}"_`;
+  const incriminatingEvidence: string = realTalkBuilder.success(
+    targetUser.id,
+    statement
+  );
 
   interaction.reply(incriminatingEvidence);
 };
