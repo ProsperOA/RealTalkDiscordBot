@@ -1,6 +1,7 @@
 import { Client, CommandInteraction } from 'discord.js';
 
 import commandInterface from './command-interface';
+import logger from './utils/logger';
 
 /**
  * Logs general debug output from client.
@@ -8,17 +9,9 @@ import commandInterface from './command-interface';
  * @param {Client} client - Reference to client object.
  */
 const addDebugLogger = (client: Client): void => {
-  client.on('debug', (message: string) => {
-    console.info('DEBUG', message);
-  });
-
-  client.on('warn', (message: string) => {
-    console.warn('WARNING', message);
-  });
-
-  client.on('error', (error: Error) => {
-    console.error('ERROR', error);
-  });
+  client.on('debug', logger.info);
+  client.on('warn', logger.warn);
+  client.on('error', logger.error);
 };
 
 /**

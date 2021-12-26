@@ -6,6 +6,7 @@ import { REST } from '@discordjs/rest';
 
 import * as listeners from './listeners';
 import commands from './commands';
+import logger from './utils/logger';
 import { getUsers } from './utils/helpers';
 import { isDev } from './utils';
 
@@ -73,7 +74,7 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
   const incriminatingEvidence: string =
     `**The following is provided under the terms of #RealTalk**
     Date: ${time(new Date())}
-    ${memberNicknameMention(targetUser.id)}: _"${statement}"_`
+    ${memberNicknameMention(targetUser.id)}: _"${statement}"_`;
 
 
   interaction.reply(incriminatingEvidence);
@@ -87,7 +88,7 @@ const realTalk = (client: Client, interaction: CommandInteraction): void => {
  */
 const init = async (client: Client): Promise<any> => {
   try {
-    console.log('Started refreshing application (/) commands.');
+    logger.info('Started refreshing application (/) commands.');
 
     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
       body: commands,
@@ -95,9 +96,9 @@ const init = async (client: Client): Promise<any> => {
 
     listeners.register(client, isDev);
 
-    console.log('Successfully reloaded application (/) commands.');
+    logger.info('Successfully reloaded application (/) commands.');
   } catch (error) {
-    console.error(error);
+    logger.error(error);
   }
 };
 
