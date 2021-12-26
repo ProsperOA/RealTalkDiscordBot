@@ -1,11 +1,3 @@
-import { config } from 'dotenv';
-
-const { SERVICE_ENV = 'dev' } = process.env;
-
-if (SERVICE_ENV === 'dev') {
-  config();
-}
-
 const { DATABASE_URL } = process.env;
 
 export default {

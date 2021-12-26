@@ -1,9 +1,5 @@
 import { Client, ClientOptions, Intents } from 'discord.js';
 
-import { configEnv } from './utils';
-
-configEnv('dev');
-
 import commandInterface from './command-interface';
 
 const clientOptions: ClientOptions = {
