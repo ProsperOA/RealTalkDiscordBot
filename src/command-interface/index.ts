@@ -27,7 +27,7 @@ export type CommandFunction =
  * @returns {boolean}
  */
 const isMention = (mention: string): boolean =>
-  new RegExp(`${USER_MENTION_REGEX.source}|${NICKNAME_MENTION_REGEX}`)
+  new RegExp(`${USER_MENTION_REGEX.source}|${NICKNAME_MENTION_REGEX.source}`)
     .test(mention);
 
 /**
