@@ -51,14 +51,14 @@ const baseLogger = (
     output.push(...opts);
   }
 
-  const consoleLogType = {
+  const consoleLogMap = {
     info: LOG_TYPE_INFO,
     warn: LOG_TYPE_WARN,
     error: LOG_TYPE_ERROR,
     interaction: LOG_TYPE_INFO,
   };
 
-  (console as any)[consoleLogType.interaction](...output);
+  (console as any)[consoleLogMap[type]](...output);
 };
 
 /**
