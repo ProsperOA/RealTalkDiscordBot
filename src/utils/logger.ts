@@ -1,5 +1,6 @@
 import { CacheType, CommandInteraction, CommandInteractionOption } from 'discord.js';
 import { isEmpty } from 'lodash';
+import { stripIndents } from 'common-tags';
 
 import { config } from '../constants';
 
@@ -60,6 +61,20 @@ const baseLogger = (
   (console as any)[consoleLogType.interaction](...output);
 };
 
+/**
+ * Formats command middleware options.
+ *
+ * @param {any} options - List of middleware options.
+ * @returns {string}
+ */
+const formatCommandMiddleware = (options: any): string =>
+  options
+    ? Object.keys(options).map(option =>
+        `${Object.keys(options[option]).map(key =>
+          `${option}/${key}: ${options[option][key]}`
+        ).join('/n')}
+      `).join('/n')
+    : 'Middleware: N/A';
 
 /**
  * Formats application command options.
@@ -67,7 +82,7 @@ const baseLogger = (
  * @param {Readonly<CommandInteraction<CacheType>[]} interaction - List of interaction options.
  * @returns {string}
  */
-const formatApplicationCommandOptions = (
+const formatCommandOptions = (
   options: Readonly<CommandInteractionOption<CacheType>[]>
 ): string =>
   options.map(({ name, type, value }, index) => (`
@@ -84,12 +99,14 @@ const formatApplicationCommandOptions = (
  * @returns {string}
  */
 const formatInteraction = (
-  { commandName, options, type }: CommandInteraction
+  { commandName, options, type }: CommandInteraction,
+  opts: any
 ): string => {
   switch (type) {
     case 'APPLICATION_COMMAND':
       return (`Command Name: ${commandName}
-        ${formatApplicationCommandOptions(options.data)}
+        ${formatCommandMiddleware(opts)}
+        ${formatCommandOptions(options.data)}
       `);
     default:
       logger.warn('Cannot format interaction. Invalid command interaction type.');
@@ -103,15 +120,14 @@ const formatInteraction = (
  * @param {CommandInteraction} interaction - Reference to interaction object.
  * @returns {string}
  */
-const buildInteractionMessage = (interaction: CommandInteraction): string => {
+const buildInteractionMessage = (interaction: CommandInteraction, opts: any): string => {
   const { createdAt, type, user } = interaction;
 
-  return (`
+  return '\n' + stripIndents`
     Type: ${type}
     Created: ${new Date(createdAt).toISOString()}
     User: ${user.tag}
-    ${formatInteraction(interaction)}
-  `);
+    ${formatInteraction(interaction, opts)}`;
 };
 
 export const logger = {
@@ -121,6 +137,6 @@ export const logger = {
     baseLogger(LOG_TYPE_WARN, message, opts),
   error: (message: string | Error, ...opts: any[]) =>
     baseLogger(LOG_TYPE_ERROR, message, opts),
-  interaction: (interaction: CommandInteraction) =>
-    baseLogger(LOG_TYPE_INTERACTION, buildInteractionMessage(interaction)),
+  interaction: (interaction: CommandInteraction, opts?: any) =>
+    baseLogger(LOG_TYPE_INTERACTION, buildInteractionMessage(interaction, opts)),
 };

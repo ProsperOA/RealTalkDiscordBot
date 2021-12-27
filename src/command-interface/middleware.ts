@@ -32,8 +32,8 @@ export const useThrottle = (callback: CommandFunction, duration: number) =>
       return;
     }
 
-    callback(client, interaction);
-
     userThrottleCache[userId] =
       setTimeout(() => delete userThrottleCache[userId], duration);
+
+    callback(client, interaction);
   };

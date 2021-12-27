@@ -13,7 +13,7 @@ const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
-const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30_000;
+export const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30_000;
 const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
 const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
 
