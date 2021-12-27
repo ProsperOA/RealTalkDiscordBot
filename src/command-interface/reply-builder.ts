@@ -14,3 +14,12 @@ export const realTalkBuilder = {
   }),
 
 };
+
+export const throttleBuilder = {
+
+  coolDown: (duration: number): InteractionReplyOptions => ({
+    content: `**#RealTalk**, chill... ${duration}s left`,
+    ephemeral: true
+  }),
+
+};

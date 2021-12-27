@@ -3,17 +3,22 @@ import { Client, CommandInteraction, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 
-import * as listeners from '../listeners';
+import * as listeners from './listeners';
 import commands from './commands';
 import { getUsers, isDev, logger } from '../utils';
 import { realTalkBuilder } from './reply-builder';
+import { useThrottle } from './middleware';
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
+const THROTTLE_DURATION: Readonly<number> = 30_000;
 const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
 const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
+
+export type CommandFunction =
+  (client: Client, interaction: CommandInteraction) => void;
 
 /**
  * Tests whether a mention is a valid user or nickname mention.
@@ -90,6 +95,9 @@ const init = async (client: Client): Promise<any> => {
     listeners.register(client, isDev);
 
     logger.info('Successfully reloaded application (/) commands.');
+
+    logger.info(`Active Middleware:
+      useThrottle (${THROTTLE_DURATION}ms) /realtalk`);
   } catch (error) {
     logger.error(error);
   }
@@ -97,5 +105,5 @@ const init = async (client: Client): Promise<any> => {
 
 export default {
   init,
-  realtalk: realTalk,
+  realtalk: useThrottle(realTalk, THROTTLE_DURATION),
 };
