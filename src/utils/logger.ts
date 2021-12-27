@@ -1,4 +1,4 @@
-import { CommandInteraction } from 'discord.js';
+import { CacheType, CommandInteraction, CommandInteractionOption } from 'discord.js';
 import { isEmpty } from 'lodash';
 
 import { config } from '../constants';
@@ -60,18 +60,59 @@ const baseLogger = (
   (console as any)[consoleLogType.interaction](...output);
 };
 
+
+/**
+ * Formats application command options.
+ *
+ * @param {Readonly<CommandInteraction<CacheType>[]} interaction - List of interaction options.
+ * @returns {string}
+ */
+const formatApplicationCommandOptions = (
+  options: Readonly<CommandInteractionOption<CacheType>[]>
+): string =>
+  options.map(({ name, type, value }, index) => (`
+    Command Option #${index + 1}:
+      Name: ${name}
+      Type: ${type}
+      Value: ${value}`
+    )).join('\n');
+
+/**
+ * Formats a portion of the interaction message based on interaction type.
+ *
+ * @param {CommandInteraction} interaction - Reference to interaction object.
+ * @returns {string}
+ */
+const formatInteraction = (
+  { commandName, options, type }: CommandInteraction
+): string => {
+  switch (type) {
+    case 'APPLICATION_COMMAND':
+      return (`Command Name: ${commandName}
+        ${formatApplicationCommandOptions(options.data)}
+      `);
+    default:
+      logger.warn('Cannot format interaction. Invalid command interaction type.');
+      return '';
+  }
+};
+
 /**
  * Builds formatted interaction message.
  *
  * @param {CommandInteraction} interaction - Reference to interaction object.
+ * @returns {string}
  */
-const buildInteractionMessage = (
-  { createdAt, ephemeral, type, user }: CommandInteraction
-): string => `
-  Type:      ${type}
-  Created:   ${new Date(createdAt).toISOString()}
-  User:      ${user.tag}
-  Ephemeral: ${Boolean(ephemeral)}`;
+const buildInteractionMessage = (interaction: CommandInteraction): string => {
+  const { createdAt, type, user } = interaction;
+
+  return (`
+    Type: ${type}
+    Created: ${new Date(createdAt).toISOString()}
+    User: ${user.tag}
+    ${formatInteraction(interaction)}
+  `);
+};
 
 export const logger = {
   info: (message: string, ...opts: any[]) =>
