@@ -1,7 +1,6 @@
 import { Client, Collection, Guild, GuildMember, User } from 'discord.js';
 import { find } from 'lodash';
 
-export const USER_ID_REGEX: Readonly<RegExp> = /^[0-9]{18}$/;
 export const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
 export const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
 
@@ -22,7 +21,7 @@ export const isMention = (mention: string): boolean =>
  * @returns {string}
  */
 export const extractUserIdFromMention = (mention: string): string =>
-  isMention(mention) ? mention.match(USER_ID_REGEX)[0] : '';
+  isMention(mention) ? mention.match(/[0-9]{18}/)[0] : '';
 
 /**
  * Curried function that returns a {User} matching a filter.
