@@ -2,7 +2,7 @@ import { CacheType, CommandInteraction, CommandInteractionOption } from 'discord
 import { isEmpty } from 'lodash';
 import { stripIndents } from 'common-tags';
 
-import { config } from '../constants';
+const SERVICE_NAME: Readonly<string> = 'RealTalkDiscordBot';
 
 type LogTypeInfo = 'info';
 type LogTypeWarn = 'warn';
@@ -44,7 +44,7 @@ const baseLogger = (
 ): void => {
   const output: any[] = [
     OUTPUT_COLORS[type],
-    `[${config.serviceName}] ${type.toUpperCase()} ${message}`
+    `[${SERVICE_NAME}] ${type.toUpperCase()} ${message}`
   ];
 
   if (!isEmpty(opts)) {

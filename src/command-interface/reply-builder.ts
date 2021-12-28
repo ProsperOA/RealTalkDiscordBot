@@ -1,7 +1,7 @@
 import { memberNicknameMention, time } from '@discordjs/builders';
 import { InteractionReplyOptions } from 'discord.js';
 
-export const realTalkBuilder = {
+export const realTalkReply = {
 
   success: (userId: string, statement: string): string =>
     `**The following is provided under the terms of #RealTalk**
@@ -15,7 +15,7 @@ export const realTalkBuilder = {
 
 };
 
-export const throttleBuilder = {
+export const throttleReply = {
 
   coolDown: (duration: number): InteractionReplyOptions => ({
     content: `**#RealTalk**, chill... ${duration}s left`,

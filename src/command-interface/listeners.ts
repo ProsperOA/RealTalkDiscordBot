@@ -14,16 +14,17 @@ const addDebugLogger = (client: Client): void => {
   client.on('warn', logger.warn);
   client.on('error', logger.error);
 };
+
 /**
  * Adds a logger to an interaction.
  *
  * @param {CommandInteraction} interaction - Reference to interaction object.
  */
-const addInteractionLogger = (interaction: CommandInteraction): void => {
+const logInteraction = (interaction: CommandInteraction): void => {
     const middleware: any = {};
 
     if (THROTTLE_DURATION) {
-      middleware.useThrottle = `${THROTTLE_DURATION.toLocaleString('en-US')}ms`;
+      middleware.useThrottle = `${THROTTLE_DURATION}ms`;
     }
 
     const options: any = isEmpty(middleware) ? null : {
@@ -51,7 +52,7 @@ export const register = (client: Client, debug?: boolean): void => {
     }
 
     if (debug) {
-      addInteractionLogger(interaction);
+      logInteraction(interaction);
     }
 
     await (commandInterface as any)[interaction.commandName](client, interaction);

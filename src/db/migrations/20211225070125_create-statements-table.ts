@@ -11,6 +11,5 @@ export const up = async (knex: Knex): Promise<void> =>
     t.string('link').notNullable();
   });
 
-
 export const down = async (knex: Knex): Promise<void> =>
   knex.schema.dropTable('statements');
