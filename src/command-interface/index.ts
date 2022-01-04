@@ -5,7 +5,7 @@ import { REST } from '@discordjs/rest';
 import * as listeners from './listeners';
 import commands from './commands';
 import db from '../db';
-import { realTalkReply } from './reply-builder';
+import { listAllRealTalkReply, realTalkReply } from './reply-builder';
 import { useThrottle } from './middleware';
 
 import {
@@ -82,6 +82,24 @@ const realTalk = async (
 };
 
 /**
+ * Handles the realtalk-list command.
+ *
+ * @param {Client}             client      - Reference to Client object.
+ * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
+ */
+const listAllRealTalk = async (
+  client: Client,
+  interaction: CommandInteraction
+): Promise<void> => {
+  checkInit();
+
+  const statements = await db.getAllStatements();
+  const reply: string = listAllRealTalkReply.success(statements);
+
+  await interaction.reply(reply);
+};
+
+/**
  * Initializes slash commands and registers the client listeners.
  *
  * @param   {Client}       client - Reference to Client object.
@@ -109,5 +127,7 @@ const init = async (client: Client): Promise<any> => {
 
 export default {
   init,
-  realtalk: useThrottle(realTalk, THROTTLE_DURATION),
+
+  'realtalk':      useThrottle(realTalk, THROTTLE_DURATION),
+  'realtalk-list': listAllRealTalk,
 };

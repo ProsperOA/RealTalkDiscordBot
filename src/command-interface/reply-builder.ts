@@ -1,4 +1,4 @@
-import { memberNicknameMention, time } from '@discordjs/builders';
+import { hideLinkEmbed, memberNicknameMention, time } from '@discordjs/builders';
 import { InteractionReplyOptions } from 'discord.js';
 
 export const realTalkReply = {
@@ -12,6 +12,14 @@ export const realTalkReply = {
     content: `**#RealTalk**, ${username} doesn't exist in this server.`,
     ephemeral: true,
   }),
+
+};
+
+export const listAllRealTalkReply = {
+
+  success: (statements: any[]) => statements.map(s =>
+    `> **#RealTalk**, ${memberNicknameMention(s.user_id)} claims ${memberNicknameMention(s.accused_user_id)} said "${s.content}".
+    > ${hideLinkEmbed(s.link)}`).join('\n\n'),
 
 };
 

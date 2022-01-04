@@ -14,6 +14,11 @@ const realTalk = new SlashCommandBuilder()
       .setRequired(true)
   );
 
+const listAllRealTalk = new SlashCommandBuilder()
+  .setName('realtalk-list')
+  .setDescription('List all recorded real talk.');
+
 export default [
-  realTalk
+  realTalk,
+  listAllRealTalk,
 ].map(command => command.toJSON());
