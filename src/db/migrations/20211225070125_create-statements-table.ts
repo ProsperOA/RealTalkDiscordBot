@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
 
-export const up = async (knex: Knex): Promise<void> =>
+export const up = async (knex: Knex) =>
   knex.schema.createTable('statements', t => {
-    t.uuid('id').primary();
+    t.increments('id');
     t.string('user_id', 18).notNullable();
     t.string('accused_user_id', 18).notNullable();
     t.dateTime('created_at').notNullable();
@@ -11,5 +11,5 @@ export const up = async (knex: Knex): Promise<void> =>
     t.string('link').notNullable();
   });
 
-export const down = async (knex: Knex): Promise<void> =>
+export const down = async (knex: Knex) =>
   knex.schema.dropTable('statements');

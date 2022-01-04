@@ -4,6 +4,7 @@ import { REST } from '@discordjs/rest';
 
 import * as listeners from './listeners';
 import commands from './commands';
+import db from '../db';
 import { realTalkReply } from './reply-builder';
 import { useThrottle } from './middleware';
 
@@ -69,6 +70,15 @@ const realTalk = async (
   );
 
   await interaction.reply(incriminatingEvidence);
+  const message = await interaction.fetchReply() as any;
+
+  await db.createStatement({
+    user_id: interaction.user.id,
+    accused_user_id: targetUser.id,
+    created_at: new Date(),
+    content: statement,
+    link: message.url,
+  });
 };
 
 /**

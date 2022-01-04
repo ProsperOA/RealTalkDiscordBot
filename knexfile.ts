@@ -1,3 +1,6 @@
+import { config } from 'dotenv';
+config({ debug: true });
+
 const { DATABASE_URL } = process.env;
 
 export default {
