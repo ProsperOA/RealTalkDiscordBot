@@ -1,11 +1,13 @@
 import { Client, CommandInteraction, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
+import { takeRightWhile } from 'lodash';
 
 import * as listeners from './listeners';
 import commands from './commands';
 import db from '../db';
 import { listAllRealTalkReply, realTalkReply } from './reply-builder';
+import { StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
 
 import {
@@ -17,13 +19,17 @@ import {
   logger,
 } from '../utils';
 
+export type CommandFunction =
+  (client: Client, interaction: CommandInteraction) => Promise<void>;
+
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
+export const COMMAND_OPTION_REQUEST_CONTENT_LENGTH: Readonly<number> = 140;
+// DiscordAPI limit
+const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
 export const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30_000;
-export type CommandFunction =
-  (client: Client, interaction: CommandInteraction) => Promise<void>;
 
 let isInitialized: boolean = false;
 
@@ -39,6 +45,15 @@ const checkInit = (): void => {
 };
 
 /**
+ * Checks whether user input has an acceptable length.
+ *
+ * @param   {string}  input - user command option input.
+ * @returns {boolean}
+ */
+const isValidCommandOptionLength = (input: string): boolean =>
+  input.length <= COMMAND_OPTION_REQUEST_CONTENT_LENGTH;
+
+/**
  * Handles the realtalk command.
  *
  * @param {Client}             client      - Reference to Client object.
@@ -51,6 +66,13 @@ const realTalk = async (
   checkInit();
 
   const targetUsername: string = interaction.options.get('who', true).value as string;
+  const statement: string = interaction.options.get('what', true).value as string;
+
+  if (!isValidCommandOptionLength(statement)) {
+    interaction.reply(realTalkReply.invalidContentLength());
+    return;
+  }
+
   const userFinder = findUser(getUsers(client));
 
   const targetUser: User = isMention(targetUsername)
@@ -63,7 +85,6 @@ const realTalk = async (
   }
 
   // smh... 🤦🏿‍♂️
-  const statement: string = interaction.options.get('what', true).value as string;
   const incriminatingEvidence: string = realTalkReply.success(
     targetUser.id,
     statement
@@ -93,10 +114,19 @@ const listAllRealTalk = async (
 ): Promise<void> => {
   checkInit();
 
-  const statements = await db.getAllStatements();
-  const reply: string = listAllRealTalkReply.success(statements);
+  const statementsAcc: StatementRecord[] = [];
+  const allStatements: StatementRecord[] = await db.getAllStatements();
 
-  await interaction.reply(reply);
+  const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
+    statementsAcc.push(s);
+    const contentLength: number = listAllRealTalkReply.success(statementsAcc).length;
+
+    return contentLength < RESPONSE_BODY_CONTENT_LENGTH;
+  });
+
+  await interaction.reply(
+    listAllRealTalkReply.success(statementsSlice)
+  );
 };
 
 /**
