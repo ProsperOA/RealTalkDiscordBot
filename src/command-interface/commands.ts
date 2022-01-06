@@ -3,7 +3,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 const realTalk = new SlashCommandBuilder()
   .setName('realtalk')
   .setDescription('#RealTalk?')
-  .addStringOption(option =>
+  .addUserOption(option =>
     option.setName('who')
       .setDescription('Who they is?')
       .setRequired(true)

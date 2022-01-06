@@ -11,11 +11,6 @@ export const realTalkReply = {
     Date: ${time(new Date())}
     ${memberNicknameMention(userId)}: _"${statement}"_`,
 
-  fail: (username: string): InteractionReplyOptions => ({
-    content: `**#RealTalk**, ${username} doesn't exist in this server.`,
-    ephemeral: true,
-  }),
-
   invalidContentLength: (): InteractionReplyOptions => ({
     content: `**#RealTalk**, the statement must be ${COMMAND_OPTION_REQUEST_CONTENT_LENGTH} characters or less`,
     ephemeral: true,

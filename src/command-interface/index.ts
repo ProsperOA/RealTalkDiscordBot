@@ -6,18 +6,10 @@ import { takeRightWhile } from 'lodash';
 import * as listeners from './listeners';
 import commands from './commands';
 import db from '../db';
+import { getUser, isDev, logger } from '../utils';
 import { listAllRealTalkReply, realTalkReply } from './reply-builder';
 import { StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
-
-import {
-  extractUserIdFromMention,
-  findUser,
-  getUsers,
-  isDev,
-  isMention,
-  logger,
-} from '../utils';
 
 export type CommandFunction =
   (client: Client, interaction: CommandInteraction) => Promise<void>;
@@ -65,7 +57,6 @@ const realTalk = async (
 ): Promise<void> => {
   checkInit();
 
-  const targetUsername: string = interaction.options.get('who', true).value as string;
   const statement: string = interaction.options.get('what', true).value as string;
 
   if (!isValidCommandOptionLength(statement)) {
@@ -73,16 +64,8 @@ const realTalk = async (
     return;
   }
 
-  const userFinder = findUser(getUsers(client));
-
-  const targetUser: User = isMention(targetUsername)
-    ? userFinder({ id: extractUserIdFromMention(targetUsername) })
-    : userFinder({ username: targetUsername });
-
-  if (!targetUser) {
-    interaction.reply(realTalkReply.fail(targetUsername));
-    return;
-  }
+  const targetUserId: string = interaction.options.get('who', true).value as string;
+  const targetUser: User = getUser(client, targetUserId);
 
   // smh... 🤦🏿‍♂️
   const incriminatingEvidence: string = realTalkReply.success(
