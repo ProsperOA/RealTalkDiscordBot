@@ -4,12 +4,17 @@ import { REST } from '@discordjs/rest';
 import { takeRightWhile } from 'lodash';
 
 import * as listeners from './listeners';
-import commands from './commands';
 import db from '../db';
-import { getUser, isDev, logger } from '../utils';
+import { getSubCommand, getUser, isDev, logger } from '../utils';
 import { listAllRealTalkReply, realTalkReply } from './reply-builder';
 import { StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
+
+import commands, {
+  COMMAND_REAL_TALK,
+  SUBCOMMAND_REAL_TALK_HISTORY,
+  SUBCOMMAND_REAL_TALK_RECORD
+} from './commands';
 
 export type CommandFunction =
   (client: Client, interaction: CommandInteraction) => Promise<void>;
@@ -138,9 +143,20 @@ const init = async (client: Client): Promise<any> => {
   }
 };
 
-export default {
-  init,
-
-  'realtalk':      useThrottle(realTalk, THROTTLE_DURATION),
-  'realtalk-list': listAllRealTalk,
+export const commandInterfaceMap = {
+  [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction) => {
+    switch(getSubCommand(interaction).name) {
+      case SUBCOMMAND_REAL_TALK_RECORD:
+        await useThrottle(realTalk, THROTTLE_DURATION)(client, interaction);
+        break;
+      case SUBCOMMAND_REAL_TALK_HISTORY:
+        await listAllRealTalk(client, interaction);
+        break;
+      default:
+        logger.error(`Invalid ${COMMAND_REAL_TALK} subcommand`);
+        return;
+    }
+  },
 };
+
+export default { init };

@@ -1,7 +1,7 @@
 import { Client, CommandInteraction } from 'discord.js';
 import { isEmpty } from 'lodash';
 
-import commandInterface, { THROTTLE_DURATION } from '.';
+import { commandInterfaceMap, THROTTLE_DURATION } from '.';
 import { logger } from '../utils';
 
 /**
@@ -55,7 +55,7 @@ export const register = (client: Client, debug?: boolean): void => {
       logInteraction(interaction);
     }
 
-    await (commandInterface as any)[interaction.commandName](client, interaction);
+    await commandInterfaceMap[interaction.commandName](client, interaction);
   });
 
 };
