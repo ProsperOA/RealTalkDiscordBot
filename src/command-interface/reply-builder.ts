@@ -1,7 +1,7 @@
 import { hideLinkEmbed, memberNicknameMention, time } from '@discordjs/builders';
 import { InteractionReplyOptions } from 'discord.js';
 
-import { COMMAND_OPTION_REQUEST_CONTENT_LENGTH } from '.';
+import { COMMAND_OPTION_CONTENT_LENGTH } from './index';
 import { StatementRecord } from '../db/models/statements';
 
 export const realTalkReply = {
@@ -12,7 +12,7 @@ export const realTalkReply = {
     ${memberNicknameMention(userId)}: _"${statement}"_`,
 
   invalidContentLength: (): InteractionReplyOptions => ({
-    content: `**#RealTalk**, the statement must be ${COMMAND_OPTION_REQUEST_CONTENT_LENGTH} characters or less`,
+    content: `**#RealTalk**, the statement must be ${COMMAND_OPTION_CONTENT_LENGTH} characters or less`,
     ephemeral: true,
   }),
 

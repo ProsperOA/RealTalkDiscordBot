@@ -1,6 +1,6 @@
 import { Client, CommandInteraction } from 'discord.js';
 
-import { CommandFunction } from '.';
+import { CommandFunction } from './index';
 import { getRemainingTimeout } from '../utils';
 import { throttleReply } from './reply-builder';
 

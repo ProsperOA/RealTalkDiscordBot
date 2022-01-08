@@ -66,7 +66,7 @@ const baseLogger = (
 /**
  * Formats command middleware options.
  *
- * @param {any} options - List of middleware options.
+ * @param   {any} options - List of middleware options.
  * @returns {string}
  */
 const formatCommandMiddleware = (options: any): string =>
@@ -112,7 +112,7 @@ const formatSubCommands = (options: CommandInteractionOption[]): string =>
 /**
  * Formats application command options.
  *
- * @param {Readonly<CommandInteraction<CacheType>[]} interaction - List of interaction options.
+ * @param   {Readonly<CommandInteraction<CacheType>[]} interaction - List of interaction options.
  * @returns {string}
  */
 const formatCommandOptions = (
@@ -137,7 +137,8 @@ const formatCommandOptions = (
 /**
  * Formats a portion of the interaction message based on interaction type.
  *
- * @param {CommandInteraction} interaction - Reference to interaction object.
+ * @param   {CommandInteraction} interaction - Reference to interaction object.
+ * @param   {any}                opts        - Additional logging options.
  * @returns {string}
  */
 const formatInteraction = (
@@ -159,7 +160,8 @@ const formatInteraction = (
 /**
  * Builds formatted interaction message.
  *
- * @param {CommandInteraction} interaction - Reference to interaction object.
+ * @param   {CommandInteraction} interaction - Reference to interaction object.
+ * @param   {any}                opts        - Additional logging options.
  * @returns {string}
  */
 const buildInteractionMessage = (interaction: CommandInteraction, opts: any): string => {

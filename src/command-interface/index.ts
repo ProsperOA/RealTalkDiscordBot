@@ -23,8 +23,7 @@ const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
-export const COMMAND_OPTION_REQUEST_CONTENT_LENGTH: Readonly<number> = 140;
-// DiscordAPI limit
+export const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
 const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
 export const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30_000;
 
@@ -48,7 +47,7 @@ const checkInit = (): void => {
  * @returns {boolean}
  */
 const isValidCommandOptionLength = (input: string): boolean =>
-  input.length <= COMMAND_OPTION_REQUEST_CONTENT_LENGTH;
+  input.length <= COMMAND_OPTION_CONTENT_LENGTH;
 
 /**
  * Handles the realtalk command.

@@ -1,7 +1,7 @@
 import { Client, CommandInteraction } from 'discord.js';
 import { isEmpty } from 'lodash';
 
-import { commandInterfaceMap, THROTTLE_DURATION } from '.';
+import { commandInterfaceMap, THROTTLE_DURATION } from './index';
 import { logger } from '../utils';
 
 /**

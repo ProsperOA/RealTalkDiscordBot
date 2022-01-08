@@ -34,6 +34,6 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
   }
 
   return str.split('\n')
-    .map(line => `${space}${line}`)
+    .map(line => space + line)
     .join('\n');
 };
