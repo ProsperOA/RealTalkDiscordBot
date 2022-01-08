@@ -70,7 +70,7 @@ const baseLogger = (
  * @returns {string}
  */
 const formatCommandMiddleware = (options: any): string =>
-  options
+  !isEmpty(options)
     ? Object.keys(options).map(option =>
         `${Object.keys(options[option]).map(key =>
           `${option}/${key}: ${options[option][key]}`
@@ -101,7 +101,7 @@ const formatSubCommandValue = (option: CommandInteractionOption): string => {
  * @returns {string}
  */
 const formatSubCommands = (options: CommandInteractionOption[]): string =>
-  options
+  !isEmpty(options)
     ? options.map(option =>
       `Name: ${option.name}
       Type: ${option.type}
