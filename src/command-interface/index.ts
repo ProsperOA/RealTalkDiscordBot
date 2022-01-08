@@ -1,11 +1,11 @@
-import { Client, CommandInteraction, User } from 'discord.js';
+import { Client, CommandInteraction } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 import { takeRightWhile } from 'lodash';
 
 import * as listeners from './listeners';
 import db from '../db';
-import { getSubCommand, getUser, isDev, logger } from '../utils';
+import { getSubCommand, isDev, logger } from '../utils';
 import { listAllRealTalkReply, realTalkReply } from './reply-builder';
 import { StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
@@ -70,11 +70,10 @@ const realTalk = async (
   }
 
   const targetUserId: string = interaction.options.get('who', true).value as string;
-  const targetUser: User = getUser(client, targetUserId);
 
   // smh... 🤦🏿‍♂️
   const incriminatingEvidence: string = realTalkReply.success(
-    targetUser.id,
+    targetUserId,
     statement
   );
 
@@ -83,7 +82,7 @@ const realTalk = async (
 
   await db.createStatement({
     user_id: interaction.user.id,
-    accused_user_id: targetUser.id,
+    accused_user_id: targetUserId,
     created_at: new Date(),
     content: statement,
     link: message.url,
