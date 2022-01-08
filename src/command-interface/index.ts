@@ -5,8 +5,8 @@ import { takeRightWhile } from 'lodash';
 
 import * as listeners from './listeners';
 import db from '../db';
+import replyBuilder from './reply-builder';
 import { getSubCommand, isDev, logger } from '../utils';
-import { listAllRealTalkReply, realTalkReply } from './reply-builder';
 import { StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
 
@@ -64,14 +64,17 @@ const realTalk = async (
   const statement: string = interaction.options.get('what', true).value as string;
 
   if (!isValidCommandOptionLength(statement)) {
-    interaction.reply(realTalkReply.invalidContentLength());
+    interaction.reply(
+      replyBuilder.invalidStatementLength(COMMAND_OPTION_CONTENT_LENGTH)
+    );
+
     return;
   }
 
   const targetUserId: string = interaction.options.get('who', true).value as string;
 
   // smh... 🤦🏿‍♂️
-  const incriminatingEvidence: string = realTalkReply.success(
+  const incriminatingEvidence: string = replyBuilder.realTalkRecord(
     targetUserId,
     statement
   );
@@ -105,13 +108,13 @@ const listAllRealTalk = async (
 
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
-    const contentLength: number = listAllRealTalkReply.success(statementsAcc).length;
+    const contentLength: number = replyBuilder.realTalkHistory(statementsAcc).length;
 
     return contentLength < RESPONSE_BODY_CONTENT_LENGTH;
   });
 
   await interaction.reply(
-    listAllRealTalkReply.success(statementsSlice)
+    replyBuilder.realTalkHistory(statementsSlice)
   );
 };
 
@@ -143,7 +146,9 @@ const init = async (client: Client): Promise<any> => {
 
 export const commandInterfaceMap = {
   [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction) => {
-    switch(getSubCommand(interaction).name) {
+    const subcommandName: string = getSubCommand(interaction).name;
+
+    switch(subcommandName) {
       case SUBCOMMAND_REAL_TALK_RECORD:
         await useThrottle(realTalk, THROTTLE_DURATION)(client, interaction);
         break;
@@ -151,7 +156,8 @@ export const commandInterfaceMap = {
         await listAllRealTalk(client, interaction);
         break;
       default:
-        logger.error(`Invalid ${COMMAND_REAL_TALK} subcommand`);
+        interaction.reply(replyBuilder.internalError());
+        logger.error(`${subcommandName} is an invalid ${COMMAND_REAL_TALK} subcommand`);
         return;
     }
   },

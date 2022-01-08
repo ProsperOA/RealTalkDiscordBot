@@ -1,8 +1,8 @@
 import { Client, CommandInteraction } from 'discord.js';
 
+import replyBuilder from './reply-builder';
 import { CommandFunction } from './index';
 import { getRemainingTimeout } from '../utils';
-import { throttleReply } from './reply-builder';
 
 const userThrottleCache: {[userId: string]: NodeJS.Timeout} = {};
 
@@ -20,7 +20,7 @@ export const useThrottle = (callback: CommandFunction, duration: number) =>
 
     if (timeout) {
       const remainingTimeout: number = getRemainingTimeout(timeout);
-      interaction.reply(throttleReply.coolDown(remainingTimeout));
+      interaction.reply(replyBuilder.throttleCoolDown(remainingTimeout));
       return;
     }
 
