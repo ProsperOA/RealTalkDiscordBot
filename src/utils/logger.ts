@@ -152,7 +152,7 @@ const formatInteraction = (
 
         ${formatCommandOptions(options.data)}`;
     default:
-      logger.warn('Cannot format interaction. Invalid command interaction type.');
+      logger.warn(`Cannot format interaction. ${type} is an invalid command interaction type.`);
       return '';
   }
 };
