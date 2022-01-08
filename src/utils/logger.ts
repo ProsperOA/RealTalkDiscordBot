@@ -2,6 +2,8 @@ import { CacheType, CommandInteraction, CommandInteractionOption } from 'discord
 import { isEmpty } from 'lodash';
 import { stripIndents } from 'common-tags';
 
+import { multilineIndent } from './functions';
+
 const SERVICE_NAME: Readonly<string> = 'RealTalkDiscordBot';
 
 type LogTypeInfo = 'info';
@@ -42,14 +44,14 @@ const baseLogger = (
   message: string | Error,
   opts?: any[]
 ): void => {
-  const output: any[] = [
+  const baseOutput: any[] = [
     OUTPUT_COLORS[type],
     `[${SERVICE_NAME}] ${type.toUpperCase()} ${message}`
   ];
 
-  if (!isEmpty(opts)) {
-    output.push(...opts);
-  }
+  const output: any[] = isEmpty(opts)
+    ? baseOutput
+    : [ ...baseOutput, ...opts ];
 
   const consoleLogMap = {
     info: LOG_TYPE_INFO,
@@ -72,9 +74,40 @@ const formatCommandMiddleware = (options: any): string =>
     ? Object.keys(options).map(option =>
         `${Object.keys(options[option]).map(key =>
           `${option}/${key}: ${options[option][key]}`
-        ).join('/n')}
-      `).join('/n')
+        ).join('/n')}`
+      ).join('/n')
     : 'Middleware: N/A';
+
+/**
+ * Formats application subcommand values.
+ *
+ * @param   {CommandInteractionOption} option - Subcommand to format.
+ * @returns {string}
+ */
+const formatSubCommandValue = (option: CommandInteractionOption): string => {
+  switch (option.type) {
+    case 'USER':
+      const { user } = option;
+      return `${option.value} (${user.username}#${user.discriminator})`;
+    default:
+      return option.value as string;
+  }
+};
+
+/**
+ * Formats application subcommands.
+ *
+ * @param   {CommandInteractionOption[]} options - List of subcommands.
+ * @returns {string}
+ */
+const formatSubCommands = (options: CommandInteractionOption[]): string =>
+  options
+    ? options.map(option =>
+      `Name: ${option.name}
+      Type: ${option.type}
+      Value: ${formatSubCommandValue(option)}`
+    ).join('\n\n')
+  : '';
 
 /**
  * Formats application command options.
@@ -84,13 +117,22 @@ const formatCommandMiddleware = (options: any): string =>
  */
 const formatCommandOptions = (
   options: Readonly<CommandInteractionOption<CacheType>[]>
-): string =>
-  options.map(({ name, type, value }, index) => (`
-    Command Option #${index + 1}:
-      Name: ${name}
-      Type: ${type}
-      Value: ${value}`
-    )).join('\n');
+): string => {
+  let output: string = '';
+
+  options.forEach((option, index) => {
+    output += `Command Option #${index + 1}:
+      Name: ${option.name}
+      Type: ${option.type}`;
+
+    if (option.type === 'SUB_COMMAND' && !isEmpty(option.options)) {
+      output += `\n\nCommand Option #${index + 1} Options:
+        ${formatSubCommands(option.options)}`;
+    }
+  });
+
+  return output;
+};
 
 /**
  * Formats a portion of the interaction message based on interaction type.
@@ -104,10 +146,10 @@ const formatInteraction = (
 ): string => {
   switch (type) {
     case 'APPLICATION_COMMAND':
-      return (`Command Name: ${commandName}
+      return `Command Name: ${commandName}
         ${formatCommandMiddleware(opts)}
-        ${formatCommandOptions(options.data)}
-      `);
+
+        ${formatCommandOptions(options.data)}`;
     default:
       logger.warn('Cannot format interaction. Invalid command interaction type.');
       return '';
@@ -123,11 +165,13 @@ const formatInteraction = (
 const buildInteractionMessage = (interaction: CommandInteraction, opts: any): string => {
   const { createdAt, type, user } = interaction;
 
-  return '\n' + stripIndents`
+  const message: string = stripIndents`
     Type: ${type}
     Created: ${new Date(createdAt).toISOString()}
     User: ${user.tag}
     ${formatInteraction(interaction, opts)}`;
+
+  return `\n${multilineIndent(message, 2)}`;
 };
 
 export const logger = {
