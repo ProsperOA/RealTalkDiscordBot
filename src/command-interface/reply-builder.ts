@@ -6,7 +6,7 @@ import { RealTalkStats, StatementRecord } from '../db/models/statements';
 export default {
 
   internalError: (): InteractionReplyOptions => ({
-    content: '**#RealTalk**, an error occurred. 😬',
+    content: '**#RealTalk**, an error occurred. \:grimacing:',
     ephemeral: true,
   }),
 
