@@ -7,13 +7,14 @@ import * as listeners from './listeners';
 import db from '../db';
 import replyBuilder from './reply-builder';
 import { getSubCommand, isDev, logger } from '../utils';
-import { StatementRecord } from '../db/models/statements';
+import { RealTalkStats, StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
 
 import commands, {
   COMMAND_REAL_TALK,
   SUBCOMMAND_REAL_TALK_HISTORY,
-  SUBCOMMAND_REAL_TALK_RECORD
+  SUBCOMMAND_REAL_TALK_RECORD,
+  SUBCOMMAND_REAL_TALK_STATS
 } from './commands';
 
 export type CommandFunction =
@@ -117,6 +118,24 @@ const listAllRealTalk = async (
     replyBuilder.realTalkHistory(statementsSlice)
   );
 };
+/**
+ * Handles the realtalk stats subcommand.
+ *
+ * @param {Client}             client      - Reference to Client object.
+ * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
+ */
+const realTalkStats = async (
+  client: Client,
+  interaction: CommandInteraction
+): Promise<void> => {
+  checkInit();
+
+  const stats: RealTalkStats = await db.getStatementStats();
+
+  await interaction.reply(
+    replyBuilder.realTalkStats(stats)
+  );
+};
 
 /**
  * Initializes slash commands and registers the client listeners.
@@ -154,6 +173,9 @@ export const commandInterfaceMap = {
         break;
       case SUBCOMMAND_REAL_TALK_HISTORY:
         await listAllRealTalk(client, interaction);
+        break;
+      case SUBCOMMAND_REAL_TALK_STATS:
+        await realTalkStats(client, interaction);
         break;
       default:
         interaction.reply(replyBuilder.internalError());

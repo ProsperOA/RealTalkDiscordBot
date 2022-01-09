@@ -1,8 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 
 export const COMMAND_REAL_TALK: Readonly<string> = 'realtalk';
-export const SUBCOMMAND_REAL_TALK_RECORD: Readonly<string> = 'record';
 export const SUBCOMMAND_REAL_TALK_HISTORY: Readonly<string> = 'history';
+export const SUBCOMMAND_REAL_TALK_RECORD: Readonly<string> = 'record';
+export const SUBCOMMAND_REAL_TALK_STATS: Readonly<string> = 'stats';
 
 const realTalk = new SlashCommandBuilder()
   .setName(COMMAND_REAL_TALK)
@@ -10,7 +11,7 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(SUBCOMMAND_REAL_TALK_RECORD)
-      .setDescription('Record a #RealTalk statement')
+      .setDescription('Record a #RealTalk statement.')
       .addUserOption(option =>
         option.setName('who')
           .setDescription('Who they is?')
@@ -22,7 +23,11 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(SUBCOMMAND_REAL_TALK_HISTORY)
-      .setDescription('List all recorded real talk.'));
+      .setDescription('List a history of them joints.'))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(SUBCOMMAND_REAL_TALK_STATS)
+      .setDescription('Show me the stats.'));
 
 export default [
   realTalk
