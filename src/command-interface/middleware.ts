@@ -2,9 +2,9 @@ import { Client, CommandInteraction } from 'discord.js';
 
 import replyBuilder from './reply-builder';
 import { CommandFunction } from './index';
-import { getRemainingTimeout } from '../utils';
+import { getRemainingTimeout, Timeout } from '../utils';
 
-const userThrottleCache: {[userId: string]: NodeJS.Timeout} = {};
+const userThrottleCache: {[userId: string]: Timeout} = {};
 
 /**
  * Throttles command requests per user.
@@ -16,7 +16,7 @@ const userThrottleCache: {[userId: string]: NodeJS.Timeout} = {};
 export const useThrottle = (callback: CommandFunction, duration: number) =>
   async (client: Client, interaction: CommandInteraction) => {
     const userId: string = interaction.user.id;
-    const timeout: NodeJS.Timeout = userThrottleCache[userId];
+    const timeout: Timeout = userThrottleCache[userId];
 
     if (timeout) {
       const remainingTimeout: number = getRemainingTimeout(timeout);
@@ -25,7 +25,7 @@ export const useThrottle = (callback: CommandFunction, duration: number) =>
     }
 
     userThrottleCache[userId] =
-      setTimeout(() => delete userThrottleCache[userId], duration);
+      setTimeout(() => delete userThrottleCache[userId], duration) as Timeout;
 
     await callback(client, interaction);
   };

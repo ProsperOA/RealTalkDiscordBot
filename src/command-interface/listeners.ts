@@ -4,6 +4,10 @@ import { isEmpty } from 'lodash';
 import { commandInterfaceMap, THROTTLE_DURATION } from './index';
 import { logger } from '../utils';
 
+export interface MiddlewareOptions {
+  Middleware: {[key: string]: string};
+}
+
 /**
  * Adds debug, warning, and error loggers to a client.
  *
@@ -21,13 +25,13 @@ const addDebugLogger = (client: Client): void => {
  * @param {CommandInteraction} interaction - Reference to interaction object.
  */
 const logInteraction = (interaction: CommandInteraction): void => {
-    const middleware: any = {};
+    const middleware: {[key: string]: string} = {};
 
     if (THROTTLE_DURATION) {
       middleware.useThrottle = `${THROTTLE_DURATION}ms`;
     }
 
-    const options: any = isEmpty(middleware) ? null : {
+    const options: MiddlewareOptions = isEmpty(middleware) ? null : {
       Middleware: middleware
     };
 

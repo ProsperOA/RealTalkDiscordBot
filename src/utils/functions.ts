@@ -1,22 +1,16 @@
-import { CommandInteraction, CommandInteractionOption } from 'discord.js';
+export interface Timeout extends NodeJS.Timeout {
+  _idleStart: number;
+  _idleTimeout: number;
+}
 
 /**
  * Returns remaining time for setTimeout.
  *
- * @param   {any}    timeout - Reference to timeout object.
+ * @param   {Timeout} timeout - Reference to timeout object.
  * @returns {number}
  */
-export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: any): number =>
+export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): number =>
   Math.ceil((_idleStart + _idleTimeout) / 1000 - process.uptime());
-
-/**
- * Returns an interaction's subcommand.
- *
- * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @returns {CommandInteractionOption}
- */
-export const getSubCommand = (interaction: CommandInteraction): CommandInteractionOption =>
-  interaction.options.data[0];
 
 /**
  * Adds indentation to a multiline string.
@@ -26,12 +20,12 @@ export const getSubCommand = (interaction: CommandInteraction): CommandInteracti
  * @returns {string}
  */
 export const multilineIndent = (str: string, indent: number = 1): string => {
-  const indentSize: number = Math.abs(indent);
-  let space: string = '';
-
-  for (let i = 1; i <= indentSize; i++) {
-    space += ' ';
+  if (str.indexOf('\n') === -1) {
+    return str;
   }
+
+  const indentSize: number = Math.abs(indent);
+  const space: string = Array.from({ length: indentSize }, () => ' ').join('');
 
   return str.split('\n')
     .map(line => space + line)

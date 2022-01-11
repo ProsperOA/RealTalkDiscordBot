@@ -3,8 +3,13 @@ import { isEmpty } from 'lodash';
 import { stripIndents } from 'common-tags';
 
 import { multilineIndent } from './functions';
+import { MiddlewareOptions } from '../command-interface/listeners';
 
 const SERVICE_NAME: Readonly<string> = 'RealTalkDiscordBot';
+
+type InteractionOptions = MiddlewareOptions & {
+  [key: string]: any;
+};
 
 type LogTypeInfo = 'info';
 type LogTypeWarn = 'warn';
@@ -60,16 +65,16 @@ const baseLogger = (
     interaction: LOG_TYPE_INFO,
   };
 
-  (console as any)[consoleLogMap[type]](...output);
+  console[consoleLogMap[type]](...output);
 };
 
 /**
  * Formats command middleware options.
  *
- * @param   {any} options - List of middleware options.
+ * @param   {InteractionOptions} options - List of middleware options.
  * @returns {string}
  */
-const formatCommandMiddleware = (options: any): string =>
+const formatCommandMiddleware = (options: InteractionOptions): string =>
   !isEmpty(options)
     ? Object.keys(options).map(option =>
         `${Object.keys(options[option]).map(key =>
@@ -115,9 +120,7 @@ const formatSubCommands = (options: CommandInteractionOption[]): string =>
  * @param   {Readonly<CommandInteraction<CacheType>[]} interaction - List of interaction options.
  * @returns {string}
  */
-const formatCommandOptions = (
-  options: Readonly<CommandInteractionOption<CacheType>[]>
-): string => {
+const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheType>[]>): string => {
   let output: string = '';
 
   options.forEach((option, index) => {
@@ -138,13 +141,10 @@ const formatCommandOptions = (
  * Formats a portion of the interaction message based on interaction type.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {any}                opts        - Additional logging options.
+ * @param   {InteractionOptions} opts        - Additional logging options.
  * @returns {string}
  */
-const formatInteraction = (
-  { commandName, options, type }: CommandInteraction,
-  opts: any
-): string => {
+const formatInteraction = ({ commandName, options, type }: CommandInteraction,  opts: InteractionOptions): string => {
   switch (type) {
     case 'APPLICATION_COMMAND':
       return `Command Name: ${commandName}
@@ -161,10 +161,10 @@ const formatInteraction = (
  * Builds formatted interaction message.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {any}                opts        - Additional logging options.
+ * @param   {InteractionOptions} opts        - Additional logging options.
  * @returns {string}
  */
-const buildInteractionMessage = (interaction: CommandInteraction, opts: any): string => {
+const buildInteractionMessage = (interaction: CommandInteraction, opts: InteractionOptions): string => {
   const { createdAt, type, user } = interaction;
 
   const message: string = stripIndents`
@@ -177,12 +177,12 @@ const buildInteractionMessage = (interaction: CommandInteraction, opts: any): st
 };
 
 export const logger = {
-  info: (message: string, ...opts: any[]) =>
+  info: (message: string, ...opts: any[]): void =>
     baseLogger(LOG_TYPE_INFO, message, opts),
-  warn: (message: string, ...opts: any[]) =>
+  warn: (message: string, ...opts: any[]): void =>
     baseLogger(LOG_TYPE_WARN, message, opts),
-  error: (message: string | Error, ...opts: any[]) =>
+  error: (message: string | Error, ...opts: any[]): void =>
     baseLogger(LOG_TYPE_ERROR, message, opts),
-  interaction: (interaction: CommandInteraction, opts?: any) =>
+  interaction: (interaction: CommandInteraction, opts?: InteractionOptions): void =>
     baseLogger(LOG_TYPE_INTERACTION, buildInteractionMessage(interaction, opts)),
 };

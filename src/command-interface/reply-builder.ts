@@ -3,6 +3,15 @@ import { InteractionReplyOptions } from 'discord.js';
 
 import { RealTalkStats, StatementRecord } from '../db/models/statements';
 
+interface ReplyBuilder {
+  internalError: () => InteractionReplyOptions;
+  invalidStatementLength: (length: number) => InteractionReplyOptions;
+  realTalkHistory: (statements: StatementRecord[]) => string;
+  realTalkRecord: (userId: string, statement: string) => string;
+  realTalkStats: (stats: RealTalkStats) => string;
+  throttleCoolDown: (duration: number) => InteractionReplyOptions;
+}
+
 export default {
 
   internalError: (): InteractionReplyOptions => ({
@@ -51,4 +60,4 @@ export default {
     ephemeral: true
   }),
 
-};
+} as ReplyBuilder;

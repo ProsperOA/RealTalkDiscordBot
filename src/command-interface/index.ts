@@ -1,4 +1,4 @@
-import { Client, CommandInteraction } from 'discord.js';
+import { Client, CommandInteraction, CommandInteractionOption, Message } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 import { takeRightWhile } from 'lodash';
@@ -6,7 +6,7 @@ import { takeRightWhile } from 'lodash';
 import * as listeners from './listeners';
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { getSubCommand, isDev, logger } from '../utils';
+import { isDev, logger } from '../utils';
 import { RealTalkStats, StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
 
@@ -17,8 +17,7 @@ import commands, {
   SUBCOMMAND_REAL_TALK_STATS
 } from './commands';
 
-export type CommandFunction =
-  (client: Client, interaction: CommandInteraction) => Promise<void>;
+export type CommandFunction = (client: Client, interaction: CommandInteraction) => Promise<void>;
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 
@@ -51,15 +50,21 @@ const isValidCommandOptionLength = (input: string): boolean =>
   input.length <= COMMAND_OPTION_CONTENT_LENGTH;
 
 /**
+ * Returns an interaction's subcommand.
+ *
+ * @param   {CommandInteraction} interaction - Reference to interaction object.
+ * @returns {CommandInteractionOption}
+ */
+const getSubCommand = (interaction: CommandInteraction): CommandInteractionOption =>
+  interaction.options.data[0];
+
+/**
  * Handles the realtalk command.
  *
- * @param {Client}             client      - Reference to Client object.
+ * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const realTalk = async (
-  client: Client,
-  interaction: CommandInteraction
-): Promise<void> => {
+const realTalk = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   checkInit();
 
   const statement: string = interaction.options.get('what', true).value as string;
@@ -81,7 +86,7 @@ const realTalk = async (
   );
 
   await interaction.reply(incriminatingEvidence);
-  const message = await interaction.fetchReply() as any;
+  const message: Message = await interaction.fetchReply() as Message;
 
   await db.createStatement({
     user_id: interaction.user.id,
@@ -95,13 +100,10 @@ const realTalk = async (
 /**
  * Handles the realtalk-list command.
  *
- * @param {Client}             client      - Reference to Client object.
+ * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const listAllRealTalk = async (
-  client: Client,
-  interaction: CommandInteraction
-): Promise<void> => {
+const listAllRealTalk = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   checkInit();
 
   const statementsAcc: StatementRecord[] = [];
@@ -121,13 +123,10 @@ const listAllRealTalk = async (
 /**
  * Handles the realtalk stats subcommand.
  *
- * @param {Client}             client      - Reference to Client object.
+ * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const realTalkStats = async (
-  client: Client,
-  interaction: CommandInteraction
-): Promise<void> => {
+const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   checkInit();
 
   const stats: RealTalkStats = await db.getStatementStats();
@@ -141,9 +140,9 @@ const realTalkStats = async (
  * Initializes slash commands and registers the client listeners.
  *
  * @param   {Client}       client - Reference to Client object.
- * @returns {Promise<any>}
+ * @returns {Promise<void>}
  */
-const init = async (client: Client): Promise<any> => {
+const init = async (client: Client): Promise<void> => {
   try {
     logger.info('Started refreshing application (/) commands.');
 
