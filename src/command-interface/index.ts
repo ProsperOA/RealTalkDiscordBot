@@ -150,7 +150,7 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
       }
     });
 
-    return await interaction.reply(
+    return interaction.reply(
       replyBuilder.realTalkStatsCompact(compactStats)
     );
   }
@@ -186,22 +186,18 @@ const init = async (client: Client): Promise<void> => {
 
 export const commandInterfaceMap = {
   [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction) => {
-    const subcommandName: string = getSubCommand(interaction).name;
+    const subcommand: string = getSubCommand(interaction).name;
 
-    switch(subcommandName) {
+    switch(subcommand) {
       case SUBCOMMAND_REAL_TALK_RECORD:
-        await useThrottle(realTalk, THROTTLE_DURATION)(client, interaction);
-        break;
+        return useThrottle(realTalk, THROTTLE_DURATION)(client, interaction);
       case SUBCOMMAND_REAL_TALK_HISTORY:
-        await listAllRealTalk(client, interaction);
-        break;
+        return listAllRealTalk(client, interaction);
       case SUBCOMMAND_REAL_TALK_STATS:
-        await realTalkStats(client, interaction);
-        break;
+        return realTalkStats(client, interaction);
       default:
-        interaction.reply(replyBuilder.internalError());
-        logger.error(`${subcommandName} is an invalid ${COMMAND_REAL_TALK} subcommand`);
-        return;
+        logger.error(`${subcommand} is an invalid ${COMMAND_REAL_TALK} subcommand`);
+        return interaction.reply(replyBuilder.internalError());
     }
   },
 };

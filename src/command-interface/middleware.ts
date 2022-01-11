@@ -20,8 +20,7 @@ export const useThrottle = (callback: CommandFunction, duration: number) =>
 
     if (timeout) {
       const remainingTimeout: number = getRemainingTimeout(timeout);
-      interaction.reply(replyBuilder.throttleCoolDown(remainingTimeout));
-      return;
+      return interaction.reply(replyBuilder.throttleCoolDown(remainingTimeout));
     }
 
     userThrottleCache[userId] =
