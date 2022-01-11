@@ -1,7 +1,8 @@
 import { hideLinkEmbed, memberNicknameMention, time } from '@discordjs/builders';
 import { InteractionReplyOptions } from 'discord.js';
 
-import { RealTalkStats, StatementRecord } from '../db/models/statements';
+import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
+import { pluralizeIf } from '../utils';
 
 interface ReplyBuilder {
   internalError: () => InteractionReplyOptions;
@@ -9,6 +10,7 @@ interface ReplyBuilder {
   realTalkHistory: (statements: StatementRecord[]) => string;
   realTalkRecord: (userId: string, statement: string) => string;
   realTalkStats: (stats: RealTalkStats) => string;
+  realTalkStatsCompact: (stats: RealTalkStatsCompact) => string;
   throttleCoolDown: (duration: number) => InteractionReplyOptions;
 }
 
@@ -54,6 +56,9 @@ export default {
 
       return message;
     }).join('\n')}`,
+
+  realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
+    `**#RealTalk** has been used ${uses} ${pluralizeIf('time', uses)} by ${uniqueUsers} ${pluralizeIf('user', uniqueUsers)}`,
 
   throttleCoolDown: (duration: number): InteractionReplyOptions => ({
     content: `**#RealTalk**, chill... ${duration}s left`,

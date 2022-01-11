@@ -7,7 +7,7 @@ import * as listeners from './listeners';
 import db from '../db';
 import replyBuilder from './reply-builder';
 import { isDev, logger } from '../utils';
-import { RealTalkStats, StatementRecord } from '../db/models/statements';
+import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
 
 import commands, {
@@ -50,6 +50,15 @@ const isValidCommandOptionLength = (input: string): boolean =>
   input.length <= COMMAND_OPTION_CONTENT_LENGTH;
 
 /**
+ * Checks whether a string has a valid content length.
+ *
+ * @param   {string}  str - string to check.
+ * @returns {boolean}
+ */
+const isValidContentLength = (str: string): boolean =>
+  str.length <= RESPONSE_BODY_CONTENT_LENGTH;
+
+/**
  * Returns an interaction's subcommand.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
@@ -70,11 +79,9 @@ const realTalk = async (_client: Client, interaction: CommandInteraction): Promi
   const statement: string = interaction.options.get('what', true).value as string;
 
   if (!isValidCommandOptionLength(statement)) {
-    interaction.reply(
+    return interaction.reply(
       replyBuilder.invalidStatementLength(COMMAND_OPTION_CONTENT_LENGTH)
     );
-
-    return;
   }
 
   const targetUserId: string = interaction.options.get('who', true).value as string;
@@ -111,9 +118,10 @@ const listAllRealTalk = async (_client: Client, interaction: CommandInteraction)
 
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
-    const contentLength: number = replyBuilder.realTalkHistory(statementsAcc).length;
 
-    return contentLength < RESPONSE_BODY_CONTENT_LENGTH;
+    return isValidContentLength(
+      replyBuilder.realTalkHistory(statementsAcc)
+    );
   });
 
   await interaction.reply(
@@ -130,10 +138,24 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
   checkInit();
 
   const stats: RealTalkStats = await db.getStatementStats();
+  const message: string  = replyBuilder.realTalkStats(stats);
 
-  await interaction.reply(
-    replyBuilder.realTalkStats(stats)
-  );
+  if (!isValidContentLength(message)) {
+    const compactStats: RealTalkStatsCompact = { uniqueUsers: 0, uses: 0 };
+
+    Object.values(stats).forEach(({ uses }) => {
+      if (uses) {
+        compactStats.uniqueUsers += 1;
+        compactStats.uses += uses;
+      }
+    });
+
+    return await interaction.reply(
+      replyBuilder.realTalkStatsCompact(compactStats)
+    );
+  }
+
+  await interaction.reply(message);
 };
 
 /**

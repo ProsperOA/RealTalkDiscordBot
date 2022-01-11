@@ -31,3 +31,13 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
     .map(line => space + line)
     .join('\n');
 };
+
+/**
+ * Returns plural form of a string if a condition is met.
+ *
+ * @param   {string} str - string to format
+ * @param   {boolean | number} cond - number or boolean to check
+ * @returns {string}
+ */
+export const pluralizeIf = (str: string, cond: boolean | number): string =>
+  cond === 1 || !cond ? str : `${str}s`;

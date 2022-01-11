@@ -18,6 +18,11 @@ export interface RealTalkStats {
   };
 }
 
+export interface RealTalkStatsCompact {
+  uniqueUsers: number;
+  uses: number;
+}
+
 interface RealTalkAccusation {
   [accusedUserId: string]: {accusations: number};
 }
