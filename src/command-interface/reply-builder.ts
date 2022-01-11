@@ -43,8 +43,8 @@ export default {
       const { uses, accusations } = stats[userId];
 
       let message: string = `> ${memberNicknameMention(userId)}: `;
-      const usesPart: string = `${uses} uses`;
-      const accusationsPart: string = `${accusations} accusations`;
+      const usesPart: string = `${uses} ${pluralizeIf('use', uses)}`;
+      const accusationsPart: string = `${accusations} ${pluralizeIf('accusation', accusations)}`;
 
       if (uses && accusations) {
         message += `${usesPart}, ${accusationsPart}`;
