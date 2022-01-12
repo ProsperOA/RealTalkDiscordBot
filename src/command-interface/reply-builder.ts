@@ -1,8 +1,8 @@
-import { hideLinkEmbed, memberNicknameMention, time } from '@discordjs/builders';
+import { hideLinkEmbed, time } from '@discordjs/builders';
 import { InteractionReplyOptions } from 'discord.js';
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
-import { pluralizeIf } from '../utils';
+import { nicknameMention, pluralizeIf } from '../utils';
 
 interface ReplyBuilder {
   internalError: () => InteractionReplyOptions;
@@ -28,21 +28,21 @@ export default {
 
   realTalkHistory: (statements: StatementRecord[]): string =>
     statements.map(s =>
-      `> **#RealTalk**, ${memberNicknameMention(s.user_id)} claims ${memberNicknameMention(s.accused_user_id)} said "${s.content}".
+      `> **#RealTalk**, ${nicknameMention(s.user_id)} claims ${nicknameMention(s.accused_user_id)} said "${s.content}".
       > ${hideLinkEmbed(s.link)}`
     ).join('\n\n'),
 
   realTalkRecord: (userId: string, statement: string): string =>
     `**The following is provided under the terms of #RealTalk**
     Date: ${time(new Date())}
-    ${memberNicknameMention(userId)}: _"${statement}"_`,
+    ${nicknameMention(userId)}: _"${statement}"_`,
 
   realTalkStats: (stats: RealTalkStats): string =>
     `**#RealTalk Stats**
     ${Object.keys(stats).map(userId => {
       const { uses, accusations } = stats[userId];
 
-      let message: string = `> ${memberNicknameMention(userId)}: `;
+      let message: string = `> ${nicknameMention(userId)}: `;
       const usesPart: string = `${uses} ${pluralizeIf('use', uses)}`;
       const accusationsPart: string = `${accusations} ${pluralizeIf('accusation', accusations)}`;
 

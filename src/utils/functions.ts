@@ -1,3 +1,7 @@
+import { memberNicknameMention } from '@discordjs/builders';
+
+import { isDev } from './index';
+
 export interface Timeout extends NodeJS.Timeout {
   _idleStart: number;
   _idleTimeout: number;
@@ -41,3 +45,13 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
  */
 export const pluralizeIf = (str: string, cond: boolean | number): string =>
   cond === 1 || !cond ? str : `${str}s`;
+
+/**
+ * Returns a formatted userId in dev, but nickname mention in prod. This prevents
+ * spamming mentions in dev.
+ *
+ * @param   {string} userId - user id to format
+ * @returns {string}
+ */
+export const nicknameMention = (userId: string): string =>
+  isDev ? `UserID::${userId}` : memberNicknameMention(userId);
