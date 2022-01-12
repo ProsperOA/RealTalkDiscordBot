@@ -4,8 +4,7 @@ import { stripIndents } from 'common-tags';
 
 import { multilineIndent } from './functions';
 import { MiddlewareOptions } from '../command-interface/listeners';
-
-const SERVICE_NAME: Readonly<string> = 'RealTalkDiscordBot';
+import { SERVICE_NAME } from '../index';
 
 type InteractionOptions = MiddlewareOptions & {
   [key: string]: any;

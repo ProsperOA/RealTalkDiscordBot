@@ -1,7 +1,9 @@
 import { Client, ClientOptions, Intents } from 'discord.js';
 
 import commandInterface from './command-interface';
-import { logger } from './utils';
+import { isDev, logger } from './utils';
+
+export const SERVICE_NAME: Readonly<string> = 'RealTalkDiscordBot';
 
 const clientOptions: ClientOptions = {
   intents: [
@@ -15,6 +17,10 @@ const client: Client = new Client(clientOptions);
 commandInterface.init(client);
 
 client.on('ready', (): void => {
+  if (isDev) {
+    client.user.setUsername(SERVICE_NAME + ' [DEV]');
+  }
+
   logger.info(`Logged in as ${client.user.tag}`);
 });
 
