@@ -20,10 +20,9 @@ import commands, {
 export type CommandFunction = (client: Client, interaction: CommandInteraction) => Promise<void>;
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
-
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
-export const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
+const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
 const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
 export const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30_000;
 
@@ -73,7 +72,7 @@ const getSubCommand = (interaction: CommandInteraction): CommandInteractionOptio
  * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const realTalk = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkRecord = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   checkInit();
 
   const statement: string = interaction.options.get('what', true).value as string;
@@ -110,7 +109,7 @@ const realTalk = async (_client: Client, interaction: CommandInteraction): Promi
  * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const listAllRealTalk = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   checkInit();
 
   const statementsAcc: StatementRecord[] = [];
@@ -119,15 +118,12 @@ const listAllRealTalk = async (_client: Client, interaction: CommandInteraction)
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
 
-    return isValidContentLength(
-      replyBuilder.realTalkHistory(statementsAcc)
-    );
+    return isValidContentLength(replyBuilder.realTalkHistory(statementsAcc));
   });
 
-  await interaction.reply(
-    replyBuilder.realTalkHistory(statementsSlice)
-  );
+  await interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
 };
+
 /**
  * Handles the realtalk stats subcommand.
  *
@@ -150,9 +146,7 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
       }
     });
 
-    return interaction.reply(
-      replyBuilder.realTalkStatsCompact(compactStats)
-    );
+    return interaction.reply(replyBuilder.realTalkStatsCompact(compactStats));
   }
 
   await interaction.reply(message);
@@ -174,9 +168,6 @@ const init = async (client: Client): Promise<void> => {
 
     logger.info('Successfully reloaded application (/) commands.');
 
-    logger.info(`Active Middleware:
-      useThrottle (${THROTTLE_DURATION}ms) /realtalk`);
-
     listeners.register(client, isDev);
     isInitialized = true;
   } catch (error) {
@@ -184,15 +175,15 @@ const init = async (client: Client): Promise<void> => {
   }
 };
 
-export const commandInterfaceMap = {
+export const commandInterfaceMap: {[command: string]: CommandFunction} = {
   [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction) => {
     const subcommand: string = getSubCommand(interaction).name;
 
     switch(subcommand) {
       case SUBCOMMAND_REAL_TALK_RECORD:
-        return useThrottle(realTalk, THROTTLE_DURATION)(client, interaction);
+        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
       case SUBCOMMAND_REAL_TALK_HISTORY:
-        return listAllRealTalk(client, interaction);
+        return realTalkHistory(client, interaction);
       case SUBCOMMAND_REAL_TALK_STATS:
         return realTalkStats(client, interaction);
       default:

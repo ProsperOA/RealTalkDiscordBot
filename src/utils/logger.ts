@@ -7,7 +7,7 @@ import { MiddlewareOptions } from '../command-interface/listeners';
 import { SERVICE_NAME } from '../index';
 
 type InteractionOptions = MiddlewareOptions & {
-  [key: string]: any;
+  [name: string]: any;
 };
 
 type LogTypeInfo = 'info';
@@ -43,11 +43,7 @@ const OUTPUT_COLORS: Readonly<OutputColors> = {
  * @param {string | Error} message - message to log to console.
  * @param {any[]}          opts    - additional logging options.
  */
-const baseLogger = (
-  type: LogType,
-  message: string | Error,
-  opts?: any[]
-): void => {
+const baseLogger = (type: LogType, message: string | Error, opts?: any[]): void => {
   const baseOutput: any[] = [
     OUTPUT_COLORS[type],
     `[${SERVICE_NAME}] ${type.toUpperCase()} ${message}`

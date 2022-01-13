@@ -44,7 +44,7 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
  * @returns {string}
  */
 export const pluralizeIf = (str: string, cond: boolean | number): string =>
-  cond === 1 || !cond ? str : `${str}s`;
+  cond === 1 || !cond ? str : str + 's';
 
 /**
  * Returns a formatted userId in dev, but nickname mention in prod. This prevents
@@ -54,4 +54,4 @@ export const pluralizeIf = (str: string, cond: boolean | number): string =>
  * @returns {string}
  */
 export const nicknameMention = (userId: string): string =>
-  isDev ? `UserID::${userId}` : memberNicknameMention(userId);
+  isDev ? 'UserID::' + userId : memberNicknameMention(userId);

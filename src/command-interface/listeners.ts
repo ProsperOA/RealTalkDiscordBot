@@ -5,7 +5,7 @@ import { commandInterfaceMap, THROTTLE_DURATION } from './index';
 import { logger } from '../utils';
 
 export interface MiddlewareOptions {
-  Middleware: {[key: string]: string};
+  Middleware: {[name: string]: string};
 }
 
 /**
@@ -25,7 +25,7 @@ const addDebugLogger = (client: Client): void => {
  * @param {CommandInteraction} interaction - Reference to interaction object.
  */
 const logInteraction = (interaction: CommandInteraction): void => {
-    const middleware: {[key: string]: string} = {};
+    const middleware: {[name: string]: string} = {};
 
     if (THROTTLE_DURATION) {
       middleware.useThrottle = `${THROTTLE_DURATION}ms`;
