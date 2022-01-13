@@ -4,6 +4,7 @@ export const COMMAND_REAL_TALK: Readonly<string> = 'realtalk';
 export const SUBCOMMAND_REAL_TALK_HISTORY: Readonly<string> = 'history';
 export const SUBCOMMAND_REAL_TALK_RECORD: Readonly<string> = 'record';
 export const SUBCOMMAND_REAL_TALK_STATS: Readonly<string> = 'stats';
+export const SUBCOMMAND_REAL_TALK_QUIZ: Readonly<string> = 'quiz';
 
 const realTalk = new SlashCommandBuilder()
   .setName(COMMAND_REAL_TALK)
@@ -27,7 +28,11 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(SUBCOMMAND_REAL_TALK_STATS)
-      .setDescription('Show me the stats.'));
+      .setDescription('Show me the stats.'))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(SUBCOMMAND_REAL_TALK_QUIZ)
+      .setDescription('Quiz us, pls.'));
 
 export default [
   realTalk

@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, CommandInteractionOption, Message } from 'discord.js';
+import { Client, CommandInteraction, CommandInteractionOption, Message, MessageCollector, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 import { takeRightWhile } from 'lodash';
@@ -6,13 +6,14 @@ import { takeRightWhile } from 'lodash';
 import * as listeners from './listeners';
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { isDev, logger } from '../utils';
-import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
+import { extractUserIdFromMention, isDev, isMention, logger } from '../utils';
+import { RealTalkQuizRecord, RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
 
 import commands, {
   COMMAND_REAL_TALK,
   SUBCOMMAND_REAL_TALK_HISTORY,
+  SUBCOMMAND_REAL_TALK_QUIZ,
   SUBCOMMAND_REAL_TALK_RECORD,
   SUBCOMMAND_REAL_TALK_STATS
 } from './commands';
@@ -153,6 +154,40 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
 };
 
 /**
+ * Handles the realtalk quiz subcommand.
+ *
+ * @param {Client}             _client     - Reference to Client object.
+ * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
+ */
+const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  const userResponseTime: number = 30_000;
+  const statement: RealTalkQuizRecord = await db.getRandomStatement();
+  await interaction.reply(replyBuilder.realTalkQuiz(statement.content, userResponseTime / 1000));
+
+  const filter = (message: Message) => message.content.startsWith('#RealTalk');
+  const collector = interaction.channel.createMessageCollector({ filter, time: userResponseTime });
+  const winnerUserIds: string[] = [];
+
+  collector.on('collect', message => {
+    const mention: string = message.content.split(' ')[1] || '';
+    const userId: string = extractUserIdFromMention(mention);
+
+    const isValidMention: boolean = mention && isMention(mention);
+    const isCorrectUserId: boolean = userId === statement.accused_user_id;
+
+    if (isValidMention && isCorrectUserId) {
+      winnerUserIds.push(message.author.id);
+    }
+  });
+
+  collector.on('end', async () => {
+    await interaction.followUp(
+      replyBuilder.realTalkQuizEnd(statement.accused_user_id, winnerUserIds)
+    );
+  });
+};
+
+/**
  * Initializes slash commands and registers the client listeners.
  *
  * @param   {Client}       client - Reference to Client object.
@@ -186,6 +221,8 @@ export const commandInterfaceMap: {[command: string]: CommandFunction} = {
         return realTalkHistory(client, interaction);
       case SUBCOMMAND_REAL_TALK_STATS:
         return realTalkStats(client, interaction);
+      case SUBCOMMAND_REAL_TALK_QUIZ:
+        return realTalkQuiz(client, interaction);
       default:
         logger.error(`${subcommand} is an invalid ${COMMAND_REAL_TALK} subcommand`);
         return interaction.reply(replyBuilder.internalError());

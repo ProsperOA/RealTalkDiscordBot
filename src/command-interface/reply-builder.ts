@@ -1,5 +1,6 @@
 import { hideLinkEmbed, time } from '@discordjs/builders';
 import { InteractionReplyOptions } from 'discord.js';
+import { isEmpty } from 'lodash';
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { nicknameMention, pluralizeIf } from '../utils';
@@ -11,6 +12,8 @@ interface ReplyBuilder {
   realTalkRecord: (userId: string, statement: string) => string;
   realTalkStats: (stats: RealTalkStats) => string;
   realTalkStatsCompact: (stats: RealTalkStatsCompact) => string;
+  realTalkQuiz: (statement: string, duration: number) => string;
+  realTalkQuizEnd: (accusedUserId: string, userIds: string[]) => string;
   throttleCoolDown: (duration: number) => InteractionReplyOptions;
 }
 
@@ -59,6 +62,15 @@ export default {
 
   realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
     `**#RealTalk** has been used ${uses} ${pluralizeIf('time', uses)} by ${uniqueUsers} ${pluralizeIf('user', uniqueUsers)}`,
+
+  realTalkQuiz: (statement: string, duration: number): string =>
+    `Who's the type of person to say: _"${statement}"_?
+      You have ${duration}s to respond in chat with: #RealTalk @Username
+      Ex: #RealTalk @JohnDoe`,
+
+  realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>
+    `${isEmpty(userIds) ? 'No one' : userIds.map(nicknameMention).join(', ')} got it right.
+    ${nicknameMention(accusedUserId)} is the type of person that would say that...`,
 
   throttleCoolDown: (duration: number): InteractionReplyOptions => ({
     content: `**#RealTalk**, chill... ${duration}s left`,

@@ -41,6 +41,11 @@ interface RealTalkUsageRecord {
   count: string;
 }
 
+export interface RealTalkQuizRecord {
+  accused_user_id: string;
+  content: string;
+}
+
 const createStatement = (data: StatementRecord) =>
   knex('statements')
     .insert(data);
@@ -79,8 +84,16 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
   return merge({}, ...uses, ...accusations);
 };
 
+const getRandomStatement = () =>
+  knex('statements')
+    .select([ 'accused_user_id', 'content' ])
+    .orderByRaw('RANDOM()')
+    .limit(1)
+    .first();
+
 export default {
   createStatement,
   getAllStatements,
+  getRandomStatement,
   getStatementStats,
 };
