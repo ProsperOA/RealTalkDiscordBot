@@ -61,7 +61,7 @@ export const nicknameMention = (userId: string): string => {
 
   return cond([
     [ constant(!user), constant('UserID::' + userId) ],
-    [ constant(isDev), constant(user.username) ],
+    [ constant(isDev), constant(user.tag) ],
     [ stubTrue, constant(memberNicknameMention(userId)) ]
   ])(isDev);
 };
