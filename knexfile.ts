@@ -13,6 +13,9 @@ export default {
     migrations: {
       directory: 'src/db/migrations',
     },
+    seeds: {
+      directory: 'src/db/seeds',
+    },
   },
   production: {
     client: 'pg',
