@@ -25,5 +25,5 @@ export const extractUserIdFromMention = (mention: string): string =>
 
 export const getUser = (userId: string): User => {
   const guild: Guild = client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
-  return guild?.members.cache.get(userId).user ?? null;
+  return guild?.members.cache.get(userId)?.user ?? null;
 };

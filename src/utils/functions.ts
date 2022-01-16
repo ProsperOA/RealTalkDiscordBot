@@ -59,10 +59,9 @@ export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
 export const nicknameMention = (userId: string): string => {
   const user: User = getUser(userId);
 
-  return cond([
-    [ constant(!user), constant('UserID::' + userId) ],
-    [ constant(isDev), constant(user.tag) ],
-    [ stubTrue, constant(memberNicknameMention(userId)) ]
-  ])(isDev);
+  if (!user) {
+    return 'UserID::' + userId;
+  }
+
+  return isDev ? user.tag : memberNicknameMention(userId);
 };
-  // isDev ? getUser(userId).username : memberNicknameMention(userId);
