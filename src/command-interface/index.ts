@@ -1,7 +1,7 @@
 import { Client, CommandInteraction, CommandInteractionOption, Message, MessageCollector, User } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
-import { takeRightWhile } from 'lodash';
+import { takeRightWhile, trim, words } from 'lodash';
 
 import * as listeners from './listeners';
 import db from '../db';
@@ -19,6 +19,9 @@ import commands, {
 } from './commands';
 
 export type CommandFunction = (client: Client, interaction: CommandInteraction) => Promise<void>;
+interface CommandInterfaceMap {
+  [commandName: string]: CommandFunction;
+}
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
@@ -74,8 +77,6 @@ const getSubCommand = (interaction: CommandInteraction): CommandInteractionOptio
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkRecord = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  checkInit();
-
   const statement: string = interaction.options.get('what', true).value as string;
 
   if (!isValidCommandOptionLength(statement)) {
@@ -111,14 +112,11 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction):
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  checkInit();
-
   const statementsAcc: StatementRecord[] = [];
   const allStatements: StatementRecord[] = await db.getAllStatements();
 
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
-
     return isValidContentLength(replyBuilder.realTalkHistory(statementsAcc));
   });
 
@@ -132,8 +130,6 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  checkInit();
-
   const stats: RealTalkStats = await db.getStatementStats();
   const message: string  = replyBuilder.realTalkStats(stats);
 
@@ -160,29 +156,33 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  const userResponseTime: number = 30_000;
+  const responseTimeout: number = 30_000;
   const statement: RealTalkQuizRecord = await db.getRandomStatement();
-  await interaction.reply(replyBuilder.realTalkQuiz(statement.content, userResponseTime / 1000));
+
+  await interaction.reply(
+    replyBuilder.realTalkQuiz(statement.content, responseTimeout / 1000)
+  );
 
   const filter = (message: Message) => message.content.startsWith('#RealTalk');
-  const collector = interaction.channel.createMessageCollector({ filter, time: userResponseTime });
-  const winnerUserIds: string[] = [];
+  const collector = interaction.channel.createMessageCollector({ filter, time: responseTimeout });
+  const correctAnswerUserIds: string[] = [];
 
   collector.on('collect', message => {
-    const mention: string = message.content.split(' ')[1] || '';
-    const userId: string = extractUserIdFromMention(mention);
+    const { content } = message;
 
+    const mention: string = words(trim(content))[1];
+    const userId: string = extractUserIdFromMention(mention);
     const isValidMention: boolean = mention && isMention(mention);
     const isCorrectUserId: boolean = userId === statement.accused_user_id;
 
     if (isValidMention && isCorrectUserId) {
-      winnerUserIds.push(message.author.id);
+      correctAnswerUserIds.push(message.author.id);
     }
   });
 
   collector.on('end', async () => {
     await interaction.followUp(
-      replyBuilder.realTalkQuizEnd(statement.accused_user_id, winnerUserIds)
+      replyBuilder.realTalkQuizEnd(statement.accused_user_id, correctAnswerUserIds)
     );
   });
 };
@@ -210,8 +210,9 @@ const init = async (client: Client): Promise<void> => {
   }
 };
 
-export const commandInterfaceMap: {[command: string]: CommandFunction} = {
+export const commandInterfaceMap: CommandInterfaceMap = {
   [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction) => {
+    checkInit();
     const subcommand: string = getSubCommand(interaction).name;
 
     switch(subcommand) {
