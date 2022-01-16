@@ -13,7 +13,7 @@ const clientOptions: ClientOptions = {
   ],
 };
 
-const client: Client = new Client(clientOptions);
+export const client: Client = new Client(clientOptions);
 commandInterface.init(client);
 
 client.on('ready', (): void => {

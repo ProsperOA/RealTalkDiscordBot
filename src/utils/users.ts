@@ -1,3 +1,6 @@
+import { Guild, User } from 'discord.js';
+import { client } from '../index';
+
 export const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
 export const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
 
@@ -19,3 +22,8 @@ export const isMention = (mention: string): boolean =>
  */
 export const extractUserIdFromMention = (mention: string): string =>
   isMention(mention) ? mention.match(/[0-9]{18}/)[0] : '';
+
+export const getUser = (userId: string): User => {
+  const guild: Guild = client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
+  return guild?.members.cache.get(userId).user ?? null;
+};

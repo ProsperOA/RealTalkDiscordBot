@@ -1,6 +1,9 @@
 import { memberNicknameMention } from '@discordjs/builders';
+import { User } from 'discord.js';
+import { cond, constant, stubTrue } from 'lodash';
 
 import { isDev } from './index';
+import { getUser } from './users';
 
 export interface Timeout extends NodeJS.Timeout {
   _idleStart: number;
@@ -28,7 +31,7 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
     return str;
   }
 
-  const indentSize: number = Math.abs(indent);
+  const indentSize: number = indent < 1 ? 1 : indent;
   const space: string = Array.from({ length: indentSize }, () => ' ').join('');
 
   return str.split('\n')
@@ -37,14 +40,14 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
 };
 
 /**
- * Returns plural form of a string if a condition is met.
+ * Returns plural form of a string if a pluralize is not 1 or true.
  *
  * @param   {string} str - string to format
- * @param   {boolean | number} cond - number or boolean to check
+ * @param   {boolean | number} pluralize - number or boolean to check
  * @returns {string}
  */
-export const pluralizeIf = (str: string, cond: boolean | number): string =>
-  cond === 1 || !cond ? str : str + 's';
+export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
+  pluralize === 1 || !pluralize ? str : str + 's';
 
 /**
  * Returns a formatted userId in dev, but nickname mention in prod. This prevents
@@ -53,5 +56,13 @@ export const pluralizeIf = (str: string, cond: boolean | number): string =>
  * @param   {string} userId - user id to format
  * @returns {string}
  */
-export const nicknameMention = (userId: string): string =>
-  isDev ? 'UserID::' + userId : memberNicknameMention(userId);
+export const nicknameMention = (userId: string): string => {
+  const user: User = getUser(userId);
+
+  return cond([
+    [ constant(!user), constant('UserID::' + userId) ],
+    [ constant(isDev), constant(user.username) ],
+    [ stubTrue, constant(memberNicknameMention(userId)) ]
+  ])(isDev);
+};
+  // isDev ? getUser(userId).username : memberNicknameMention(userId);
