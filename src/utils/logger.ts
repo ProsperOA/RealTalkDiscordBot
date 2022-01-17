@@ -68,16 +68,14 @@ const baseLogger = (type: LogType, message: string | Error, opts?: any[]): void 
  * @param   {InteractionOptions} options - List of middleware options.
  * @returns {string}
  */
-const formatInteractionOptions = (options: InteractionOptions): string => {
-  console.log(options);
-  return !isEmpty(options)
+const formatInteractionOptions = (options: InteractionOptions): string =>
+  !isEmpty(options)
     ? Object.keys(options).map(option => isString(option)
       ? `${option}: ${options[option]}`
       : `${Object.keys(options[option]).map(key =>
           `${option}/${key}: ${[options][option][key]}`).join('\n')}`
       ).join('\n')
     : '';
-};
 
 /**
  * Formats application subcommand values.

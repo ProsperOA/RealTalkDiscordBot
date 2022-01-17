@@ -6,7 +6,8 @@ import { getUser } from './users';
 
 export interface Timer {
   start: () => Date;
-  end: () => number;
+  end: () => Date;
+  time: () => number;
 }
 export interface Timeout extends NodeJS.Timeout {
   _idleStart: number;
@@ -76,14 +77,22 @@ export const nicknameMention = (userId: string): string => {
  * @returns {Timer}
  */
 export const timer = (): Timer => {
-  let startTime: Date = null;
+  let startDateTime: Date = null;
+  let totalTime: number = 0;
 
   return {
     start: (): Date => {
-      startTime = new Date();
-      return startTime;
+      startDateTime = new Date();
+      return startDateTime;
     },
-    end: (): number =>
-      startTime ? new Date().getTime() - startTime.getTime() : 0,
+    end: (): Date => {
+      const endDateTime: Date = new Date();
+
+      totalTime =
+        startDateTime ? endDateTime.getTime() - startDateTime.getTime() : null;
+
+      return endDateTime;
+    },
+    time: () => totalTime,
   };
 };
