@@ -1,12 +1,7 @@
 import { Client, CommandInteraction } from 'discord.js';
-import { isEmpty } from 'lodash';
 
 import { commandInterfaceMap, THROTTLE_DURATION } from './index';
-import { logger } from '../utils';
-
-export interface MiddlewareOptions {
-  Middleware: {[name: string]: string};
-}
+import { InteractionOptions, logger, Timer, timer } from '../utils';
 
 /**
  * Adds debug, warning, and error loggers to a client.
@@ -24,16 +19,16 @@ const addDebugLogger = (client: Client): void => {
  *
  * @param {CommandInteraction} interaction - Reference to interaction object.
  */
-const logInteraction = (interaction: CommandInteraction): void => {
-    const middleware: {[name: string]: string} = {};
+const logInteraction = async (interaction: CommandInteraction, responseTime: number): Promise<void> => {
+    const options: InteractionOptions = {
+      'Middleware': 'N/A',
+      'Reply': 'N/A',
+      'Response Time': `${responseTime}ms`,
+    };
 
     if (THROTTLE_DURATION) {
-      middleware.useThrottle = `${THROTTLE_DURATION}ms`;
+      options.Middleware.useThrottle = `${THROTTLE_DURATION}ms`;
     }
-
-    const options: MiddlewareOptions = isEmpty(middleware) ? null : {
-      Middleware: middleware
-    };
 
     logger.interaction(interaction, options);
 };
@@ -45,21 +40,24 @@ const logInteraction = (interaction: CommandInteraction): void => {
  * @param {boolean} debug  - Whether client debug events are logged.
  */
 export const register = (client: Client, debug?: boolean): void => {
-
   if (debug) {
     addDebugLogger(client);
   }
 
   client.on('interactionCreate', async (interaction: CommandInteraction) => {
+    const t: Timer = timer();
+    t.start();
+
     if (!interaction.isCommand()) {
       return;
     }
 
-    if (debug) {
-      logInteraction(interaction);
-    }
-
     await commandInterfaceMap[interaction.commandName](client, interaction);
+    const responseTime: number = t.end();
+
+    if (debug) {
+      await logInteraction(interaction, responseTime);
+    }
   });
 
 };

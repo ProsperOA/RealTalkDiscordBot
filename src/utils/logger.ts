@@ -1,14 +1,13 @@
 import { CacheType, CommandInteraction, CommandInteractionOption } from 'discord.js';
-import { isEmpty } from 'lodash';
+import { isEmpty, isString } from 'lodash';
 import { stripIndents } from 'common-tags';
 
 import { multilineIndent } from './functions';
-import { MiddlewareOptions } from '../command-interface/listeners';
 import { SERVICE_NAME } from '../index';
 
-type InteractionOptions = MiddlewareOptions & {
+export interface InteractionOptions {
   [name: string]: any;
-};
+}
 
 type LogTypeInfo = 'info';
 type LogTypeWarn = 'warn';
@@ -69,14 +68,16 @@ const baseLogger = (type: LogType, message: string | Error, opts?: any[]): void 
  * @param   {InteractionOptions} options - List of middleware options.
  * @returns {string}
  */
-const formatCommandMiddleware = (options: InteractionOptions): string =>
-  !isEmpty(options)
-    ? Object.keys(options).map(option =>
-        `${Object.keys(options[option]).map(key =>
-          `${option}/${key}: ${options[option][key]}`
-        ).join('/n')}`
-      ).join('/n')
-    : 'Middleware: N/A';
+const formatInteractionOptions = (options: InteractionOptions): string => {
+  console.log(options);
+  return !isEmpty(options)
+    ? Object.keys(options).map(option => isString(option)
+      ? `${option}: ${options[option]}`
+      : `${Object.keys(options[option]).map(key =>
+          `${option}/${key}: ${[options][option][key]}`).join('\n')}`
+      ).join('\n')
+    : '';
+};
 
 /**
  * Formats application subcommand values.
@@ -143,7 +144,7 @@ const formatInteraction = ({ commandName, options, type }: CommandInteraction,  
   switch (type) {
     case 'APPLICATION_COMMAND':
       return `Command Name: ${commandName}
-        ${formatCommandMiddleware(opts)}
+        ${formatInteractionOptions(opts)}
 
         ${formatCommandOptions(options.data)}`;
     default:

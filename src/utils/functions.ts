@@ -4,6 +4,10 @@ import { User } from 'discord.js';
 import { isDev } from './index';
 import { getUser } from './users';
 
+export interface Timer {
+  start: () => Date;
+  end: () => number;
+}
 export interface Timeout extends NodeJS.Timeout {
   _idleStart: number;
   _idleTimeout: number;
@@ -63,4 +67,23 @@ export const nicknameMention = (userId: string): string => {
   }
 
   return isDev ? user.tag : memberNicknameMention(userId);
+};
+
+/**
+ * Provides an interface that calculates the time in ms between a start and end
+ * time.
+ *
+ * @returns {Timer}
+ */
+export const timer = (): Timer => {
+  let startTime: Date = null;
+
+  return {
+    start: (): Date => {
+      startTime = new Date();
+      return startTime;
+    },
+    end: (): number =>
+      startTime ? new Date().getTime() - startTime.getTime() : 0,
+  };
 };
