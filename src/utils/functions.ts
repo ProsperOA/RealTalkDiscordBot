@@ -50,8 +50,13 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
  * @param   {boolean | number} pluralize - number or boolean to check
  * @returns {string}
  */
-export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
-  pluralize === 1 || !pluralize ? str : `${str}s`;
+export const pluralizeIf = (str: string, pluralize: boolean | number): string => {
+  if ((pluralize !== 0 && !pluralize) || pluralize === 1) {
+    return str;
+  }
+
+  return `${str}s`;
+};
 
 /**
  * Returns a formatted userId in dev, but nickname mention in prod. This prevents
