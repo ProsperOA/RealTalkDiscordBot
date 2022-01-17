@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, CommandInteractionOption, Message, MessageCollector, User } from 'discord.js';
+import { Client, CollectorFilter, CommandInteraction, CommandInteractionOption, Message, MessageCollector } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 import { takeRightWhile, trim, words } from 'lodash';
@@ -163,8 +163,11 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
     replyBuilder.realTalkQuiz(statement.content, responseTimeout / 1000)
   );
 
-  const filter = (message: Message) => message.content.startsWith('#RealTalk');
-  const collector = interaction.channel.createMessageCollector({ filter, time: responseTimeout });
+  const filter: CollectorFilter<[Message<boolean>]> =
+    (message: Message) => message.content.startsWith('#RealTalk');
+  const collector: MessageCollector =
+    interaction.channel.createMessageCollector({ filter, time: responseTimeout });
+
   const correctAnswerUserIds: string[] = [];
 
   collector.on('collect', message => {

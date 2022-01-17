@@ -1,6 +1,5 @@
 import { memberNicknameMention } from '@discordjs/builders';
 import { User } from 'discord.js';
-import { cond, constant, stubTrue } from 'lodash';
 
 import { isDev } from './index';
 import { getUser } from './users';
@@ -47,7 +46,7 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
  * @returns {string}
  */
 export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
-  pluralize === 1 || !pluralize ? str : str + 's';
+  pluralize === 1 || !pluralize ? str : `${str}s`;
 
 /**
  * Returns a formatted userId in dev, but nickname mention in prod. This prevents
@@ -60,7 +59,7 @@ export const nicknameMention = (userId: string): string => {
   const user: User = getUser(userId);
 
   if (!user) {
-    return 'UserID::' + userId;
+    return `UserID::${userId}`;
   }
 
   return isDev ? user.tag : memberNicknameMention(userId);

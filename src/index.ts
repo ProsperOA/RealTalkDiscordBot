@@ -18,7 +18,7 @@ commandInterface.init(client);
 
 client.on('ready', (): void => {
   if (isDev) {
-    client.user.setUsername(SERVICE_NAME + ' [DEV]');
+    client.user.setUsername(`${SERVICE_NAME} [DEV]`);
   }
 
   logger.info(`Logged in as ${client.user.tag}`);

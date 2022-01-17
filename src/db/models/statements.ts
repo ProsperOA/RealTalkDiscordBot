@@ -1,3 +1,4 @@
+import { Knex } from 'knex';
 import { merge } from 'lodash';
 
 import knex from '../db';
@@ -46,11 +47,11 @@ export interface RealTalkQuizRecord {
   content: string;
 }
 
-const createStatement = (data: StatementRecord) =>
+const createStatement = (data: StatementRecord): Knex.QueryBuilder<any, number[]> =>
   knex('statements')
     .insert(data);
 
-const getAllStatements = () =>
+const getAllStatements = (): Knex.QueryBuilder =>
   knex
     .select()
     .table('statements');
@@ -65,13 +66,13 @@ const transformAccusations = (accusations: RealTalkAccusationRecord[]): RealTalk
     [accusation.accused_user_id]: { accusations: Number(accusation.count) }
   }));
 
-const getStatementUses = () =>
+const getStatementUses = (): Knex.QueryBuilder =>
   knex('statements')
     .select('user_id')
     .count('user_id')
     .groupBy('user_id');
 
-const getStatementAccusations = () =>
+const getStatementAccusations = (): Knex.QueryBuilder =>
   knex('statements')
     .select('accused_user_id')
     .count('accused_user_id')
@@ -84,7 +85,7 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
   return merge({}, ...uses, ...accusations);
 };
 
-const getRandomStatement = () =>
+const getRandomStatement = (): Knex.QueryBuilder =>
   knex('statements')
     .select([ 'accused_user_id', 'content' ])
     .orderByRaw('RANDOM()')
