@@ -17,17 +17,24 @@ interface ReplyBuilder {
   throttleCoolDown: (duration: number) => InteractionReplyOptions;
 }
 
+/**
+ * Returns a discreet reply message.
+ *
+ * @param {string} content - reply message content.
+ * @returns {InteractionReplyOptions}
+ */
+const quietReply = (content: string): InteractionReplyOptions => ({
+  content,
+  ephemeral: true
+});
+
 export default {
 
-  internalError: (): InteractionReplyOptions => ({
-    content: '**#RealTalk**, an error occurred. \:grimacing:',
-    ephemeral: true,
-  }),
+  internalError: (): InteractionReplyOptions =>
+    quietReply('**#RealTalk**, an error occurred. \:grimacing:'),
 
-  invalidStatementLength: (length: number): InteractionReplyOptions => ({
-    content: `**#RealTalk**, the statement must be ${length} characters or less`,
-    ephemeral: true,
-  }),
+  invalidStatementLength: (length: number): InteractionReplyOptions =>
+    quietReply(`**#RealTalk**, the statement must be ${length} characters or less`),
 
   realTalkHistory: (statements: StatementRecord[]): string =>
     statements.map(s =>
@@ -72,9 +79,7 @@ export default {
     `${isEmpty(userIds) ? 'No one' : userIds.map(nicknameMention).join(', ')} got it right.
     ${nicknameMention(accusedUserId)} is the type of person that would say that...`,
 
-  throttleCoolDown: (duration: number): InteractionReplyOptions => ({
-    content: `**#RealTalk**, chill... ${duration}s left`,
-    ephemeral: true
-  }),
+  throttleCoolDown: (duration: number): InteractionReplyOptions =>
+    quietReply(`**#RealTalk**, chill... ${duration}s left`),
 
 } as ReplyBuilder;
