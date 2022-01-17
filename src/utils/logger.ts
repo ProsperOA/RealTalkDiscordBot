@@ -102,9 +102,9 @@ const formatSubCommandValue = (option: CommandInteractionOption): string => {
 const formatSubCommands = (options: CommandInteractionOption[]): string =>
   !isEmpty(options)
     ? options.map(option =>
-      `Name: ${option.name}
-      Type: ${option.type}
-      Value: ${formatSubCommandValue(option)}`
+      `> > Type: ${option.type}
+      > > Name: ${option.name}
+      > > Value: ${formatSubCommandValue(option)}`
     ).join('\n\n')
   : '';
 
@@ -119,11 +119,11 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
 
   options.forEach((option, index) => {
     output += `Command Option #${index + 1}:
-      Name: ${option.name}
-      Type: ${option.type}`;
+      > Type: ${option.type}
+      > Name: ${option.name}`;
 
     if (option.type === 'SUB_COMMAND' && !isEmpty(option.options)) {
-      output += `\n\nCommand Option #${index + 1} Options:
+      output += `\n\n> Command Option #${index + 1} Options:
         ${formatSubCommands(option.options)}`;
     }
   });
