@@ -77,22 +77,23 @@ export const nicknameMention = (userId: string): string => {
  * @returns {Timer}
  */
 export const timer = (): Timer => {
-  let startDateTime: Date = null;
+  let startDate: Date = null;
   let totalTime: number = 0;
 
   return {
     start: (): Date => {
-      startDateTime = new Date();
-      return startDateTime;
+      startDate = new Date();
+      return startDate;
     },
     end: (): Date => {
-      const endDateTime: Date = new Date();
+      const endDate: Date = new Date();
 
-      totalTime =
-        startDateTime ? endDateTime.getTime() - startDateTime.getTime() : null;
+      if (startDate) {
+        totalTime = endDate.getTime() - startDate.getTime();
+      }
 
-      return endDateTime;
+      return endDate;
     },
-    time: () => totalTime,
+    time: (): number => totalTime,
   };
 };

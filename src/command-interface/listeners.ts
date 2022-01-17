@@ -8,7 +8,7 @@ import { InteractionOptions, logger, Timer, timer } from '../utils';
  *
  * @param {CommandInteraction} interaction - Reference to interaction object.
  */
-const logInteraction = async (interaction: CommandInteraction, responseTime: number): Promise<void> => {
+const logInteraction = (interaction: CommandInteraction, responseTime: number): void => {
     const options: InteractionOptions = {
       'Middleware': 'N/A',
       'Response Time': `${responseTime}ms`,
@@ -34,7 +34,7 @@ const onInteractionCreate = (client: Client, debug?: boolean) =>
     t.end();
 
     if (debug) {
-      await logInteraction(interaction, t.time());
+      logInteraction(interaction, t.time());
     }
   };
 

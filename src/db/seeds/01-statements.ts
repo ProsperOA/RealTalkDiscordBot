@@ -39,7 +39,7 @@ const buildStatementRecords = (userIds: string[]) => {
 export async function seed(knex: Knex): Promise<void> {
   await knex('statements').del();
 
-  const totalUsers = 30;
+  const totalUsers: number = 30;
   const minUserId: number = 1000;
   const maxUserId: number = 9999;
   const userIds: string[] =
