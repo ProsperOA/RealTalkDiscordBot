@@ -89,6 +89,7 @@ const getSubCommand = (interaction: CommandInteraction): CommandInteractionOptio
  */
 const realTalkRecord = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(interaction.channelId)
+    .filter(user => user.id !== interaction.user.id)
     .map(user => ({ user_id: user.id }));
 
   const statement: string = interaction.options.get('what', true).value as string;
