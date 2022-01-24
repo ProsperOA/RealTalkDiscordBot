@@ -11,10 +11,10 @@ export default {
       ssl: { rejectUnauthorized: false },
     },
     migrations: {
-      directory: 'src/db/migrations',
+      directory: './src/db/migrations',
     },
     seeds: {
-      directory: 'src/db/seeds',
+      directory: './src/db/seeds',
     },
   },
   production: {
@@ -28,7 +28,7 @@ export default {
       max: 20,
     },
     migrations: {
-      directory: 'src/db/migrations',
+      directory: './src/db/migrations',
     },
   },
 };

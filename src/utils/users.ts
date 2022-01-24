@@ -1,4 +1,4 @@
-import { Guild, User } from 'discord.js';
+import { Guild, GuildChannel, GuildMember, User } from 'discord.js';
 
 import { client } from '../index';
 
@@ -24,13 +24,32 @@ export const isMention = (mention: string): boolean =>
 export const extractUserIdFromMention = (mention: string): string =>
   isMention(mention) ? mention.match(/[0-9]{18}/)[0] : '';
 
+export const getGuild = (): Guild =>
+  client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
+
+/**
+ * Returns a member from the current client's guild.
+ *
+ * @param   {string} userId - id of user to fetch.
+ * @returns {GuildMember}
+ */
+export const getMember = (userId: string): GuildMember => {
+  return getGuild()?.members.cache.get(userId) ?? null;
+};
+
 /**
  * Returns a user from the current client's guild.
  *
  * @param   {string} userId - id of user to fetch.
  * @returns {User}
  */
-export const getUser = (userId: string): User => {
-  const guild: Guild = client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
-  return guild?.members.cache.get(userId)?.user ?? null;
+export const getUser = (userId: string): User =>
+  getMember(userId)?.user ?? null;
+
+export const getActiveUsersInChannel = (channelId: string): User[] => {
+ const channel: GuildChannel = client.channels.cache.get(channelId) as GuildChannel;
+
+  return channel.members
+    ? channel.members.map(member => member.user).filter(user => !user.bot)
+    : null;
 };

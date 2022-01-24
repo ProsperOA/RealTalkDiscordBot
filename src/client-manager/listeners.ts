@@ -1,14 +1,15 @@
-import { Client, CommandInteraction } from 'discord.js';
+import { Client, CommandInteraction, MessageInteraction, MessageReaction, PartialMessageReaction, User } from 'discord.js';
 
-import { commandInterfaceMap, THROTTLE_DURATION } from './index';
+import { commandInterfaceMap, THROTTLE_DURATION } from './command-interface';
 import { InteractionOptions, logger, Timer, timer } from '../utils';
+import { reactionInterfaceMap } from './reaction-interface';
 
 /**
  * Adds a logger to an interaction.
  *
  * @param {CommandInteraction} interaction - Reference to interaction object.
  */
-const logInteraction = (interaction: CommandInteraction, responseTime: number): void => {
+const logInteraction = (interaction: CommandInteraction | MessageInteraction, responseTime: number): void => {
     const options: InteractionOptions = {
       'Middleware': 'N/A',
       'Response Time': `${responseTime}ms`,
@@ -21,7 +22,7 @@ const logInteraction = (interaction: CommandInteraction, responseTime: number): 
     logger.interaction(interaction, options);
 };
 
-const onInteractionCreate = (client: Client, debug?: boolean) =>
+const onInteractionCreate = (client: Client) =>
   async (interaction: CommandInteraction): Promise<void> => {
     if (!interaction.isCommand()) {
       return;
@@ -33,9 +34,38 @@ const onInteractionCreate = (client: Client, debug?: boolean) =>
     await commandInterfaceMap[interaction.commandName](client, interaction);
     t.end();
 
-    if (debug) {
-      logInteraction(interaction, t.time());
+    logInteraction(interaction, t.time());
+  };
+
+const onMessageReactionAdd = (client: Client) =>
+  async (reaction: MessageReaction | PartialMessageReaction, _user: User): Promise<void> => {
+    if (reaction.partial) {
+      try {
+        await reaction.fetch();
+      } catch (error) {
+        logger.error(error);
+        return;
+      }
     }
+
+      const t: Timer = timer();
+      const { emoji, message: { interaction }} = reaction;
+
+      t.start();
+      await reactionInterfaceMap[emoji.name](client, reaction);
+      t.end();
+
+      const customInteraction = {
+        ...interaction,
+        options: {
+          data: [{
+            type: 'Emoji Reaction',
+            name: emoji.name,
+          }]
+        }
+      };
+
+      logInteraction(customInteraction, t.time());
   };
 
 /**
@@ -60,5 +90,6 @@ export const register = (client: Client, debug?: boolean): void => {
     addDebugLogger(client);
   }
 
-  client.on('interactionCreate', onInteractionCreate(client, debug));
+  client.on('interactionCreate', onInteractionCreate(client));
+  client.on('messageReactionAdd', onMessageReactionAdd(client));
 };

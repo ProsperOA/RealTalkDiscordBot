@@ -36,7 +36,23 @@ const buildStatementRecords = (userIds: string[]) => {
   return statements;
 };
 
-export async function seed(knex: Knex): Promise<void> {
+const buildWitnesses = (statements: any[], userIds: string[]) => {
+  const witnesses: any[] = [];
+
+  for (let i = 0; i < statements.length * 2 / 3; i++) {
+    for (let j = 0; j < random(1, 5); j++) {
+      witnesses.push({
+        created_at: statements[i].created_at,
+        statement_id: statements[i].id,
+        user_id: userIds[random(userIds.length - 1)],
+      });
+    }
+  }
+
+  return witnesses;
+};
+
+export const seed = async (knex: Knex): Promise<void> => {
   await knex('statements').del();
 
   const totalUsers: number = 30;
@@ -45,7 +61,10 @@ export async function seed(knex: Knex): Promise<void> {
   const userIds: string[] =
     Array.from({ length: totalUsers }, () => String(random(minUserId, maxUserId)));
 
-  await knex('statements').insert(
-    buildStatementRecords(userIds)
-  );
-}
+  const statements = buildStatementRecords(userIds);
+  await knex('statements').insert(statements);
+
+  const statementRecords = await knex('statements').select();
+  const witnesses = buildWitnesses(statementRecords, userIds);
+  await knex('statement_witnesses').insert(witnesses);
+};
