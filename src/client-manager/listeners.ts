@@ -95,7 +95,7 @@ const addDebugLogger = (client: Client): void => {
  * @param {Client}  client - Reference to client object.
  * @param {boolean} debug  - Whether client debug events are logged.
  */
-export const register = (client: Client, debug?: boolean): void => {
+const register = (client: Client, debug?: boolean): void => {
   if (debug) {
     addDebugLogger(client);
   }
@@ -103,3 +103,5 @@ export const register = (client: Client, debug?: boolean): void => {
   client.on('interactionCreate', onInteractionCreate(client));
   client.on('messageReactionAdd', onMessageReactionAdd(client));
 };
+
+export default { register };
