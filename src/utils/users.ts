@@ -46,10 +46,15 @@ export const getMember = (userId: string): GuildMember => {
 export const getUser = (userId: string): User =>
   getMember(userId)?.user ?? null;
 
+export const isOnlineAndListening = (member: GuildMember): boolean =>
+  member.presence?.status === 'online' && !member.voice.deaf;
+
 export const getActiveUsersInChannel = (channelId: string): User[] => {
- const channel: GuildChannel = client.channels.cache.get(channelId) as GuildChannel;
+  const channel: GuildChannel = client.channels.cache.get(channelId) as GuildChannel;
 
   return channel.members
-    ? channel.members.map(member => member.user).filter(user => !user.bot)
-    : null;
+    ?.filter(isOnlineAndListening)
+    .map(member => member.user)
+    .filter(user => !user.bot)
+    ?? null;
 };

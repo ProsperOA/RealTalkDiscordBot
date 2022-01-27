@@ -1,6 +1,6 @@
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
-import { takeRightWhile, trim, words } from 'lodash';
+import { isEmpty, takeRightWhile, trim, words } from 'lodash';
 
 import {
   Client,
@@ -91,6 +91,10 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction):
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(interaction.channelId)
     .filter(user => user.id !== interaction.user.id)
     .map(user => ({ user_id: user.id }));
+
+  if (!isDev && isEmpty(witnesses)) {
+    return interaction.reply(replyBuilder.noWitnesses());
+  }
 
   const statement: string = interaction.options.get('what', true).value as string;
 

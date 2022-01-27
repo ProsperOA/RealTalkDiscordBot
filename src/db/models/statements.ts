@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { merge } from 'lodash';
+import { isEmpty, merge } from 'lodash';
 
 import knex from '../db';
 import { StatementWitnessRecord } from './statement-witnesses';
@@ -62,8 +62,9 @@ const createStatement = (statement: StatementRecord, witnesses: Partial<Statemen
     knex('statements')
       .transacting(trx)
       .insert(statement, [ 'id' ])
-      .then(data =>
-        knex('statement_witnesses')
+      .then(data => isEmpty(witnesses)
+        ? data
+        : knex('statement_witnesses')
           .transacting(trx)
           .insert(buildWitnessRecords(witnesses, data[0].id))));
 

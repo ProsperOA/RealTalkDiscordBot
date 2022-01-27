@@ -8,6 +8,7 @@ import { nicknameMention, pluralizeIf } from '../utils';
 interface ReplyBuilder {
   internalError: () => InteractionReplyOptions;
   invalidStatementLength: (length: number) => InteractionReplyOptions;
+  noWitnesses: () => InteractionReplyOptions;
   realTalkIsCap: (statement: StatementRecord) => string;
   realTalkHistory: (statements: StatementRecord[]) => string;
   realTalkRecord: (userId: string, statement: string) => string;
@@ -36,6 +37,9 @@ export default {
 
   invalidStatementLength: (length: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, the statement must be ${length} characters or less`),
+
+  noWitnesses: (): InteractionReplyOptions =>
+    quietReply('**RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement.'),
 
   realTalkIsCap: ({ content, link, user_id }: StatementRecord): string =>
     `**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
