@@ -1,7 +1,7 @@
 import { Client, CommandInteraction } from 'discord.js';
 
 import replyBuilder from './reply-builder';
-import { CommandFunction } from './index';
+import { CommandFunction } from './command-interface';
 import { getRemainingTimeout, Timeout } from '../utils';
 
 const userThrottleCache: {[userId: string]: Timeout} = {};

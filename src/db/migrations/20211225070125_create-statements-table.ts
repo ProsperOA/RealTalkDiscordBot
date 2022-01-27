@@ -9,6 +9,7 @@ export const up = async (knex: Knex): Promise<Knex.SchemaBuilder> =>
     t.dateTime('deleted_at').nullable();
     t.string('content').notNullable();
     t.string('link').notNullable();
+    t.boolean('is_cap').notNullable().defaultTo(false);
     t.index([ 'user_id', 'accused_user_id' ], 'statements_user_id_index');
   });
 

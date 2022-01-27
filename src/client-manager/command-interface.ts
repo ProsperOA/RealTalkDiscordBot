@@ -1,14 +1,24 @@
-import { Client, CollectorFilter, CommandInteraction, CommandInteractionOption, Message, MessageCollector } from 'discord.js';
 import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
 import { takeRightWhile, trim, words } from 'lodash';
 
+import {
+  Client,
+  CollectorFilter,
+  CommandInteraction,
+  CommandInteractionOption,
+  Message,
+  MessageCollector,
+  MessageInteraction,
+} from 'discord.js';
+
 import * as listeners from './listeners';
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { extractUserIdFromMention, isDev, isMention, logger } from '../utils';
+import { extractUserIdFromMention, getActiveUsersInChannel, isDev, isMention, logger } from '../utils';
 import { RealTalkQuizRecord, RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { useThrottle } from './middleware';
+import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 
 import commands, {
   COMMAND_REAL_TALK,
@@ -18,7 +28,8 @@ import commands, {
   SUBCOMMAND_REAL_TALK_STATS
 } from './commands';
 
-export type CommandFunction = (client: Client, interaction: CommandInteraction) => Promise<void>;
+export type CommandFunction =
+  (client: Client, interaction: CommandInteraction | MessageInteraction) => Promise<void>;
 interface CommandInterfaceMap {
   [commandName: string]: CommandFunction;
 }
@@ -77,6 +88,10 @@ const getSubCommand = (interaction: CommandInteraction): CommandInteractionOptio
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkRecord = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(interaction.channelId)
+    .filter(user => user.id !== interaction.user.id)
+    .map(user => ({ user_id: user.id }));
+
   const statement: string = interaction.options.get('what', true).value as string;
 
   if (!isValidCommandOptionLength(statement)) {
@@ -86,23 +101,23 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction):
   }
 
   const targetUserId: string = interaction.options.get('who', true).value as string;
-
-  // smh... 🤦🏿‍♂️
   const incriminatingEvidence: string = replyBuilder.realTalkRecord(
     targetUserId,
     statement
   );
 
-  await interaction.reply(incriminatingEvidence);
-  const message: Message = await interaction.fetchReply() as Message;
+  const message: Message =
+    await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
-  await db.createStatement({
+  const statementRecord: StatementRecord = {
     user_id: interaction.user.id,
     accused_user_id: targetUserId,
     created_at: new Date(),
     content: statement,
     link: message.url,
-  });
+  };
+
+  await db.createStatement(statementRecord, witnesses);
 };
 
 /**

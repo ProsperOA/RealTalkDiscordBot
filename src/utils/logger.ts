@@ -1,4 +1,4 @@
-import { CacheType, CommandInteraction, CommandInteractionOption } from 'discord.js';
+import { CacheType, CommandInteraction, CommandInteractionOption, MessageInteraction } from 'discord.js';
 import { isEmpty, isString } from 'lodash';
 import { stripIndents } from 'common-tags';
 
@@ -118,7 +118,7 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
   let output: string = '';
 
   options.forEach((option, index) => {
-    output += `Command Option #${index + 1}:
+    output += `\nCommand Option #${index + 1}:
       > Type: ${option.type}
       > Name: ${option.name}`;
 
@@ -138,17 +138,24 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
  * @param   {InteractionOptions} opts        - Additional logging options.
  * @returns {string}
  */
-const formatInteraction = ({ commandName, options, type }: CommandInteraction,  opts: InteractionOptions): string => {
-  switch (type) {
-    case 'APPLICATION_COMMAND':
-      return `Command Name: ${commandName}
-        ${formatInteractionOptions(opts)}
+const formatInteraction = (interaction: CommandInteraction | MessageInteraction,  opts: InteractionOptions): string => {
+  let output: string = '';
 
-        ${formatCommandOptions(options.data)}`;
+  switch (interaction.type) {
+    case 'APPLICATION_COMMAND':
+      output += `Command Name: ${interaction.commandName}
+        ${formatInteractionOptions(opts)}\n`;
+
+      if ('options' in interaction) {
+        output += formatCommandOptions(interaction.options.data);
+      }
+      break;
     default:
-      logger.warn(`Cannot format interaction. ${type} is an invalid command interaction type.`);
-      return '';
+      logger.warn(`Cannot format interaction. ${interaction.type} is an invalid command interaction type.`);
+      break;
   }
+
+  return output;
 };
 
 /**
@@ -158,12 +165,17 @@ const formatInteraction = ({ commandName, options, type }: CommandInteraction,  
  * @param   {InteractionOptions} opts        - Additional logging options.
  * @returns {string}
  */
-const buildInteractionMessage = (interaction: CommandInteraction, opts: InteractionOptions): string => {
-  const { createdAt, type, user } = interaction;
+const buildInteractionMessage = (interaction: CommandInteraction | MessageInteraction, opts: InteractionOptions): string => {
+  const { type, user } = interaction;
+  let createdAt: Date | string = new Date().toISOString();
+
+  if ('createdAt' in interaction) {
+    createdAt = interaction.createdAt;
+  }
 
   const message: string = stripIndents`
     Type: ${type}
-    Created: ${new Date(createdAt).toISOString()}
+    Created: ${createdAt}
     User: ${user.tag}
     ${formatInteraction(interaction, opts)}`;
 
@@ -177,6 +189,6 @@ export const logger = {
     baseLogger(LOG_TYPE_WARN, message, opts),
   error: (message: string | Error, ...opts: any[]): void =>
     baseLogger(LOG_TYPE_ERROR, message, opts),
-  interaction: (interaction: CommandInteraction, opts?: InteractionOptions): void =>
+  interaction: (interaction: CommandInteraction | MessageInteraction, opts?: InteractionOptions): void =>
     baseLogger(LOG_TYPE_INTERACTION, buildInteractionMessage(interaction, opts)),
 };

@@ -2,14 +2,17 @@ import { Knex } from 'knex';
 import { merge } from 'lodash';
 
 import knex from '../db';
+import { StatementWitnessRecord } from './statement-witnesses';
 
 export interface StatementRecord {
+  id?: number;
   user_id: string;
   accused_user_id: string;
   created_at: Date;
   deleted_at?: Date;
   content: string;
   link: string;
+  is_cap?: boolean;
 }
 
 export interface RealTalkStats {
@@ -47,14 +50,32 @@ export interface RealTalkQuizRecord {
   content: string;
 }
 
-const createStatement = (data: StatementRecord): Knex.QueryBuilder<any, number[]> =>
-  knex('statements')
-    .insert(data);
+const buildWitnessRecords = (witnesses: Partial<StatementWitnessRecord>[], statementId: number): StatementWitnessRecord[] =>
+  witnesses.map(witness => ({
+    ...witness,
+    statement_id: statementId,
+    created_at: new Date().toISOString(),
+  } as StatementWitnessRecord));
+
+const createStatement = (statement: StatementRecord, witnesses: Partial<StatementWitnessRecord>[])  =>
+  knex.transaction(trx =>
+    knex('statements')
+      .transacting(trx)
+      .insert(statement, [ 'id' ])
+      .then(data =>
+        knex('statement_witnesses')
+          .transacting(trx)
+          .insert(buildWitnessRecords(witnesses, data[0].id))));
 
 const getAllStatements = (): Knex.QueryBuilder =>
   knex
     .select()
     .table('statements');
+
+const getStatementWhere = (where: any): Knex.QueryBuilder =>
+  knex('statements')
+    .where(where)
+    .first();
 
 const transformUses = (uses: RealTalkUsageRecord[]): RealTalkUsage[] =>
   uses.map(use => ({
@@ -92,9 +113,16 @@ const getRandomStatement = (): Knex.QueryBuilder =>
     .limit(1)
     .first();
 
+const updateStatementWhere = (where: any, update: any): Knex.QueryBuilder =>
+  knex('statements')
+    .where(where)
+    .update(update);
+
 export default {
   createStatement,
   getAllStatements,
   getRandomStatement,
   getStatementStats,
+  getStatementWhere,
+  updateStatementWhere,
 };
