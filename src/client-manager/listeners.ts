@@ -1,5 +1,6 @@
 import { Client, CommandInteraction, MessageInteraction, MessageReaction, PartialMessageReaction, User } from 'discord.js';
 
+import replyBuilder from './reply-builder';
 import { commandInterfaceMap, THROTTLE_DURATION } from './command-interface';
 import { InteractionOptions, logger, Timer, timer } from '../utils';
 import { reactionInterfaceMap } from './reaction-interface';
@@ -44,6 +45,7 @@ const onMessageReactionAdd = (client: Client) =>
         await reaction.fetch();
       } catch (error) {
         logger.error(error);
+        await reaction.message.reply(replyBuilder.internalError());
         return;
       }
     }

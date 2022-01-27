@@ -1,4 +1,6 @@
 
+import { Knex } from 'knex';
+
 import knex from '../db';
 
 export interface StatementWitnessRecord {
@@ -7,7 +9,7 @@ export interface StatementWitnessRecord {
   user_id: string;
 }
 
-const getStatementWitnesses = (statementId: string) =>
+const getStatementWitnesses = (statementId: number): Knex.QueryBuilder<StatementWitnessRecord> =>
   knex('statement_witnesses')
     .select('user_id')
     .where({ statement_id: statementId });

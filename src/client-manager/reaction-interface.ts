@@ -1,37 +1,54 @@
-import { Client, MessageInteraction, MessageReaction, PartialMessageReaction } from 'discord.js';
+import { Client, MessageReaction, PartialMessageReaction } from 'discord.js';
 
 import db from '../db';
 import replyBuilder from './reply-builder';
 import { StatementRecord } from '../db/models/statements';
 import { COMMAND_REAL_TALK } from './commands';
 import { REACTION_REAL_TALK_CAP } from './reactions';
+import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 
-type ReactionFunction = (client: Client, reaction: MessageReaction | PartialMessageReaction) => void;
+type ReactionFunction =
+  (client: Client, reaction: MessageReaction | PartialMessageReaction) => Promise<void>;
 
 interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
 }
 
-const CAP_THRESHOLD: Readonly<number> = 5;
-
 const realTalkIsCap = async (_client: Client, reaction: MessageReaction | PartialMessageReaction): Promise<void> => {
-  const interaction: MessageInteraction = reaction.message.interaction;
+  const { message } = reaction;
+  const { user } = message.interaction;
 
-  if (interaction.commandName !== COMMAND_REAL_TALK || reaction.count < CAP_THRESHOLD) {
+  if (message.interaction.commandName !== COMMAND_REAL_TALK) {
     return;
   }
 
   const statement: StatementRecord = await db.getStatementWhere({
-    user_id: interaction.user.id,
-    link: reaction.message.url,
+    user_id: user.id,
+    link: message.url,
   });
 
   if (statement.is_cap) {
+    await reaction.remove();
     return;
   }
 
-  await db.updateStatementWhere({ id: statement.id }, { is_cap: true });
-  await reaction.message.reply(replyBuilder.realTalkIsCap(statement));
+  const witnesses: StatementWitnessRecord[] = await db.getStatementWitnesses(statement.id);
+  const isWitness: boolean = Boolean(witnesses.find(witness => witness.user_id === user.id));
+  const isAuthor: boolean = user.id === statement.user_id;
+
+  if (isAuthor || !isWitness) {
+    await reaction.remove();
+    return;
+  }
+
+  const capThreshold: number = Math.max(1, Math.floor(witnesses.length * 2 / 3));
+  const capCount: number =
+    message.reactions.cache.filter(r => r.emoji.name === REACTION_REAL_TALK_CAP).size;
+
+  if (capCount >= capThreshold) {
+    await db.updateStatementWhere({ id: statement.id }, { is_cap: true });
+    await message.reply(replyBuilder.realTalkIsCap(statement));
+  }
 };
 
 export const reactionInterfaceMap: ReactionInterfaceMap = {
