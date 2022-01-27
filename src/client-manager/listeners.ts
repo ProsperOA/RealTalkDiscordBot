@@ -1,7 +1,7 @@
 import { Client, CommandInteraction, MessageInteraction, MessageReaction, PartialMessageReaction, User } from 'discord.js';
 
 import replyBuilder from './reply-builder';
-import { commandInterfaceMap, THROTTLE_DURATION } from './command-interface';
+import { CommandFunction, commandInterfaceMap, THROTTLE_DURATION } from './command-interface';
 import { InteractionOptions, logger, Timer, timer } from '../utils';
 import { reactionInterfaceMap } from './reaction-interface';
 
@@ -29,10 +29,18 @@ const onInteractionCreate = (client: Client) =>
       return;
     }
 
+    const { commandName } = interaction;
+    const handlerFn: CommandFunction = commandInterfaceMap[commandName];
+
+    if (!handlerFn) {
+      logger.error(`No handler for command ${commandName}`);
+      return interaction.reply(replyBuilder.internalError());
+    }
+
     const t: Timer = timer();
 
     t.start();
-    await commandInterfaceMap[interaction.commandName](client, interaction);
+    await handlerFn(client, interaction);
     t.end();
 
     logInteraction(interaction, t.time());
@@ -54,7 +62,7 @@ const onMessageReactionAdd = (client: Client) =>
       const { emoji, message: { interaction }} = reaction;
 
       t.start();
-      await reactionInterfaceMap[emoji.name](client, reaction);
+      await reactionInterfaceMap[emoji.name]?.(client, reaction);
       t.end();
 
       const customInteraction = {
