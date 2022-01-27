@@ -2,7 +2,7 @@ import { memberNicknameMention } from '@discordjs/builders';
 import { User } from 'discord.js';
 
 import { isDev } from './index';
-import { getUser } from './users';
+import { getUser } from './guild';
 
 export interface Timer {
   start: () => Date;

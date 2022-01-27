@@ -24,6 +24,11 @@ export const isMention = (mention: string): boolean =>
 export const extractUserIdFromMention = (mention: string): string =>
   isMention(mention) ? mention.match(/[0-9]{18}/)[0] : '';
 
+/**
+ * Returns the client's current guild.
+ *
+ * @returns {Guild}
+ */
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
 
@@ -46,9 +51,21 @@ export const getMember = (userId: string): GuildMember => {
 export const getUser = (userId: string): User =>
   getMember(userId)?.user ?? null;
 
+/**
+ * Returns true if member is online and not deafened.
+ *
+ * @param   {GuildMember} member - guild member.
+ * @returns {boolean}
+ */
 export const isOnlineAndListening = (member: GuildMember): boolean =>
   member.presence?.status === 'online' && !member.voice.deaf;
 
+/**
+ * Returns active users in a guild channel with bots filtered out.
+ *
+ * @param   {string} channelId - guild channel id.
+ * @returns {User[]}
+ */
 export const getActiveUsersInChannel = (channelId: string): User[] => {
   const channel: GuildChannel = client.channels.cache.get(channelId) as GuildChannel;
 
