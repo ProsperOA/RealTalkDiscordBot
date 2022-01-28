@@ -38,7 +38,7 @@ const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
 const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
-const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 4000;
+const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
 export const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30000;
 
 let isInitialized: boolean = false;
