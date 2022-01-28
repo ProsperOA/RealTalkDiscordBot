@@ -1,7 +1,14 @@
-import { Client, CommandInteraction, MessageInteraction, MessageReaction, PartialMessageReaction, User } from 'discord.js';
+import {
+  Client,
+  CommandInteraction,
+  MessageInteraction,
+  MessageReaction,
+  PartialMessageReaction,
+  User,
+} from 'discord.js';
 
 import replyBuilder from './reply-builder';
-import { CommandFunction, commandInterfaceMap, THROTTLE_DURATION } from './command-interface';
+import { CommandFunction, commandInterfaceMap } from './command-interface';
 import { InteractionOptions, logger, Timer, timer } from '../utils';
 import { reactionInterfaceMap } from './reaction-interface';
 
@@ -12,13 +19,8 @@ import { reactionInterfaceMap } from './reaction-interface';
  */
 const logInteraction = (interaction: CommandInteraction | MessageInteraction, responseTime: number): void => {
     const options: InteractionOptions = {
-      'Middleware': 'N/A',
       'Response Time': `${responseTime}ms`,
     };
-
-    if (THROTTLE_DURATION) {
-      options.Middleware.useThrottle = `${THROTTLE_DURATION}ms`;
-    }
 
     logger.interaction(interaction, options);
 };
@@ -69,8 +71,8 @@ const onMessageReactionAdd = (client: Client) =>
         ...interaction,
         options: {
           data: [{
-            type: 'Emoji Reaction',
-            name: emoji.name,
+            type: 'EMOJI_REACTION',
+            value: emoji.name,
           }]
         }
       };
