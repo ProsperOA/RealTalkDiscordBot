@@ -1,4 +1,5 @@
 import { hideLinkEmbed, time } from '@discordjs/builders';
+import { stripIndent } from 'common-tags';
 import { InteractionReplyOptions } from 'discord.js';
 import { isEmpty } from 'lodash';
 
@@ -42,24 +43,26 @@ export default {
     quietReply('**RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement.'),
 
   realTalkIsCap: ({ content, link, user_id }: StatementRecord): string =>
-    `**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
+    stripIndent`
+    **The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
     _"${content}"_
     ${hideLinkEmbed(link)}`,
 
 
   realTalkHistory: (statements: StatementRecord[]): string =>
-    statements.map(s =>
-      `> **#RealTalk**, ${nicknameMention(s.user_id)} claims ${nicknameMention(s.accused_user_id)} said "${s.content}".
+    statements.map(s => stripIndent`
+      > **#RealTalk**, ${nicknameMention(s.user_id)} claims ${nicknameMention(s.accused_user_id)} said "${s.content}".
       > ${hideLinkEmbed(s.link)}`
     ).join('\n\n'),
 
   realTalkRecord: (userId: string, statement: string): string =>
-    `**The following is provided under the terms of #RealTalk**
-    Date: ${time(new Date())}
-    ${nicknameMention(userId)}: _"${statement}"_`,
+    stripIndent`
+      **The following is provided under the terms of #RealTalk**
+      Date: ${time(new Date())}
+      ${nicknameMention(userId)}: _"${statement}"_`,
 
   realTalkStats: (stats: RealTalkStats): string =>
-    `**#RealTalk Stats**
+    stripIndent`**#RealTalk Stats**
     ${Object.keys(stats).map(userId => {
       const { uses, accusations } = stats[userId];
 
@@ -82,13 +85,15 @@ export default {
     `**#RealTalk** has been used ${uses} ${pluralizeIf('time', uses)} by ${uniqueUsers} ${pluralizeIf('user', uniqueUsers)}`,
 
   realTalkQuiz: (statement: string, duration: number): string =>
-    `Who's the type of person to say: _"${statement}"_?
+    stripIndent`
+      Who's the type of person to say: _"${statement}"_?
       You have ${duration}s to respond in chat with: #RealTalk @Username
-      Ex: #RealTalk @JohnDoe`,
+      _Ex: #RealTalk @JohnDoe_`,
 
   realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>
-    `${isEmpty(userIds) ? 'No one' : userIds.map(nicknameMention).join(', ')} got it right.
-    ${nicknameMention(accusedUserId)} is the type of person that would say that...`,
+    stripIndent`
+      ${isEmpty(userIds) ? 'No one' : userIds.map(nicknameMention).join(', ')} got it right.
+      ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`,
 
   throttleCoolDown: (duration: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, chill... ${duration}s left`),
