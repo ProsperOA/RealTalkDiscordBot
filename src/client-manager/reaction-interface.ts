@@ -6,6 +6,7 @@ import { StatementRecord } from '../db/models/statements';
 import { COMMAND_REAL_TALK } from './commands';
 import { REACTION_REAL_TALK_CAP } from './reactions';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
+import { isDev } from '../utils';
 
 type ReactionFunction =
   (client: Client, reaction: MessageReaction | PartialMessageReaction) => Promise<void>;
@@ -13,6 +14,9 @@ type ReactionFunction =
 interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
 }
+
+const calcCapThreshold = (max: number): number =>
+  isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
 const realTalkIsCap = async (_client: Client, reaction: MessageReaction | PartialMessageReaction): Promise<void> => {
   const { message } = reaction;
@@ -33,15 +37,18 @@ const realTalkIsCap = async (_client: Client, reaction: MessageReaction | Partia
   }
 
   const witnesses: StatementWitnessRecord[] = await db.getStatementWitnesses(statement.id);
-  const isWitness: boolean = Boolean(witnesses.find(witness => witness.user_id === user.id));
-  const isAuthor: boolean = user.id === statement.user_id;
 
-  if (isAuthor || !isWitness) {
-    await reaction.remove();
-    return;
+  if (!isDev) {
+    const isWitness: boolean = Boolean(witnesses.find(witness => witness.user_id === user.id));
+    const isAuthor: boolean = user.id === statement.user_id;
+
+    if (isAuthor || !isWitness) {
+      await reaction.remove();
+      return;
+    }
   }
 
-  const capThreshold: number = Math.max(1, Math.floor(witnesses.length * 2 / 3));
+  const capThreshold: number = calcCapThreshold(witnesses.length);
   const capCount: number =
     message.reactions.cache.filter(r => r.emoji.name === REACTION_REAL_TALK_CAP).size;
 
