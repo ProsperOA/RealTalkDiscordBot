@@ -1,5 +1,5 @@
-import { memberNicknameMention } from '@discordjs/builders';
 import { User } from 'discord.js';
+import { memberNicknameMention } from '@discordjs/builders';
 
 import { isDev } from './index';
 import { getUser } from './guild';
@@ -50,13 +50,10 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
  * @param   {boolean | number} pluralize - number or boolean to check
  * @returns {string}
  */
-export const pluralizeIf = (str: string, pluralize: boolean | number): string => {
-  if ((pluralize !== 0 && !pluralize) || pluralize === 1) {
-    return str;
-  }
-
-  return `${str}s`;
-};
+export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
+  (typeof pluralize === 'boolean' && !pluralize) || pluralize === 1
+    ? str
+    : `${str}s`;
 
 /**
  * Returns a formatted userId in dev, but nickname mention in prod. This prevents

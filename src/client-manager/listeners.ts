@@ -55,29 +55,29 @@ const onMessageReactionAdd = (client: Client) =>
         await reaction.fetch();
       } catch (error) {
         logger.error(error);
-        await reaction.message.reply(replyBuilder.internalError());
+        reaction.message.reply(replyBuilder.internalError());
         return;
       }
     }
 
-      const t: Timer = timer();
-      const { emoji, message: { interaction }} = reaction;
+    const t: Timer = timer();
+    const { emoji, message: { interaction }} = reaction;
 
-      t.start();
-      await reactionInterfaceMap[emoji.name]?.(client, reaction);
-      t.end();
+    t.start();
+    await reactionInterfaceMap[emoji.name]?.(client, reaction);
+    t.end();
 
-      const customInteraction = {
-        ...interaction,
-        options: {
-          data: [{
-            type: 'EMOJI_REACTION',
-            value: emoji.name,
-          }]
-        }
-      };
+    const customInteraction = {
+      ...interaction,
+      options: {
+        data: [{
+          type: 'EMOJI_REACTION',
+          value: emoji.name,
+        }]
+      }
+    };
 
-      logInteraction(customInteraction, t.time());
+    logInteraction(customInteraction, t.time());
   };
 
 /**

@@ -2,9 +2,9 @@ import { Client, MessageReaction, PartialMessageReaction } from 'discord.js';
 
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { StatementRecord } from '../db/models/statements';
 import { COMMAND_REAL_TALK } from './commands';
 import { REACTION_REAL_TALK_CAP } from './reactions';
+import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 import { isDev } from '../utils';
 

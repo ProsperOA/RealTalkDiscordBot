@@ -1,7 +1,7 @@
-import { hideLinkEmbed, time } from '@discordjs/builders';
-import { stripIndent } from 'common-tags';
 import { InteractionReplyOptions } from 'discord.js';
+import { hideLinkEmbed, time } from '@discordjs/builders';
 import { isEmpty } from 'lodash';
+import { stripIndent } from 'common-tags';
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { nicknameMention, pluralizeIf } from '../utils';

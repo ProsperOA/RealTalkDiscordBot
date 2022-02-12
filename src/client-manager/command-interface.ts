@@ -1,5 +1,5 @@
-import { Routes } from 'discord-api-types/v9';
 import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v9';
 import { isEmpty, takeRightWhile, trim, words } from 'lodash';
 
 import {
@@ -15,10 +15,10 @@ import {
 import db from '../db';
 import listeners from './listeners';
 import replyBuilder from './reply-builder';
-import { extractUserIdFromMention, getActiveUsersInChannel, isDev, isMention, logger } from '../utils';
 import { RealTalkQuizRecord, RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
-import { useThrottle } from './middleware';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
+import { extractUserIdFromMention, getActiveUsersInChannel, isDev, isMention, logger } from '../utils';
+import { useThrottle } from './middleware';
 
 import commands, {
   COMMAND_REAL_TALK,
@@ -175,7 +175,7 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  const responseTimeout: number = 30_000;
+  const responseTimeout: number = 30000;
   const statement: RealTalkQuizRecord = await db.getRandomStatement();
 
   await interaction.reply(

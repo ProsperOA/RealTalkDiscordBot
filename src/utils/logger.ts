@@ -2,8 +2,8 @@ import { CacheType, CommandInteraction, CommandInteractionOption, MessageInterac
 import { isEmpty, isString } from 'lodash';
 import { stripIndents } from 'common-tags';
 
-import { multilineIndent } from './functions';
 import { SERVICE_NAME } from '../index';
+import { multilineIndent } from './functions';
 
 export interface InteractionOptions {
   [name: string]: any;
@@ -73,7 +73,8 @@ const formatInteractionOptions = (options: InteractionOptions): string =>
     ? Object.keys(options).map(option => isString(option)
       ? `${option}: ${options[option]}`
       : `${Object.keys(options[option]).map(key =>
-          `${option}/${key}: ${[options][option][key]}`).join('\n')}`
+          `${option}/${key}: ${[options][option][key]}`
+        ).join('\n')}`
       ).join('\n')
     : '';
 
@@ -167,7 +168,7 @@ const formatInteraction = (interaction: CommandInteraction | MessageInteraction,
  */
 const buildInteractionMessage = (interaction: CommandInteraction | MessageInteraction, opts: InteractionOptions): string => {
   const { type, user } = interaction;
-  let createdAt: Date | string = new Date().toISOString();
+  let createdAt: Date = new Date();
 
   if ('createdAt' in interaction) {
     createdAt = interaction.createdAt;
@@ -175,7 +176,7 @@ const buildInteractionMessage = (interaction: CommandInteraction | MessageIntera
 
   const message: string = stripIndents`
     Type: ${type}
-    Created: ${createdAt}
+    Created: ${createdAt.toUTCString()}
     User: ${user.tag}
     ${formatInteraction(interaction, opts)}`;
 

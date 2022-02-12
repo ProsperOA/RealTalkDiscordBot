@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
-import { random } from 'lodash';
 import { LoremIpsum } from 'lorem-ipsum';
+import { random } from 'lodash';
 
 const randomDate = (start: Date, end: Date): Date =>
   new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
