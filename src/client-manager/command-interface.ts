@@ -93,7 +93,7 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction):
     .map(user => ({ user_id: user.id }));
 
   if (!isDev && isEmpty(witnesses)) {
-    return interaction.reply(replyBuilder.noWitnesses());
+    return interaction.reply(replyBuilder.realTalkNoWitnesses());
   }
 
   const statement: string = interaction.options.get('what', true).value as string;
@@ -226,7 +226,7 @@ const init = async (client: Client): Promise<void> => {
     logger.info('Successfully reloaded application (/) commands.');
 
     listeners.register(client, isDev);
-    isInitialized = true;
+    // isInitialized = true;
   } catch (error) {
     logger.error(error);
   }

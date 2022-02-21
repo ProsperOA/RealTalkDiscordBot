@@ -87,8 +87,7 @@ const formatInteractionOptions = (options: InteractionOptions): string =>
 const formatSubCommandValue = (option: CommandInteractionOption): string => {
   switch (option.type) {
     case 'USER':
-      const { user } = option;
-      return `${option.value} (${user.tag})`;
+      return `${option.value} (${option.user.tag})`;
     default:
       return option.value as string;
   }

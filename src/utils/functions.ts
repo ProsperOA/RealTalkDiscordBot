@@ -9,6 +9,7 @@ export interface Timer {
   end: () => Date;
   time: () => number;
 }
+
 export interface Timeout extends NodeJS.Timeout {
   _idleStart: number;
   _idleTimeout: number;
