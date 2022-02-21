@@ -9,6 +9,7 @@ import { nicknameMention, pluralizeIf } from '../utils';
 interface ReplyBuilder {
   internalError: () => InteractionReplyOptions;
   invalidStatementLength: (length: number) => InteractionReplyOptions;
+  realTalkExists: (userId: string, url: string) => string;
   realTalkHistory: (statements: StatementRecord[]) => string;
   realTalkIsCap: (statement: StatementRecord) => string;
   realTalkNoWitnesses: () => InteractionReplyOptions;
@@ -39,17 +40,19 @@ export default {
   invalidStatementLength: (length: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, the statement must be ${length} characters or less`),
 
-  realTalkIsCap: ({ content, link, user_id }: StatementRecord): string =>
-    stripIndent`**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
-      _"${content}"_
-      ${hideLinkEmbed(link)}`,
-
+  realTalkExists: (userId: string, url: string): string =>
+    `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`,
 
   realTalkHistory: (statements: StatementRecord[]): string =>
     statements.map(s => stripIndent`
       > **#RealTalk**, ${nicknameMention(s.user_id)} claims ${nicknameMention(s.accused_user_id)} said "${s.content}".
       > ${hideLinkEmbed(s.link)}`
     ).join('\n\n'),
+
+  realTalkIsCap: ({ content, link, user_id }: StatementRecord): string =>
+    stripIndent`**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
+      _"${content}"_
+      ${hideLinkEmbed(link)}`,
 
   realTalkNoWitnesses: (): InteractionReplyOptions =>
     quietReply('**#RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement.'),

@@ -9,7 +9,6 @@ import {
   CommandInteractionOption,
   Message,
   MessageCollector,
-  MessageInteraction,
 } from 'discord.js';
 
 import db from '../db';
@@ -29,7 +28,7 @@ import commands, {
 } from './commands';
 
 export type CommandFunction =
-  (client: Client, interaction: CommandInteraction | MessageInteraction) => Promise<void>;
+  (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
 interface CommandInterfaceMap {
   [commandName: string]: CommandFunction;
 }
@@ -87,12 +86,12 @@ const getSubCommand = (interaction: CommandInteraction): CommandInteractionOptio
  * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const realTalkRecord = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkRecord = async (_client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(interaction.channelId)
     .filter(user => user.id !== interaction.user.id)
     .map(user => ({ user_id: user.id }));
 
-  if (!isDev && isEmpty(witnesses)) {
+  if (!isDev && (requireWitnesses && isEmpty(witnesses))) {
     return interaction.reply(replyBuilder.realTalkNoWitnesses());
   }
 

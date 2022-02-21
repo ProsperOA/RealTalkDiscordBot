@@ -1,15 +1,16 @@
-import { Client, MessageReaction } from 'discord.js';
+import { Client, CommandInteraction, MessageReaction, TextChannel, User } from 'discord.js';
 
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { COMMAND_REAL_TALK } from './commands';
-import { REACTION_REAL_TALK_CAP } from './reactions';
+import { COMMAND_REAL_TALK, SUBCOMMAND_REAL_TALK_RECORD } from './commands';
+import { REACTION_REAL_TALK_CAP, REACTION_REAL_TALK_EMOJI } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 import { isDev } from '../utils';
+import { commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
-  (client: Client, reaction: MessageReaction) => Promise<void>;
+  (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
 
 interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
@@ -18,7 +19,7 @@ interface ReactionInterfaceMap {
 const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
-const realTalkIsCap = async (_client: Client, reaction: MessageReaction): Promise<void> => {
+const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
   const { user } = message.interaction;
 
@@ -58,6 +59,55 @@ const realTalkIsCap = async (_client: Client, reaction: MessageReaction): Promis
   }
 };
 
+const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
+  const { message } = reaction;
+  const targetUserId: string = message.author.id;
+  const messageContent: string = message.content;
+
+  const channel: TextChannel = (client.channels.cache.get(message.channelId) as TextChannel);
+
+  const existingStatement: StatementRecord = await db.getStatementWhere({
+    accused_user_id: targetUserId,
+    content: messageContent,
+  });
+
+  if (existingStatement) {
+    if (reaction.count === 1) {
+      const incriminatingEvidence: string = replyBuilder.realTalkExists(
+        user.id,
+        existingStatement.link
+      );
+
+      channel.send(incriminatingEvidence);
+      return;
+    }
+
+    return;
+  }
+
+  const commandParams: any = {
+    what: { value: messageContent },
+    who: { value: targetUserId },
+  };
+
+  const mockInteraction: any = {
+    channelId: message.channelId,
+    options: {
+      data: [{
+        name: SUBCOMMAND_REAL_TALK_RECORD,
+        type: 'SUB_COMMAND',
+      }],
+      get: (param: string, _required: boolean) => commandParams[param]
+    },
+    reply: (data: any) => channel.send(data),
+    user,
+  };
+
+  const realTalkCommand = commandInterfaceMap[COMMAND_REAL_TALK];
+  await realTalkCommand(client, mockInteraction as CommandInteraction, false);
+};
+
 export const reactionInterfaceMap: ReactionInterfaceMap = {
   [REACTION_REAL_TALK_CAP]: realTalkIsCap,
+  [REACTION_REAL_TALK_EMOJI]: realTalkEmojiReaction,
 };

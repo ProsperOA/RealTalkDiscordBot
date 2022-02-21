@@ -68,7 +68,7 @@ const onMessageReactionAdd = (client: Client) =>
       const t: Timer = timer();
 
       t.start();
-      await handlerFn(client, fullReaction);
+      await handlerFn(client, user, fullReaction);
       t.end();
 
       const logData: CustomMessageReaction = {
