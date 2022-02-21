@@ -226,7 +226,7 @@ const init = async (client: Client): Promise<void> => {
     logger.info('Successfully reloaded application (/) commands.');
 
     listeners.register(client, isDev);
-    // isInitialized = true;
+    isInitialized = true;
   } catch (error) {
     logger.error(error);
   }
