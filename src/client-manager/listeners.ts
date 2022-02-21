@@ -9,20 +9,20 @@ import {
 
 import replyBuilder from './reply-builder';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
-import { InteractionOptions, logger, Timer, timer } from '../utils';
+import { CustomLogOptions, CustomLogOutput, logger, Timer, timer } from '../utils';
 import { reactionInterfaceMap } from './reaction-interface';
 
 /**
  * Adds a logger to an interaction.
  *
- * @param {CommandInteraction} interaction - Reference to interaction object.
+ * @param {CommandInteraction} output - Reference to interaction object.
  */
-const logInteraction = (interaction: CommandInteraction | MessageInteraction, responseTime: number): void => {
-    const options: InteractionOptions = {
+const logCustom = (output: CustomLogOutput, responseTime: number): void => {
+    const options: CustomLogOptions = {
       'Response Time': `${responseTime}ms`,
     };
 
-    logger.interaction(interaction, options);
+    logger.custom(output, options);
 };
 
 const onInteractionCreate = (client: Client) =>
@@ -45,7 +45,7 @@ const onInteractionCreate = (client: Client) =>
     await handlerFn(client, interaction);
     t.end();
 
-    logInteraction(interaction, t.time());
+    logCustom({ interaction }, t.time());
   };
 
 const onMessageReactionAdd = (client: Client) =>
@@ -61,23 +61,16 @@ const onMessageReactionAdd = (client: Client) =>
     }
 
     const t: Timer = timer();
-    const { emoji, message: { interaction }} = reaction;
+    const fullReaction: MessageReaction = reaction as MessageReaction;
+    const handlerFn = reactionInterfaceMap[fullReaction.emoji.name];
 
-    t.start();
-    await reactionInterfaceMap[emoji.name]?.(client, reaction);
-    t.end();
+    if (handlerFn) {
+      t.start();
+      await handlerFn?.(client, reaction);
+      t.end();
 
-    const customInteraction = {
-      ...interaction,
-      options: {
-        data: [{
-          type: 'EMOJI_REACTION',
-          value: emoji.name,
-        }]
-      }
-    };
-
-    logInteraction(customInteraction, t.time());
+      logCustom({ messageReaction: fullReaction }, t.time());
+    }
   };
 
 /**
