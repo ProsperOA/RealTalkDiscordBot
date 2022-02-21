@@ -1,53 +1,74 @@
-import { CacheType, CommandInteraction, CommandInteractionOption, MessageInteraction, MessageReaction } from 'discord.js';
-import { isEmpty, isObject, isString } from 'lodash';
+import * as chalk from 'chalk';
+import { isEmpty, isNil } from 'lodash';
 import { stripIndents } from 'common-tags';
+
+import {
+  CacheType,
+  CommandInteraction,
+  CommandInteractionOption,
+  MessageReaction,
+  User,
+} from 'discord.js';
 
 import { SERVICE_NAME } from '../index';
 import { multilineIndent } from './functions';
 
 export interface CustomLogOptions {
-  [name: string]: any;
+  [name: string]: string;
 }
 
-export type CustomLogOutput = string | Error | {
-  [type: string]: CommandInteraction | MessageReaction;
-}
-
-type LogTypeDefault = 'log';
+type LogTypeDebug = 'debug';
 type LogTypeError = 'error';
 type LogTypeInfo = 'info';
 type LogTypeInteraction = 'interaction';
-type LogTypeMessageReaction = 'message_reaction';
+type LogTypeMessageReaction = 'messageReaction';
 type LogTypeWarn = 'warn';
-
-type LogType =
-  LogTypeError |
-  LogTypeInfo |
-  LogTypeInteraction |
-  LogTypeMessageReaction |
-  LogTypeWarn;
 
 type CustomLogType = LogTypeInteraction | LogTypeMessageReaction;
 
-const LOG_TYPE_DEFAULT: Readonly<LogTypeDefault> = 'log';
+type LogType =
+  CustomLogType |
+  LogTypeDebug |
+  LogTypeError |
+  LogTypeInfo |
+  LogTypeWarn;
+
+enum PRINTABLE_CUSTOM_LOG_TYPE {
+  interaction = 'interaction',
+  messageReaction = 'message_reaction',
+}
+
+export interface CustomMessageReaction {
+  reaction: MessageReaction;
+  user: User;
+}
+
+type CustomLogOutput = CommandInteraction | CustomMessageReaction;
+
+export type CustomLogData = {
+  [type in CustomLogType]?: CustomLogOutput
+};
+
+const LOG_TYPE_DEBUG: Readonly<LogTypeDebug> = 'debug';
 const LOG_TYPE_ERROR: Readonly<LogTypeError> = 'error';
 const LOG_TYPE_INFO: Readonly<LogTypeInfo> = 'info';
 const LOG_TYPE_INTERACTION: Readonly<LogTypeInteraction> = 'interaction';
-const LOG_TYPE_MESSAGE_REACTION: Readonly<LogTypeMessageReaction> = 'message_reaction';
+const LOG_TYPE_MESSAGE_REACTION: Readonly<LogTypeMessageReaction> = 'messageReaction';
 const LOG_TYPE_WARN: Readonly<LogTypeWarn> = 'warn';
 
-interface OutputColors {
-  custom: string;
-  error: string;
-  info: string;
-  warn: string;
-}
+type LogColorType =
+  'custom' |
+  LogTypeDebug |
+  LogTypeError |
+  LogTypeInfo |
+  LogTypeWarn;
 
-const OUTPUT_COLORS: Readonly<OutputColors> = {
-  custom: '\x1b[35m%s\x1b[0m',
-  error: '\x1b[31m%s\x1b[0m',
-  info: '\x1b[36m%s\x1b[0m',
-  warn: '\x1b[33m%s\x1b[0m',
+const COLOR_FUNCTIONS: Record<LogColorType, chalk.ChalkFunction> = {
+  custom: chalk.magenta,
+  debug: chalk.blueBright,
+  error: chalk.red,
+  info: chalk.blue,
+  warn: chalk.yellow,
 };
 
 /**
@@ -55,30 +76,29 @@ const OUTPUT_COLORS: Readonly<OutputColors> = {
  *
  * @param {LogType}        type    - type of log message.
  * @param {string | Error} message - message to log to console.
- * @param {any[]}          opts    - additional logging options.
+ * @param {any[]}          options    - additional logging options.
  */
-const baseLogger = (type: LogType, message: string | Error, opts?: any[]): void => {
-  const outputColor: string = (OUTPUT_COLORS as any)[type] || OUTPUT_COLORS.custom;
+const baseLogger = (type: LogType, message: string | Error, options?: any[]): void => {
+  const colorFn = (COLOR_FUNCTIONS as any)[type] || COLOR_FUNCTIONS.custom;
 
   const baseOutput: any[] = [
-    outputColor,
     `[${SERVICE_NAME}] ${type.toUpperCase()} ${message}`
   ];
 
-  const output: any[] = isEmpty(opts)
+  const output: any[] = isEmpty(options)
     ? baseOutput
-    : [ ...baseOutput, ...opts ];
+    : [ ...baseOutput, ...options ];
 
-  const outputMap = {
+  const logFnMap: any = {
+    default: LOG_TYPE_INFO,
+    error: LOG_TYPE_ERROR,
     info: LOG_TYPE_INFO,
     warn: LOG_TYPE_WARN,
-    error: LOG_TYPE_ERROR,
-    custom: LOG_TYPE_DEFAULT,
   };
 
-  const outputFn = (outputMap as any)[type] || outputMap.custom;
+  const logFn = logFnMap[type] || logFnMap.default;
 
-  (console as any)[outputFn](...output);
+  (console as any)[logFn](colorFn(...output));
 };
 
 /**
@@ -88,27 +108,22 @@ const baseLogger = (type: LogType, message: string | Error, opts?: any[]): void 
  * @returns {string}
  */
 const formatCustomLogOptions = (options: CustomLogOptions): string =>
-  !isEmpty(options)
-    ? Object.keys(options).map(option => isString(option)
-      ? `${option}: ${options[option]}`
-      : `${Object.keys(options[option]).map(key =>
-          `${option}/${key}: ${[options][option][key]}`
-        ).join('\n')}`
-      ).join('\n')
-    : '';
+  isNil(options)
+    ? ''
+    : Object.keys(options).map(option => `${option}: ${options[option]}`).join('\n');
 
 /**
  * Formats application subcommand values.
  *
- * @param   {CommandInteractionOption} option - Subcommand to format.
+ * @param   {CommandInteractionOption} opt - Subcommand to format.
  * @returns {string}
  */
-const formatSubCommandValue = (option: CommandInteractionOption): string => {
-  switch (option.type) {
+const formatSubCommandValue = (opt: CommandInteractionOption): string => {
+  switch (opt.type) {
     case 'USER':
-      return `${option.value} (${option.user.tag})`;
+      return `${opt.value} (${opt.user.tag})`;
     default:
-      return option.value as string;
+      return String(opt.value);
   }
 };
 
@@ -119,13 +134,13 @@ const formatSubCommandValue = (option: CommandInteractionOption): string => {
  * @returns {string}
  */
 const formatSubCommands = (options: CommandInteractionOption[]): string =>
-  !isEmpty(options)
-    ? options.map(option =>
+  isEmpty(options)
+    ? ''
+    : options.map(option =>
       `> > Type: ${option.type}
       > > Name: ${option.name}
       > > Value: ${formatSubCommandValue(option)}`
-    ).join('\n\n')
-  : '';
+    ).join('\n\n');
 
 /**
  * Formats application command options.
@@ -154,23 +169,23 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
  * Formats a portion of the interaction message based on interaction type.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {CustomLogOptions} opts        - Additional logging options.
+ * @param   {CustomLogOptions} options        - Additional logging options.
  * @returns {string}
  */
-const formatInteraction = (interaction: CommandInteraction | MessageInteraction,  opts: CustomLogOptions): string => {
+const formatInteraction = (interaction: CommandInteraction,  options: CustomLogOptions): string => {
   let output: string = '';
 
   switch (interaction.type) {
     case 'APPLICATION_COMMAND':
       output += `Command Name: ${interaction.commandName}
-        ${formatCustomLogOptions(opts)}\n`;
+        ${formatCustomLogOptions(options)}\n`;
 
       if ('options' in interaction) {
         output += formatCommandOptions(interaction.options.data);
       }
       break;
     default:
-      logger.warn(`Cannot format interaction. ${interaction.type} is an invalid command interaction type.`);
+      logger.warn(`Invalid command interaction type: ${interaction.type}`);
       break;
   }
 
@@ -181,75 +196,67 @@ const formatInteraction = (interaction: CommandInteraction | MessageInteraction,
  * Builds formatted interaction message.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {CustomLogOptions} opts        - Additional logging options.
+ * @param   {CustomLogOptions} options        - Additional logging options.
  * @returns {string}
  */
-const buildInteractionOutput = (interaction: CommandInteraction | MessageInteraction, opts: CustomLogOptions): string => {
+const buildInteractionOutput = (interaction: CommandInteraction, options: CustomLogOptions): string => {
   const { type, user } = interaction;
-  let createdAt: Date = new Date();
-
-  if ('createdAt' in interaction) {
-    createdAt = interaction.createdAt;
-  }
 
   const output: string = stripIndents`
     Type: ${type}
-    Created: ${createdAt.toUTCString()}
+    Created: ${interaction.createdAt.toUTCString()}
     User: ${user.tag}
-    ${formatInteraction(interaction, opts)}`;
+    ${formatInteraction(interaction, options)}`;
 
   return `\n${multilineIndent(output, 2)}`;
 };
 
-const buildMessageReactionOutput = (reaction: MessageReaction, opts?: CustomLogOptions): string => {
-  const { count, emoji, message } = reaction;
+const buildMessageReactionOutput = (data: CustomMessageReaction, options?: CustomLogOptions): string => {
+  const {
+    reaction: { count, emoji, message },
+    user,
+  } = data;
 
   const output = stripIndents`
-    Author: ${message.author.tag}
-    Content: ${message.content}
-    Created: ${message.createdAt.toUTCString()}
+    User: ${user.tag}
+    Message Author: ${message.author.tag}
+    Message Content: ${chalk.italic(message.content)}
+    Message Created: ${message.createdAt.toUTCString()}
     Emoji Name: ${emoji.name}
     Reaction Count: ${count}
-    ${formatCustomLogOptions(opts)}`;
+    ${formatCustomLogOptions(options)}`;
 
   return `\n${multilineIndent(output, 2)}`;
 };
 
-const customLogger = (output: CustomLogOutput, opts?: CustomLogOptions): void => {
-  const type: LogType = Object.keys(output)[0] as LogType;
+const customLogger = (data: CustomLogData, options?: CustomLogOptions): void => {
+  const type: CustomLogType = Object.keys(data)[0] as CustomLogType;
+  const printableLogType: string = PRINTABLE_CUSTOM_LOG_TYPE[type];
 
-  const customLogTypes = {
-    interaction: LOG_TYPE_INTERACTION,
-    messageReaction: LOG_TYPE_MESSAGE_REACTION,
-  };
-
-  const logType: CustomLogType = (customLogTypes as any)[type];
-
-  if (!logType) {
-    logger.warn(`Invalid log type: ${type}\nOutput: ${JSON.stringify(output)}`);
-    return;
+  if (!printableLogType) {
+    return logger.warn(`Invalid log type: ${type}\nOutput: ${JSON.stringify(data)}`);
   }
 
-  const outputData: any = (output as any)[type];
-  const log = baseLogger.bind(null, logType);
+  const outputData: CustomLogOutput = data[type];
+  const log: (message: string) => void = baseLogger.bind(null, printableLogType);
 
-  switch (logType) {
+  switch (type) {
     case LOG_TYPE_INTERACTION:
-      log(buildInteractionOutput(outputData, opts));
-      return;
+      return log(buildInteractionOutput(outputData as CommandInteraction, options));
     case LOG_TYPE_MESSAGE_REACTION:
-      log(buildMessageReactionOutput(outputData, opts));
-      return;
+      return log(buildMessageReactionOutput(outputData as CustomMessageReaction, options));
   }
 };
 
 export const logger = {
-  info: (message: string, ...opts: any[]): void =>
-    baseLogger(LOG_TYPE_INFO, message, opts),
-  warn: (message: string, ...opts: any[]): void =>
-    baseLogger(LOG_TYPE_WARN, message, opts),
-  error: (message: string | Error, ...opts: any[]): void =>
-    baseLogger(LOG_TYPE_ERROR, message, opts),
-  custom: (output: CustomLogOutput, opts?: CustomLogOptions): void =>
-    customLogger(output, opts),
+  custom: (data: CustomLogData, options?: CustomLogOptions): void =>
+    customLogger(data, options),
+  debug: (message: string, ...options: any[]): void =>
+    baseLogger(LOG_TYPE_DEBUG, message, options),
+  error: (message: string | Error, ...options: any[]): void =>
+    baseLogger(LOG_TYPE_ERROR, message, options),
+  info: (message: string, ...options: any[]): void =>
+    baseLogger(LOG_TYPE_INFO, message, options),
+  warn: (message: string, ...options: any[]): void =>
+    baseLogger(LOG_TYPE_WARN, message, options),
 };

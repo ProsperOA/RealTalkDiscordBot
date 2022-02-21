@@ -1,4 +1,4 @@
-import { Client, MessageReaction, PartialMessageReaction } from 'discord.js';
+import { Client, MessageReaction } from 'discord.js';
 
 import db from '../db';
 import replyBuilder from './reply-builder';
@@ -8,8 +8,8 @@ import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 import { isDev } from '../utils';
 
-type ReactionFunction =
-  (client: Client, reaction: MessageReaction | PartialMessageReaction) => Promise<void>;
+export type ReactionFunction =
+  (client: Client, reaction: MessageReaction) => Promise<void>;
 
 interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
@@ -18,7 +18,7 @@ interface ReactionInterfaceMap {
 const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
-const realTalkIsCap = async (_client: Client, reaction: MessageReaction | PartialMessageReaction): Promise<void> => {
+const realTalkIsCap = async (_client: Client, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
   const { user } = message.interaction;
 

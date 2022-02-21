@@ -1,7 +1,6 @@
 import {
   Client,
   CommandInteraction,
-  MessageInteraction,
   MessageReaction,
   PartialMessageReaction,
   User,
@@ -9,20 +8,23 @@ import {
 
 import replyBuilder from './reply-builder';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
-import { CustomLogOptions, CustomLogOutput, logger, Timer, timer } from '../utils';
-import { reactionInterfaceMap } from './reaction-interface';
+import { ReactionFunction, reactionInterfaceMap } from './reaction-interface';
 
-/**
- * Adds a logger to an interaction.
- *
- * @param {CommandInteraction} output - Reference to interaction object.
- */
-const logCustom = (output: CustomLogOutput, responseTime: number): void => {
-    const options: CustomLogOptions = {
-      'Response Time': `${responseTime}ms`,
-    };
+import {
+  CustomLogOptions,
+  CustomLogData,
+  CustomMessageReaction,
+  logger,
+  Timer,
+  timer,
+} from '../utils';
 
-    logger.custom(output, options);
+const logCustom = (data: CustomLogData, responseTime: number): void => {
+  const options: CustomLogOptions = {
+    'Response Time': `${responseTime}ms`,
+  };
+
+  logger.custom(data, options);
 };
 
 const onInteractionCreate = (client: Client) =>
@@ -49,40 +51,34 @@ const onInteractionCreate = (client: Client) =>
   };
 
 const onMessageReactionAdd = (client: Client) =>
-  async (reaction: MessageReaction | PartialMessageReaction, _user: User): Promise<void> => {
+  async (reaction: MessageReaction | PartialMessageReaction, user: User): Promise<void> => {
     if (reaction.partial) {
       try {
         await reaction.fetch();
       } catch (error) {
         logger.error(error);
-        reaction.message.reply(replyBuilder.internalError());
         return;
       }
     }
 
-    const t: Timer = timer();
     const fullReaction: MessageReaction = reaction as MessageReaction;
-    const handlerFn = reactionInterfaceMap[fullReaction.emoji.name];
+    const handlerFn: ReactionFunction = reactionInterfaceMap[fullReaction.emoji.name];
 
     if (handlerFn) {
+      const t: Timer = timer();
+
       t.start();
-      await handlerFn?.(client, reaction);
+      await handlerFn(client, fullReaction);
       t.end();
 
-      logCustom({ messageReaction: fullReaction }, t.time());
+      const logData: CustomMessageReaction = {
+        reaction: fullReaction,
+        user,
+      };
+
+      logCustom({ messageReaction: logData }, t.time());
     }
   };
-
-/**
- * Adds debug, warning, and error loggers to a client.
- *
- * @param {Client} client - Reference to client object.
- */
-const addDebugLogger = (client: Client): void => {
-  client.on('debug', logger.info);
-  client.on('warn', logger.warn);
-  client.on('error', logger.error);
-};
 
 /**
  * Registers client event listeners and calls commands.
@@ -92,9 +88,11 @@ const addDebugLogger = (client: Client): void => {
  */
 const register = (client: Client, debug?: boolean): void => {
   if (debug) {
-    addDebugLogger(client);
+    client.on('debug', logger.debug);
   }
 
+  client.on('warn', logger.warn);
+  client.on('error', logger.error);
   client.on('interactionCreate', onInteractionCreate(client));
   client.on('messageReactionAdd', onMessageReactionAdd(client));
 };
