@@ -6,7 +6,7 @@ import { COMMAND_REAL_TALK, SUBCOMMAND_REAL_TALK_RECORD_BASE } from './commands'
 import { REACTION_REAL_TALK_CAP, REACTION_REAL_TALK_EMOJI } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { isDev } from '../utils';
+import { cache, Cache, isDev } from '../utils';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
@@ -19,14 +19,7 @@ interface ReactionInterfaceMap {
 const RESPONSE_CACHE_DURATION: Readonly<number> = isDev ? 0 : 1000 * 60 * 60;
 const ACCEPTED_MESSAGE_TYPES: Readonly<string[]> = [ 'DEFAULT', 'REPLY' ];
 
-const responseCache = {
-  data: {} as any,
-  get: (userId: string) => responseCache.data[userId],
-  set: (userId: string, response: string) => {
-    responseCache.data[userId] = response;
-    setTimeout(() => delete responseCache.data[userId], RESPONSE_CACHE_DURATION);
-  },
-};
+const reactionResponseCache: Cache = cache.new('reactionResponseCache');
 
 const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
@@ -92,14 +85,14 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const channel: TextChannel = client.channels.cache.get(message.channelId) as TextChannel;
 
   if (existingStatement) {
-    const incriminatingEvidence: string = replyBuilder.realTalkExists(
+    const existingRealTalk: string = replyBuilder.realTalkExists(
       user.id,
       existingStatement.link
     );
 
-    if (incriminatingEvidence !== responseCache.get(user.id)) {
-      channel.send(incriminatingEvidence);
-      return responseCache.set(user.id, incriminatingEvidence);
+    if (existingRealTalk !== reactionResponseCache.get(user.id)) {
+      await channel.send(existingRealTalk);
+      reactionResponseCache.set(user.id, existingRealTalk, RESPONSE_CACHE_DURATION);
     }
 
     return;

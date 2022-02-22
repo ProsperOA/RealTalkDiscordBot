@@ -21,8 +21,10 @@ export interface Timeout extends NodeJS.Timeout {
  * @param   {Timeout} timeout - Reference to timeout object.
  * @returns {number}
  */
-export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): number =>
-  Math.ceil((_idleStart + _idleTimeout) / 1000 - process.uptime());
+export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): number => {
+  const timeout: number = Math.ceil((_idleStart + _idleTimeout) / 1000 - process.uptime());
+  return timeout >= 0 ? timeout : 0;
+};
 
 /**
  * Adds indentation to a multiline string.
