@@ -16,6 +16,18 @@ interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
 }
 
+const RESPONSE_CACHE_DURATION: Readonly<number> = isDev ? 0 : 1000 * 60 * 60;
+const ACCEPTED_MESSAGE_TYPES: Readonly<string[]> = [ 'DEFAULT', 'REPLY' ];
+
+const responseCache = {
+  data: {} as any,
+  get: (userId: string) => responseCache.data[userId],
+  set: (userId: string, response: string) => {
+    responseCache.data[userId] = response;
+    setTimeout(() => delete responseCache.data[userId], RESPONSE_CACHE_DURATION);
+  },
+};
+
 const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
@@ -23,7 +35,7 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
   const { message } = reaction;
   const { user } = message.interaction;
 
-  if (message.interaction.commandName !== COMMAND_REAL_TALK) {
+  if (message.interaction?.commandName !== COMMAND_REAL_TALK) {
     return;
   }
 
@@ -62,7 +74,10 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
 
-  if (message.interaction?.commandName === COMMAND_REAL_TALK) {
+  if (
+    !ACCEPTED_MESSAGE_TYPES.includes(message.type) ||
+    message.author.id === client.user.id
+  ) {
     return;
   }
 
@@ -77,14 +92,14 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const channel: TextChannel = client.channels.cache.get(message.channelId) as TextChannel;
 
   if (existingStatement) {
-    if (reaction.count === 1) {
-      const incriminatingEvidence: string = replyBuilder.realTalkExists(
-        user.id,
-        existingStatement.link
-      );
+    const incriminatingEvidence: string = replyBuilder.realTalkExists(
+      user.id,
+      existingStatement.link
+    );
 
+    if (incriminatingEvidence !== responseCache.get(user.id)) {
       channel.send(incriminatingEvidence);
-      return;
+      return responseCache.set(user.id, incriminatingEvidence);
     }
 
     return;
