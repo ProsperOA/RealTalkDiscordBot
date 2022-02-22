@@ -77,8 +77,10 @@ const isValidContentLength = (str: string): boolean =>
  * @param   {CommandInteraction} interaction - Reference to interaction object.
  * @returns {CommandInteractionOption}
  */
-const getSubCommand = (interaction: CommandInteraction): CommandInteractionOption =>
-  interaction.options.data[0];
+const getSubCommand = (interaction: CommandInteraction): CommandInteractionOption => {
+  const option: CommandInteractionOption =  interaction.options.data[0];
+  return option.type === 'SUB_COMMAND' ? option : null;
+};
 
 /**
  * Handles the realtalk command.
@@ -232,13 +234,13 @@ const init = async (client: Client): Promise<void> => {
 };
 
 export const commandInterfaceMap: CommandInterfaceMap = {
-  [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction) => {
+  [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction, ...args: any[]) => {
     checkInit();
-    const subcommand: string = getSubCommand(interaction).name;
+    const subcommand: string | null = getSubCommand(interaction)?.name;
 
     switch(subcommand) {
       case SUBCOMMAND_REAL_TALK_RECORD:
-        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
+        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction, ...args);
       case SUBCOMMAND_REAL_TALK_HISTORY:
         return realTalkHistory(client, interaction);
       case SUBCOMMAND_REAL_TALK_STATS:

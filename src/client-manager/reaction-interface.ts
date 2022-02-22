@@ -62,19 +62,19 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
 
-  if (message.interaction.commandName === COMMAND_REAL_TALK) {
+  if (message.interaction?.commandName === COMMAND_REAL_TALK) {
     return;
   }
 
   const targetUserId: string = message.author.id;
   const messageContent: string = message.content;
 
-  const channel: TextChannel = (client.channels.cache.get(message.channelId) as TextChannel);
-
   const existingStatement: StatementRecord = await db.getStatementWhere({
     accused_user_id: targetUserId,
     content: messageContent,
   });
+
+  const channel: TextChannel = (client.channels.cache.get(message.channelId) as TextChannel);
 
   if (existingStatement) {
     if (reaction.count === 1) {
@@ -102,7 +102,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
         name: SUBCOMMAND_REAL_TALK_RECORD,
         type: 'SUB_COMMAND',
       }],
-      get: (param: string, _required: boolean) => commandParams[param]
+      get: (param: string) => commandParams[param]
     },
     reply: (data: any) => channel.send(data),
     user,
