@@ -1,10 +1,13 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 
 export const COMMAND_REAL_TALK: Readonly<string> = 'realtalk';
+
 export const SUBCOMMAND_REAL_TALK_HISTORY: Readonly<string> = 'history';
 export const SUBCOMMAND_REAL_TALK_QUIZ: Readonly<string> = 'quiz';
 export const SUBCOMMAND_REAL_TALK_RECORD: Readonly<string> = 'record';
 export const SUBCOMMAND_REAL_TALK_STATS: Readonly<string> = 'stats';
+
+export const SUBCOMMAND_REAL_TALK_RECORD_BASE: Readonly<string> = 'recordBase';
 
 const realTalk = new SlashCommandBuilder()
   .setName(COMMAND_REAL_TALK)

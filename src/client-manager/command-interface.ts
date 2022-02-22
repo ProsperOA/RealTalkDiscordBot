@@ -24,6 +24,7 @@ import commands, {
   SUBCOMMAND_REAL_TALK_HISTORY,
   SUBCOMMAND_REAL_TALK_QUIZ,
   SUBCOMMAND_REAL_TALK_RECORD,
+  SUBCOMMAND_REAL_TALK_RECORD_BASE,
   SUBCOMMAND_REAL_TALK_STATS
 } from './commands';
 
@@ -38,7 +39,7 @@ const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
 const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
 const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
-export const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30000;
+const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30000;
 
 let isInitialized: boolean = false;
 
@@ -234,13 +235,15 @@ const init = async (client: Client): Promise<void> => {
 };
 
 export const commandInterfaceMap: CommandInterfaceMap = {
-  [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction, ...args: any[]) => {
+  [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     checkInit();
     const subcommand: string | null = getSubCommand(interaction)?.name;
 
     switch(subcommand) {
       case SUBCOMMAND_REAL_TALK_RECORD:
-        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction, ...args);
+        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
+      case SUBCOMMAND_REAL_TALK_RECORD_BASE:
+        return realTalkRecord(client, interaction, ...args);
       case SUBCOMMAND_REAL_TALK_HISTORY:
         return realTalkHistory(client, interaction);
       case SUBCOMMAND_REAL_TALK_STATS:

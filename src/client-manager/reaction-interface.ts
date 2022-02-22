@@ -2,12 +2,12 @@ import { Client, CommandInteraction, MessageReaction, TextChannel, User } from '
 
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { COMMAND_REAL_TALK, SUBCOMMAND_REAL_TALK_RECORD } from './commands';
+import { COMMAND_REAL_TALK, SUBCOMMAND_REAL_TALK_RECORD_BASE } from './commands';
 import { REACTION_REAL_TALK_CAP, REACTION_REAL_TALK_EMOJI } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 import { isDev } from '../utils';
-import { commandInterfaceMap } from './command-interface';
+import { CommandFunction, commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
   (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
@@ -99,16 +99,16 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     channelId: message.channelId,
     options: {
       data: [{
-        name: SUBCOMMAND_REAL_TALK_RECORD,
+        name: SUBCOMMAND_REAL_TALK_RECORD_BASE,
         type: 'SUB_COMMAND',
       }],
-      get: (param: string) => commandParams[param]
+      get: (param: string) => commandParams[param],
     },
     reply: (data: any) => channel.send(data),
     user,
   };
 
-  const realTalkCommand = commandInterfaceMap[COMMAND_REAL_TALK];
+  const realTalkCommand: CommandFunction = commandInterfaceMap[COMMAND_REAL_TALK];
   await realTalkCommand(client, mockInteraction as CommandInteraction, false);
 };
 

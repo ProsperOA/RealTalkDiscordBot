@@ -15,6 +15,10 @@ const userThrottleCache: {[userId: string]: Timeout} = {};
  */
 export const useThrottle = (callback: CommandFunction, duration: number) =>
   async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
+    if (duration <= 0) {
+      return callback(client, interaction, ...args);
+    }
+
     const userId: string = interaction.user.id;
     const timeout: Timeout = userThrottleCache[userId];
 
