@@ -65,9 +65,9 @@ type LogColorType =
 
 const COLOR_FUNCTIONS: Record<LogColorType, chalk.ChalkFunction> = {
   custom: chalk.magenta,
-  debug: chalk.blueBright,
+  debug: chalk.cyanBright,
   error: chalk.red,
-  info: chalk.blue,
+  info: chalk.cyan,
   warn: chalk.yellow,
 };
 
