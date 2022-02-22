@@ -1,7 +1,7 @@
 import { InteractionReplyOptions } from 'discord.js';
 import { hideLinkEmbed, time } from '@discordjs/builders';
 import { isEmpty } from 'lodash';
-import { stripIndent } from 'common-tags';
+import { stripIndents } from 'common-tags';
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { nicknameMention, pluralizeIf } from '../utils';
@@ -44,13 +44,13 @@ export default {
     `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`,
 
   realTalkHistory: (statements: StatementRecord[]): string =>
-    statements.map(s => stripIndent`
+    statements.map(s => stripIndents`
       > **#RealTalk**, ${nicknameMention(s.user_id)} claims ${nicknameMention(s.accused_user_id)} said "${s.content}".
       > ${hideLinkEmbed(s.link)}`
     ).join('\n\n'),
 
   realTalkIsCap: ({ content, link, user_id }: StatementRecord): string =>
-    stripIndent`**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
+    stripIndents`**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
       _"${content}"_
       ${hideLinkEmbed(link)}`,
 
@@ -58,12 +58,12 @@ export default {
     quietReply('**#RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement.'),
 
   realTalkRecord: (userId: string, statement: string): string =>
-    stripIndent`**The following is provided under the terms of #RealTalk**
+    stripIndents`**The following is provided under the terms of #RealTalk**
       Date: ${time(new Date())}
       ${nicknameMention(userId)}: _"${statement}"_`,
 
   realTalkStats: (stats: RealTalkStats): string =>
-    stripIndent`**#RealTalk Stats**
+    stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
         const { uses, accusations } = stats[userId];
 
@@ -86,13 +86,13 @@ export default {
     `**#RealTalk** has been used ${uses} ${pluralizeIf('time', uses)} by ${uniqueUsers} ${pluralizeIf('user', uniqueUsers)}`,
 
   realTalkQuiz: (statement: string, duration: number): string =>
-    stripIndent`
+    stripIndents`
       Who's the type of person to say: _"${statement}"_?
       You have ${duration}s to respond in chat with: #RealTalk @Username
       _Ex: #RealTalk @JohnDoe_`,
 
   realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>
-    stripIndent`
+    stripIndents`
       ${isEmpty(userIds) ? 'No one' : userIds.map(nicknameMention).join(', ')} got it right.
       ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`,
 
