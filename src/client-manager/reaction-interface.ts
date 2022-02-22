@@ -61,6 +61,11 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
 
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
+
+  if (message.interaction.commandName === COMMAND_REAL_TALK) {
+    return;
+  }
+
   const targetUserId: string = message.author.id;
   const messageContent: string = message.content;
 
