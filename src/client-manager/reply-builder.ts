@@ -6,21 +6,6 @@ import { stripIndents } from 'common-tags';
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { nicknameMention, pluralizeIf } from '../utils';
 
-interface ReplyBuilder {
-  internalError: () => InteractionReplyOptions;
-  invalidStatementLength: (length: number) => InteractionReplyOptions;
-  realTalkExists: (userId: string, url: string) => string;
-  realTalkHistory: (statements: StatementRecord[]) => string;
-  realTalkIsCap: (statement: StatementRecord) => string;
-  realTalkNoWitnesses: () => InteractionReplyOptions;
-  realTalkQuiz: (statement: string, duration: number) => string;
-  realTalkQuizEnd: (accusedUserId: string, userIds: string[]) => string;
-  realTalkRecord: (userId: string, statement: string) => string;
-  realTalkStats: (stats: RealTalkStats) => string;
-  realTalkStatsCompact: (stats: RealTalkStatsCompact) => string;
-  throttleCoolDown: (duration: number) => InteractionReplyOptions;
-}
-
 /**
  * Returns a discreet reply message.
  *
@@ -99,4 +84,4 @@ export default {
   throttleCoolDown: (duration: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, chill... ${duration}s left`),
 
-} as ReplyBuilder;
+};

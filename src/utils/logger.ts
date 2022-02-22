@@ -76,7 +76,7 @@ const COLOR_FUNCTIONS: Record<LogColorType, chalk.ChalkFunction> = {
  *
  * @param {LogType}        type    - type of log message.
  * @param {string | Error} message - message to log to console.
- * @param {any[]}          options    - additional logging options.
+ * @param {any[]}          options - additional logging options.
  */
 const baseLogger = (type: LogType, message: string | Error, options?: any[]): void => {
   const colorFn = (COLOR_FUNCTIONS as any)[type] || COLOR_FUNCTIONS.custom;
@@ -169,7 +169,7 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
  * Formats a portion of the interaction message based on interaction type.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {CustomLogOptions} options        - Additional logging options.
+ * @param   {CustomLogOptions} options       - Additional logging options.
  * @returns {string}
  */
 const formatInteraction = (interaction: CommandInteraction,  options: CustomLogOptions): string => {
@@ -196,7 +196,7 @@ const formatInteraction = (interaction: CommandInteraction,  options: CustomLogO
  * Builds formatted interaction message.
  *
  * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {CustomLogOptions} options        - Additional logging options.
+ * @param   {CustomLogOptions} options       - Additional logging options.
  * @returns {string}
  */
 const buildInteractionOutput = (interaction: CommandInteraction, options: CustomLogOptions): string => {

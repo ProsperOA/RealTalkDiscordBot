@@ -56,8 +56,7 @@ const onMessageReactionAdd = (client: Client) =>
       try {
         await reaction.fetch();
       } catch (error) {
-        logger.error(error);
-        return;
+        return logger.error(error);
       }
     }
 
