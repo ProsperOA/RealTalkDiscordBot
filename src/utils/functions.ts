@@ -15,6 +15,12 @@ export interface Timeout extends NodeJS.Timeout {
   _idleTimeout: number;
 }
 
+interface FetchableStructure<T = any> {
+  partial: boolean;
+  fetch: (force?: boolean) => Promise<T>;
+  [key: string]: any;
+}
+
 /**
  * Returns remaining time for setTimeout.
  *
@@ -74,6 +80,9 @@ export const nicknameMention = (userId: string): string => {
 
   return isDev ? user.tag : memberNicknameMention(userId);
 };
+
+export const fetchFull = async <T>(structure: FetchableStructure<T>, force?: boolean): Promise<T> =>
+  structure.partial ? structure.fetch(force) : structure as any as T;
 
 /**
  * Provides an interface that calculates the time in ms between a start and end

@@ -3,9 +3,11 @@ import {
   CommandInteraction,
   MessageReaction,
   PartialMessageReaction,
+  PartialUser,
   User,
 } from 'discord.js';
 
+import * as reactions from './reactions';
 import replyBuilder from './reply-builder';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 import { ReactionFunction, reactionInterfaceMap } from './reaction-interface';
@@ -17,7 +19,10 @@ import {
   logger,
   Timer,
   timer,
+  fetchFull,
 } from '../utils';
+
+type EventListener = (...args: any[]) => Promise<void>;
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
   const options: CustomLogOptions = {
@@ -27,7 +32,7 @@ const logCustom = (data: CustomLogData, responseTime: number): void => {
   logger.custom(data, options);
 };
 
-const onInteractionCreate = (client: Client) =>
+const onInteractionCreate = (client: Client): EventListener =>
   async (interaction: CommandInteraction): Promise<void> => {
     if (!interaction.isCommand()) {
       return;
@@ -50,33 +55,46 @@ const onInteractionCreate = (client: Client) =>
     logCustom({ interaction }, t.time());
   };
 
-const onMessageReactionAdd = (client: Client) =>
-  async (reaction: MessageReaction | PartialMessageReaction, user: User): Promise<void> => {
-    if (reaction.partial) {
-      try {
-        await reaction.fetch();
-      } catch (error) {
-        return logger.error(error);
-      }
+const onMessageReactionAdd = (client: Client): EventListener =>
+  async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
+    const { emoji: { name: emojiName } } = reaction;
+
+    const shouldHaveHandlerFn: boolean = Boolean(
+      Object.values(reactions).find(value => value === emojiName)
+    );
+
+    if (!shouldHaveHandlerFn) {
+      return;
     }
 
-    const fullReaction: MessageReaction = reaction as MessageReaction;
-    const handlerFn: ReactionFunction = reactionInterfaceMap[fullReaction.emoji.name];
+    const handlerFn: ReactionFunction = reactionInterfaceMap[emojiName];
 
-    if (handlerFn) {
-      const t: Timer = timer();
-
-      t.start();
-      await handlerFn(client, user, fullReaction);
-      t.end();
-
-      const logData: CustomMessageReaction = {
-        reaction: fullReaction,
-        user,
-      };
-
-      logCustom({ messageReaction: logData }, t.time());
+    if (!handlerFn) {
+      return logger.error(`No handler for reaction ${emojiName}`);
     }
+
+    let fullReaction: MessageReaction = null;
+    let fullUser: User = null;
+
+    try {
+      fullReaction = await fetchFull<MessageReaction>(reaction);
+      fullUser = await fetchFull<User>(user, true);
+    } catch (error) {
+      return logger.error(error);
+    }
+
+    const t: Timer = timer();
+
+    t.start();
+    await handlerFn(client, fullUser, fullReaction);
+    t.end();
+
+    const logData: CustomMessageReaction = {
+      reaction: fullReaction,
+      user: fullUser,
+    };
+
+    logCustom({ messageReaction: logData }, t.time());
   };
 
 /**
