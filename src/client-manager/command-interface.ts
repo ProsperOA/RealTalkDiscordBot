@@ -237,7 +237,7 @@ const init = async (client: Client): Promise<void> => {
 export const commandInterfaceMap: CommandInterfaceMap = {
   [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     checkInit();
-    const subcommand: string | null = getSubCommand(interaction)?.name;
+    const subcommand: string = getSubCommand(interaction)?.name;
 
     switch(subcommand) {
       case SUBCOMMAND_REAL_TALK_RECORD:

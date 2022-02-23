@@ -59,5 +59,5 @@ const newCache = (name: string): Cache => {
 };
 
 export const cache = {
-  new: (name: string) => newCache(name),
+  new: (name: string): Cache => newCache(name),
 };

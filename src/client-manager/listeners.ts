@@ -50,7 +50,7 @@ const onInteractionCreate = (client: Client): EventListener =>
 
     t.start();
     await handlerFn(client, interaction);
-    t.end();
+    t.stop();
 
     logCustom({ interaction }, t.time());
   };
@@ -87,7 +87,7 @@ const onMessageReactionAdd = (client: Client): EventListener =>
 
     t.start();
     await handlerFn(client, fullUser, fullReaction);
-    t.end();
+    t.stop();
 
     const logData: CustomMessageReaction = {
       reaction: fullReaction,

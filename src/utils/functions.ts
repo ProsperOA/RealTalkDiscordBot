@@ -6,7 +6,7 @@ import { getUser } from './guild';
 
 export interface Timer {
   start: () => Date;
-  end: () => Date;
+  stop: () => Date;
   time: () => number;
 }
 
@@ -99,7 +99,7 @@ export const timer = (): Timer => {
       startDate = new Date();
       return startDate;
     },
-    end: (): Date => {
+    stop: (): Date => {
       const endDate: Date = new Date();
 
       if (startDate) {
