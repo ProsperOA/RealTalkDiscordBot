@@ -14,19 +14,12 @@ import {
 import db from '../db';
 import listeners from './listeners';
 import replyBuilder from './reply-builder';
+
+import commands, { RealTalkCommand, RealTalkSubcommand } from './commands';
 import { RealTalkQuizRecord, RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 import { extractUserIdFromMention, getActiveUsersInChannel, isDev, isMention, logger } from '../utils';
 import { useThrottle } from './middleware';
-
-import commands, {
-  COMMAND_REAL_TALK,
-  SUBCOMMAND_REAL_TALK_HISTORY,
-  SUBCOMMAND_REAL_TALK_QUIZ,
-  SUBCOMMAND_REAL_TALK_RECORD,
-  SUBCOMMAND_REAL_TALK_RECORD_BASE,
-  SUBCOMMAND_REAL_TALK_STATS
-} from './commands';
 
 export type CommandFunction =
   (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -48,9 +41,12 @@ let isInitialized: boolean = false;
  *
  * @throws {Error}
  */
-const checkInit = (): void => {
+const checkInit = async (interaction: CommandInteraction): Promise<void> => {
   if (!isInitialized) {
-    throw new Error('Cannot use commands before initializing command interface');
+    await interaction.reply(replyBuilder.internalError());
+
+    logger.error('Cannot use commands before initializing command interface');
+    process.kill(process.pid, 'SIGTERM');
   }
 };
 
@@ -235,23 +231,23 @@ const init = async (client: Client): Promise<void> => {
 };
 
 export const commandInterfaceMap: CommandInterfaceMap = {
-  [COMMAND_REAL_TALK]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
-    checkInit();
+  [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
+    await checkInit(interaction);
     const subcommand: string = getSubCommand(interaction)?.name;
 
     switch(subcommand) {
-      case SUBCOMMAND_REAL_TALK_RECORD:
+      case RealTalkSubcommand.Record:
         return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
-      case SUBCOMMAND_REAL_TALK_RECORD_BASE:
+      case RealTalkSubcommand.RecordBase:
         return realTalkRecord(client, interaction, ...args);
-      case SUBCOMMAND_REAL_TALK_HISTORY:
+      case RealTalkSubcommand.History:
         return realTalkHistory(client, interaction);
-      case SUBCOMMAND_REAL_TALK_STATS:
+      case RealTalkSubcommand.Stats:
         return realTalkStats(client, interaction);
-      case SUBCOMMAND_REAL_TALK_QUIZ:
+      case RealTalkSubcommand.Quiz:
         return realTalkQuiz(client, interaction);
       default:
-        logger.error(`${subcommand} is an invalid ${COMMAND_REAL_TALK} subcommand`);
+        logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
         return interaction.reply(replyBuilder.internalError());
     }
   },

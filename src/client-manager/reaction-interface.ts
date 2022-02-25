@@ -2,8 +2,8 @@ import { Client, CommandInteraction, MessageReaction, TextChannel, User } from '
 
 import db from '../db';
 import replyBuilder from './reply-builder';
-import { COMMAND_REAL_TALK, SUBCOMMAND_REAL_TALK_RECORD_BASE } from './commands';
-import { REACTION_REAL_TALK_CAP, REACTION_REAL_TALK_EMOJI } from './reactions';
+import { RealTalkCommand, RealTalkSubcommand } from './commands';
+import { ReactionName } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
 import { cache, Cache, isDev } from '../utils';
@@ -28,7 +28,7 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
   const { message } = reaction;
   const { user } = message.interaction;
 
-  if (message.interaction?.commandName !== COMMAND_REAL_TALK) {
+  if (message.interaction?.commandName !== RealTalkCommand.RealTalk) {
     return;
   }
 
@@ -56,7 +56,7 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
 
   const capThreshold: number = calcCapThreshold(witnesses.length);
   const capCount: number =
-    message.reactions.cache.filter(r => r.emoji.name === REACTION_REAL_TALK_CAP).size;
+    message.reactions.cache.filter(r => r.emoji.name === ReactionName.Cap).size;
 
   if (capCount >= capThreshold) {
     await db.updateStatementWhere({ id: statement.id }, { is_cap: true });
@@ -107,7 +107,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     channelId: message.channelId,
     options: {
       data: [{
-        name: SUBCOMMAND_REAL_TALK_RECORD_BASE,
+        name: RealTalkSubcommand.RecordBase,
         type: 'SUB_COMMAND',
       }],
       get: (param: string) => commandParams[param],
@@ -116,11 +116,11 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     user,
   };
 
-  const realTalkCommand: CommandFunction = commandInterfaceMap[COMMAND_REAL_TALK];
+  const realTalkCommand: CommandFunction = commandInterfaceMap[RealTalkCommand.RealTalk];
   await realTalkCommand(client, mockInteraction as CommandInteraction, false);
 };
 
 export const reactionInterfaceMap: ReactionInterfaceMap = {
-  [REACTION_REAL_TALK_CAP]: realTalkIsCap,
-  [REACTION_REAL_TALK_EMOJI]: realTalkEmojiReaction,
+  [ReactionName.Cap]: realTalkIsCap,
+  [ReactionName.RealTalk]: realTalkEmojiReaction,
 };

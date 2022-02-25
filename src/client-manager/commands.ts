@@ -1,20 +1,23 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 
-export const COMMAND_REAL_TALK: Readonly<string> = 'realtalk';
+export enum RealTalkCommand {
+  RealTalk = 'realtalk',
+}
 
-export const SUBCOMMAND_REAL_TALK_HISTORY: Readonly<string> = 'history';
-export const SUBCOMMAND_REAL_TALK_QUIZ: Readonly<string> = 'quiz';
-export const SUBCOMMAND_REAL_TALK_RECORD: Readonly<string> = 'record';
-export const SUBCOMMAND_REAL_TALK_STATS: Readonly<string> = 'stats';
-
-export const SUBCOMMAND_REAL_TALK_RECORD_BASE: Readonly<string> = 'recordBase';
+export enum RealTalkSubcommand {
+  History = 'history',
+  Quiz = 'quiz',
+  Record = 'record',
+  RecordBase = 'recordBase',
+  Stats = 'stats',
+}
 
 const realTalk = new SlashCommandBuilder()
-  .setName(COMMAND_REAL_TALK)
+  .setName(RealTalkCommand.RealTalk)
   .setDescription('#RealTalk?')
   .addSubcommand(subcommand =>
     subcommand
-      .setName(SUBCOMMAND_REAL_TALK_RECORD)
+      .setName(RealTalkSubcommand.Record)
       .setDescription('Record a #RealTalk statement.')
       .addUserOption(option =>
         option.setName('who')
@@ -26,15 +29,15 @@ const realTalk = new SlashCommandBuilder()
           .setRequired(true)))
   .addSubcommand(subcommand =>
     subcommand
-      .setName(SUBCOMMAND_REAL_TALK_HISTORY)
+      .setName(RealTalkSubcommand.History)
       .setDescription('List a history of them joints.'))
   .addSubcommand(subcommand =>
     subcommand
-      .setName(SUBCOMMAND_REAL_TALK_STATS)
+      .setName(RealTalkSubcommand.Stats)
       .setDescription('Show me the stats.'))
   .addSubcommand(subcommand =>
     subcommand
-      .setName(SUBCOMMAND_REAL_TALK_QUIZ)
+      .setName(RealTalkSubcommand.Quiz)
       .setDescription('Quiz us, pls.'));
 
 export default [

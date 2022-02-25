@@ -1,5 +1,7 @@
 import {
+  Awaitable,
   Client,
+  ClientEvents,
   CommandInteraction,
   MessageReaction,
   PartialMessageReaction,
@@ -7,10 +9,10 @@ import {
   User,
 } from 'discord.js';
 
-import * as reactions from './reactions';
 import replyBuilder from './reply-builder';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 import { ReactionFunction, reactionInterfaceMap } from './reaction-interface';
+import { ReactionName } from './reactions';
 
 import {
   CustomLogOptions,
@@ -22,7 +24,8 @@ import {
   fetchFull,
 } from '../utils';
 
-type EventListener = (...args: any[]) => Promise<void>;
+type CommandInteractionHandler = (...args: ClientEvents['interactionCreate']) => Awaitable<void>;
+type MessageReactionHandler = (...args: ClientEvents['messageReactionAdd']) => Awaitable<void>;
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
   const options: CustomLogOptions = {
@@ -32,7 +35,7 @@ const logCustom = (data: CustomLogData, responseTime: number): void => {
   logger.custom(data, options);
 };
 
-const onInteractionCreate = (client: Client): EventListener =>
+const onInteractionCreate = (client: Client): CommandInteractionHandler =>
   async (interaction: CommandInteraction): Promise<void> => {
     if (!interaction.isCommand()) {
       return;
@@ -55,12 +58,12 @@ const onInteractionCreate = (client: Client): EventListener =>
     logCustom({ interaction }, t.time());
   };
 
-const onMessageReactionAdd = (client: Client): EventListener =>
+const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
     const { emoji: { name: emojiName } } = reaction;
 
     const shouldHaveHandlerFn: boolean = Boolean(
-      Object.values(reactions).find(value => value === emojiName)
+      Object.values(ReactionName).find(name => name === emojiName)
     );
 
     if (!shouldHaveHandlerFn) {
