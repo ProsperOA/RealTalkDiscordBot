@@ -1,3 +1,6 @@
+import { cloneDeep, isObject } from 'lodash';
+
+import { logger } from './logger';
 import { getRemainingTimeout, Timeout } from './functions';
 
 interface CacheData {
@@ -14,7 +17,7 @@ interface ExpirationTable {
 
 export interface Cache {
   del: (key: string) => void;
-  get: (key: string) => any;
+  get: <T = any>(key: string) => T;
   getExp: (key: string) => number | null;
   set: (key: string, value: any, expire?: number) => void;
 }
@@ -24,7 +27,8 @@ const expirationTable: ExpirationTable = {};
 
 const newCache = (name: string): Cache => {
   if (cacheData[name]) {
-    throw new Error(`${name} cache already exists`);
+    logger.error(`${name} cache already exists`);
+    process.kill(process.pid, 'SIGTERM');
   }
 
   cacheData[name] = {};
@@ -36,7 +40,15 @@ const newCache = (name: string): Cache => {
         delete cacheData[name][key];
       }
     },
-    get: (key: string): any => cacheData[name][key] || null,
+    get: <T = any>(key: string): T => {
+      const item: T = cacheData[name][key];
+
+      if (!item) {
+        return null;
+      }
+
+      return isObject(item) ? cloneDeep<T>(item) : item;
+    },
     getExp: (key: string): number => {
       const timeout: Timeout = expirationTable[name][key];
       return timeout ? getRemainingTimeout(timeout) : null;
@@ -44,14 +56,20 @@ const newCache = (name: string): Cache => {
     set: (key: string, value: any, expire?: number): void => {
       if (expire) {
         if (expire <= 0) {
-          throw new Error('Cache data timeout must be greater than 0');
+          logger.error('Cache expiration time must be greater than 0');
+          process.kill(process.pid, 'SIGTERM');
         }
 
         expirationTable[name][key] =
           setTimeout(() => operations.del(key), expire) as Timeout;
       }
 
-      cacheData[name][key] = value;
+      try {
+        cacheData[name][key] = isObject(value) ? cloneDeep<any>(value) : value;
+      } catch (error) {
+        logger.error(`StackOverflow: ${key} in ${name}`);
+        process.kill(process.pid, 'SIGTERM');
+      }
     },
   };
 

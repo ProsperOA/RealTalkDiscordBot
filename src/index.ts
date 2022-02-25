@@ -20,6 +20,10 @@ const clientOptions: ClientOptions = {
   ]
 };
 
+process.on('SIGTERM', signal => {
+  logger.info(`${signal}: Exiting...`);
+});
+
 export const client: Client = new Client(clientOptions);
 commandInterface.init(client);
 
