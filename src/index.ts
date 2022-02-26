@@ -1,8 +1,11 @@
+import Bugsnag from '@bugsnag/node';
 import { Client, ClientOptions, Intents } from 'discord.js';
+import { omit } from 'lodash';
 
 import commandInterface from './client-manager/command-interface';
 import { isDev, logger } from './utils';
 
+const { BUGSNAG_API_KEY, SERVICE_ENV } = process.env;
 export const SERVICE_NAME: Readonly<string> = 'RealTalkBot';
 
 const clientOptions: ClientOptions = {
@@ -20,8 +23,14 @@ const clientOptions: ClientOptions = {
   ]
 };
 
-process.on('SIGTERM', signal => {
-  logger.info(`${signal}: Exiting...`);
+process.on('SIGTERM', () => {
+  logger.info(`Exiting...`);
+});
+
+Bugsnag.start({
+  apiKey: BUGSNAG_API_KEY,
+  logger: omit(logger, 'custom'),
+  releaseStage: SERVICE_ENV,
 });
 
 export const client: Client = new Client(clientOptions);
