@@ -32,7 +32,7 @@ const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
 const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  const { message } = reaction
+  const { message } = reaction;
 
   const fullMessage: Message = message.partial
     ? await fetchFull<Message>(message)
@@ -82,7 +82,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 };
 
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  const { message } = reaction
+  const { message } = reaction;
 
   const fullMessage: Message = message.partial
     ? await fetchFull<Message>(message)

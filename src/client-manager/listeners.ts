@@ -83,7 +83,7 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
       ? await fetchFull<User>(user, true) : user as User;
 
     if (!(fullReaction && fullUser)) {
-      await user.send(replyBuilder.internalError().content)
+      await user.send(replyBuilder.internalError().content);
       return;
     }
 
