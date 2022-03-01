@@ -16,6 +16,13 @@ export interface Timeout extends NodeJS.Timeout {
   _idleTimeout: number;
 }
 
+export enum Time {
+  Second = 1000,
+  Minute = Second * 60,
+  Hour = Minute * 60,
+  Day = Hour * 24,
+}
+
 interface PartialStructure<T = any> {
   partial: boolean;
   fetch: (force?: boolean) => Promise<T>;
@@ -121,3 +128,6 @@ export const timer = (): Timer => {
     time: (): number => totalTime,
   };
 };
+
+export const msConvert = (ms: number, format: keyof typeof Time): number =>
+  ms / Time[format];

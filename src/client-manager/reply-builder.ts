@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash';
 import { stripIndents } from 'common-tags';
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
-import { nicknameMention, pluralizeIf } from '../utils';
+import { msConvert, nicknameMention, pluralizeIf } from '../utils';
 
 /**
  * Returns a discreet reply message.
@@ -73,7 +73,7 @@ export default {
   realTalkQuiz: (statement: string, duration: number): string =>
     stripIndents`
       Who's the type of person to say: _"${statement}"_?
-      You have ${duration}s to respond in chat with: #RealTalk @Username
+      You have ${msConvert(duration, 'Second')}s to respond in chat with: #RealTalk @Username
       _Ex: #RealTalk @JohnDoe_`,
 
   realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>

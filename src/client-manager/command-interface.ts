@@ -14,12 +14,25 @@ import {
 import db from '../db';
 import listeners from './listeners';
 import replyBuilder from './reply-builder';
-
 import commands, { RealTalkCommand, RealTalkSubcommand } from './commands';
-import { RealTalkQuizRecord, RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { extractUserIdFromMention, getActiveUsersInChannel, isDev, isMention, logger } from '../utils';
 import { useThrottle } from './middleware';
+
+import {
+  RealTalkQuizRecord,
+  RealTalkStats,
+  RealTalkStatsCompact,
+  StatementRecord,
+} from '../db/models/statements';
+
+import {
+  extractUserIdFromMention,
+  getActiveUsersInChannel,
+  isDev,
+  isMention,
+  logger,
+  Time,
+} from '../utils';
 
 export type CommandFunction =
   (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -32,7 +45,7 @@ const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
 const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
 const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
-const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : 30000;
+const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : Time.Second * 30;
 
 let isInitialized: boolean = false;
 
@@ -173,11 +186,11 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
 const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  const responseTimeout: number = 30000;
+  const responseTimeout: number = Time.Second * 30;
   const statement: RealTalkQuizRecord = await db.getRandomStatement();
 
   await interaction.reply(
-    replyBuilder.realTalkQuiz(statement.content, responseTimeout / 1000)
+    replyBuilder.realTalkQuiz(statement.content, responseTimeout)
   );
 
   const filter: CollectorFilter<[Message<boolean>]> =
