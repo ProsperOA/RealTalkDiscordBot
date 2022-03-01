@@ -76,14 +76,15 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
       return logger.error(`No handler for reaction ${emojiName}`);
     }
 
-    let fullReaction: MessageReaction = null;
-    let fullUser: User = null;
+    const fullReaction: MessageReaction = reaction.partial
+      ? await fetchFull<MessageReaction>(reaction) : reaction as MessageReaction;
 
-    try {
-      fullReaction = await fetchFull<MessageReaction>(reaction);
-      fullUser = await fetchFull<User>(user, true);
-    } catch (error) {
-      return logger.error(error);
+    const fullUser: User = user.partial
+      ? await fetchFull<User>(user, true) : user as User;
+
+    if (!(fullReaction && fullUser)) {
+      await user.send(replyBuilder.internalError().content)
+      return;
     }
 
     const t: Timer = timer();

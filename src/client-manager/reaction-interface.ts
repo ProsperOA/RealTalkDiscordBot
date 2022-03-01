@@ -13,7 +13,7 @@ import { RealTalkCommand, RealTalkSubcommand } from './commands';
 import { ReactionName } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { cache, Cache, fetchFull, isDev, logger } from '../utils';
+import { cache, Cache, fetchFull, isDev } from '../utils';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
@@ -32,13 +32,15 @@ const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
 const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  let fullMessage: Message;
+  const { message } = reaction
 
-  try {
-    fullMessage = await fetchFull<Message>(reaction.message);
-  } catch (error) {
-    await user.send(replyBuilder.internalError().content)
-    return logger.error(error);
+  const fullMessage: Message = message.partial
+    ? await fetchFull<Message>(message)
+    : message as Message;
+
+  if (!fullMessage) {
+    await user.send(replyBuilder.internalError().content);
+    return;
   }
 
   const { user: targetUser } = fullMessage.interaction;
@@ -80,13 +82,15 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 };
 
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  let fullMessage: Message;
+  const { message } = reaction
 
-  try {
-    fullMessage = await fetchFull<Message>(reaction.message);
-  } catch (error) {
-    await user.send(replyBuilder.internalError().content)
-    return logger.error(error);
+  const fullMessage: Message = message.partial
+    ? await fetchFull<Message>(message)
+    : message as Message;
+
+  if (!fullMessage) {
+    await user.send(replyBuilder.internalError().content);
+    return;
   }
 
   if (
