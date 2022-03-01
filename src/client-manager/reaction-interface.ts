@@ -1,4 +1,11 @@
-import { Client, CommandInteraction, MessageReaction, TextChannel, User } from 'discord.js';
+import {
+  Client,
+  CommandInteraction,
+  Message,
+  MessageReaction,
+  TextChannel,
+  User,
+} from 'discord.js';
 
 import db from '../db';
 import replyBuilder from './reply-builder';
@@ -6,7 +13,7 @@ import { RealTalkCommand, RealTalkSubcommand } from './commands';
 import { ReactionName } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { cache, Cache, isDev } from '../utils';
+import { cache, Cache, fetchFull, isDev, logger } from '../utils';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
@@ -24,17 +31,25 @@ const reactionResponseCache: Cache = cache.new('reactionResponseCache');
 const calcCapThreshold = (max: number): number =>
   isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
-const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReaction): Promise<void> => {
-  const { message } = reaction;
-  const { user } = message.interaction;
+const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
+  let fullMessage: Message;
 
-  if (message.interaction?.commandName !== RealTalkCommand.RealTalk) {
+  try {
+    fullMessage = await fetchFull<Message>(reaction.message);
+  } catch (error) {
+    await user.send(replyBuilder.internalError().content)
+    return logger.error(error);
+  }
+
+  const { user: targetUser } = fullMessage.interaction;
+
+  if (fullMessage.interaction?.commandName !== RealTalkCommand.RealTalk) {
     return;
   }
 
   const statement: StatementRecord = await db.getStatementWhere({
-    user_id: user.id,
-    link: message.url,
+    user_id: targetUser.id,
+    link: fullMessage.url,
   });
 
   if (statement.is_cap) {
@@ -56,33 +71,40 @@ const realTalkIsCap = async (_client: Client, _user: User, reaction: MessageReac
 
   const capThreshold: number = calcCapThreshold(witnesses.length);
   const capCount: number =
-    message.reactions.cache.filter(r => r.emoji.name === ReactionName.Cap).size;
+    fullMessage.reactions.cache.filter(r => r.emoji.name === ReactionName.Cap).size;
 
   if (capCount >= capThreshold) {
     await db.updateStatementWhere({ id: statement.id }, { is_cap: true });
-    await message.reply(replyBuilder.realTalkIsCap(statement));
+    await fullMessage.reply(replyBuilder.realTalkIsCap(statement));
   }
 };
 
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  const { message } = reaction;
+  let fullMessage: Message;
+
+  try {
+    fullMessage = await fetchFull<Message>(reaction.message);
+  } catch (error) {
+    await user.send(replyBuilder.internalError().content)
+    return logger.error(error);
+  }
 
   if (
-    !ACCEPTED_MESSAGE_TYPES.includes(message.type) ||
-    message.author.id === client.user.id
+    !ACCEPTED_MESSAGE_TYPES.includes(fullMessage.type) ||
+    fullMessage.author.id === client.user.id
   ) {
     return;
   }
 
-  const targetUserId: string = message.author.id;
-  const messageContent: string = message.content;
+  const targetUserId: string = fullMessage.author.id;
+  const messageContent: string = fullMessage.content;
 
   const existingStatement: StatementRecord = await db.getStatementWhere({
     accused_user_id: targetUserId,
     content: messageContent,
   });
 
-  const channel: TextChannel = client.channels.cache.get(message.channelId) as TextChannel;
+  const channel: TextChannel = client.channels.cache.get(fullMessage.channelId) as TextChannel;
 
   if (existingStatement) {
     const existingRealTalk: string = replyBuilder.realTalkExists(
@@ -104,7 +126,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   };
 
   const mockInteraction: any = {
-    channelId: message.channelId,
+    channelId: fullMessage.channelId,
     options: {
       data: [{
         name: RealTalkSubcommand.RecordBase,
