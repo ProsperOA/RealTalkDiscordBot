@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
 import Bugsnag from '@bugsnag/node';
-import { isEmpty, isNil, snakeCase } from 'lodash';
+import { isEmpty, snakeCase } from 'lodash';
 import { stripIndents } from 'common-tags';
 
 import {
@@ -84,22 +84,22 @@ const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, 
  * @returns {string}
  */
 const formatCustomLogOptions = (options: CustomLogOptions): string =>
-  isNil(options)
+  isEmpty(options)
     ? ''
     : Object.keys(options).map(option => `${option}: ${options[option]}`).join('\n');
 
 /**
  * Formats application subcommand values.
  *
- * @param   {CommandInteractionOption} opt - Subcommand to format.
+ * @param   {CommandInteractionOption} option - Subcommand to format.
  * @returns {string}
  */
-const formatSubCommandValue = (opt: CommandInteractionOption): string => {
-  switch (opt.type) {
+const formatSubCommandValue = (option: CommandInteractionOption): string => {
+  switch (option.type) {
     case 'USER':
-      return `${opt.value} (${opt.user.tag})`;
+      return `${option.value} (${option.user.tag})`;
     default:
-      return String(opt.value);
+      return String(option.value);
   }
 };
 
