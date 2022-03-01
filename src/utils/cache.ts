@@ -1,4 +1,4 @@
-import { cloneDeep, isObject } from 'lodash';
+import { cloneDeep, isObject, mapValues } from 'lodash';
 
 import { logger } from './logger';
 import { getRemainingTimeout, Timeout } from './functions';
@@ -9,21 +9,74 @@ interface CacheData {
   };
 }
 
-interface ExpirationTable {
+interface TTLData {
   [name: string]: {
     [type: string]: Timeout;
   };
 }
 
 export interface Cache {
-  del: (key: string) => void;
-  get: <T = any>(key: string) => T | null;
-  getTTL: (key: string) => number | null;
-  set: (key: string, value: any, expire?: number) => void;
+  clear: () => number;
+  delete: (key: string) => boolean;
+  free: () => boolean;
+  get: (key: string) => any;
+  has: (key: string) => boolean;
+  set: (key: string, value: any, ttl?: number) => boolean;
+  setF: (key: string, value: any, ttl?: number) => boolean;
+  take: (key: string) => any;
+  ttl: (key: string) => number;
 }
 
-const cacheData: CacheData = {};
-const expirationTable: ExpirationTable = {};
+let cacheData: CacheData = {};
+let ttlData: TTLData = {};
+
+const OPERATION_RETURN_DEFAULT: Readonly<Record<keyof Cache, number | boolean>> = {
+  clear: 0,
+  delete: false,
+  free: false,
+  get: null,
+  has: false,
+  set: false,
+  setF: false,
+  take: null,
+  ttl: null,
+};
+
+const preCheck = (canOperate: boolean, cb: any, args: any[]): any => {
+  if (!canOperate) {
+    return OPERATION_RETURN_DEFAULT[cb.name as keyof Cache];
+  }
+
+  return cb(...args);
+};
+
+const removeCache = (name: string): boolean => {
+  if (cacheData[name] !== undefined) {
+    delete cacheData[name];
+
+    if (ttlData[name] !== undefined) {
+      delete ttlData[name];
+    }
+
+    return true;
+  }
+
+  return false;
+};
+
+const removeAll = (): number => {
+  const cacheTotal: number = Object.keys(cacheData).length;
+
+  if (cacheTotal) {
+    cacheData = {};
+
+    if (Object.keys(ttlData).length) {
+      ttlData = {};
+    }
+  }
+
+  return cacheTotal;
+};
 
 const newCache = (name: string): Cache => {
   if (cacheData[name]) {
@@ -32,46 +85,100 @@ const newCache = (name: string): Cache => {
   }
 
   cacheData[name] = {};
-  expirationTable[name] = {};
+  ttlData[name] = {};
 
-  const operations = {
-    del: (key: string): void => {
-      if (cacheData[name][key]) {
-        delete cacheData[name][key];
+  const operations: any = {
+    clear: (): number => {
+      const cacheDataTotal: number = Object.keys(cacheData[name]).length;
+
+      if (cacheDataTotal) {
+        cacheData[name] = {};
+
+        if (Object.keys(ttlData[name]).length) {
+          ttlData[name] = {};
+        }
       }
-    },
-    get: <T = any>(key: string): T | null => {
-      const item: T = cacheData[name][key] ?? null;
 
-      return isObject(item) ? cloneDeep<T>(item) : item;
+      return cacheDataTotal;
     },
-    getTTL: (key: string): number | null => {
-      const timeout: Timeout = expirationTable[name][key];
-      return timeout ? getRemainingTimeout(timeout) : null;
-    },
-    set: (key: string, value: any, ttl?: number): void => {
-      if (ttl) {
-        if (ttl <= 0) {
-          logger.error('Cache item ttl must be greater than 0');
-          process.kill(process.pid, 'SIGTERM');
+    delete: (key: string): boolean => {
+      if (operations.has(key)) {
+        delete cacheData[name][key];
+
+        if (operations.ttl(key)) {
+          delete ttlData[name][key];
         }
 
-        expirationTable[name][key] =
-          setTimeout(() => operations.del(key), ttl) as Timeout;
+        return true;
+      }
+
+      return false;
+    },
+    free: (): boolean => {
+      delete cacheData[name];
+      return true;
+    },
+    get: (key: string): any => {
+      const item: any = cacheData[name][key] ?? null;
+      return isObject(item) ? cloneDeep(item) : item;
+    },
+    has: (key: string): boolean => cacheData[name][key] !== undefined,
+    set: (key: string, value: any, ttl?: number): boolean => {
+      if (value === undefined || operations.has(key)) {
+        return false;
+      }
+
+      if (ttl) {
+        if (ttl < 0) {
+          return false;
+        }
+
+        ttlData[name][key] = setTimeout(() => operations.delete(key), ttl) as Timeout;
       }
 
       try {
-        cacheData[name][key] = isObject(value) ? cloneDeep<any>(value) : value;
+        cacheData[name][key] = isObject(value) ? cloneDeep(value) : value;
+        return true;
       } catch (error) {
         logger.error(`stack overflow while setting ${key} in ${name}`);
-        process.kill(process.pid, 'SIGTERM');
+        return false;
       }
+    },
+    setF: (key: string, value: any, ttl?: number): boolean => {
+      if (value === undefined || (ttl && ttl <= 0)) {
+        return false;
+      }
+
+      operations.delete(key);
+
+      return operations.set(key, value, ttl);
+    },
+    take: (key: string): any => {
+      if (operations.has(key)) {
+        const item: any = operations.get(key);
+        operations.delete(key);
+
+        return item;
+      }
+
+      return null;
+    },
+    ttl: (key: string): number => {
+      const timeout: Timeout = ttlData[name][key];
+      return timeout ? getRemainingTimeout(timeout) : null;
     },
   };
 
-  return operations;
+  return mapValues(operations, fn => (
+    (...args: any[]): any => {
+      const canOperate: boolean = cacheData[name] !== undefined;
+      return preCheck(canOperate, fn, args);
+    }
+  )) as any as Cache;
 };
 
 export const cache = {
-  new: (name: string): Cache => newCache(name),
+  remove: removeCache,
+  remoteAll: removeAll,
+  new: newCache,
 };

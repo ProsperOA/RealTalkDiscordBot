@@ -20,13 +20,13 @@ export const useThrottle = (callback: CommandFunction, duration: number): Comman
     }
 
     const userId: string = interaction.user.id;
-    const timeout: number | null = throttleCache.getTTL(userId);
+    const timeout: number | null = throttleCache.ttl(userId);
 
     if (timeout) {
       return interaction.reply(replyBuilder.throttleCoolDown(timeout));
     }
 
-    throttleCache.set(userId, new Date().toUTCString(), duration);
+    throttleCache.setF(userId, new Date().toUTCString(), duration);
 
     await callback(client, interaction, ...args);
   };
