@@ -1,4 +1,5 @@
 import * as chalk from 'chalk';
+import Bugsnag from '@bugsnag/node';
 import { isEmpty, isNil, snakeCase } from 'lodash';
 import { stripIndents } from 'common-tags';
 
@@ -68,6 +69,10 @@ const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, 
   const output: string = `[${SERVICE_NAME}] ${snakeCase(type).toUpperCase()} ${message}`;
 
   const logFn: LogFunction = (console as any)[type] || console.log;
+
+  if (type === BaseLogType.Error) {
+    Bugsnag.notify(output);
+  }
 
   logFn(colorFn(output, ...options));
 };
