@@ -30,12 +30,12 @@ export default {
 
   realTalkHistory: (statements: StatementRecord[]): string =>
     statements.map(s => stripIndents`
-      > **#RealTalk**, ${nicknameMention(s.user_id)} claims ${nicknameMention(s.accused_user_id)} said "${s.content}".
-      > ${hideLinkEmbed(s.link)}`
+      > **#RealTalk** ${nicknameMention(s.accused_user_id)} said: _"${s.content}"_.
+      > (provided by ${nicknameMention(s.user_id)}) ${hideLinkEmbed(s.link)}`
     ).join('\n\n'),
 
   realTalkIsCap: ({ content, link, user_id }: StatementRecord): string =>
-    stripIndents`**The following #RealTalk statement made by ${nicknameMention(user_id)} is cap:**
+    stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(user_id)} is cap:
       _"${content}"_
       ${hideLinkEmbed(link)}`,
 
