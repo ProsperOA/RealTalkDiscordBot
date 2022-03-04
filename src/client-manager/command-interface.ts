@@ -55,12 +55,14 @@ let isInitialized: boolean = false;
  * @throws {Error}
  */
 const checkInit = async (interaction: CommandInteraction): Promise<void> => {
-  if (!isInitialized) {
+  if (isInitialized) {
+    return;
+  }
+
     await interaction.reply(replyBuilder.internalError());
 
     logger.error('Cannot use commands before initializing command interface');
     process.kill(process.pid, 'SIGTERM');
-  }
 };
 
 /**
@@ -80,17 +82,6 @@ const isValidCommandOptionLength = (input: string): boolean =>
  */
 const isValidContentLength = (str: string): boolean =>
   str.length <= RESPONSE_BODY_CONTENT_LENGTH;
-
-/**
- * Returns an interaction's subcommand.
- *
- * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @returns {CommandInteractionOption}
- */
-const getSubCommand = (interaction: CommandInteraction): CommandInteractionOption => {
-  const option: CommandInteractionOption =  interaction.options.data[0];
-  return option.type === 'SUB_COMMAND' ? option : null;
-};
 
 /**
  * Handles the realtalk command.
@@ -150,7 +141,7 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
     return isValidContentLength(replyBuilder.realTalkHistory(statementsAcc));
   });
 
-  return interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
+  await interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
 };
 
 /**
@@ -176,7 +167,7 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
     return interaction.reply(replyBuilder.realTalkStatsCompact(compactStats));
   }
 
-  return interaction.reply(message);
+  await interaction.reply(message);
 };
 
 /**
@@ -246,7 +237,7 @@ const init = async (client: Client): Promise<void> => {
 export const commandInterfaceMap: CommandInterfaceMap = {
   [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     await checkInit(interaction);
-    const subcommand: string = getSubCommand(interaction)?.name;
+    const subcommand: string = interaction.options.getSubcommand(true);
 
     switch(subcommand) {
       case RealTalkSubcommand.Record:

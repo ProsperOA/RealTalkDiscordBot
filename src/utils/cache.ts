@@ -51,28 +51,30 @@ const preCheck = (canOperate: boolean, cb: any, args: any[]): any => {
 };
 
 const removeCache = (name: string): boolean => {
-  if (cacheData[name] !== undefined) {
-    delete cacheData[name];
-
-    if (ttlData[name] !== undefined) {
-      delete ttlData[name];
-    }
-
-    return true;
+  if (cacheData[name] === undefined) {
+    return false;
   }
 
-  return false;
+  delete cacheData[name];
+
+  if (ttlData[name] !== undefined) {
+    delete ttlData[name];
+  }
+
+  return true;
 };
 
 const removeAll = (): number => {
   const cacheTotal: number = Object.keys(cacheData).length;
 
-  if (cacheTotal) {
-    cacheData = {};
+  if (!cacheTotal) {
+    return cacheTotal;
+  }
 
-    if (Object.keys(ttlData).length) {
-      ttlData = {};
-    }
+  cacheData = {};
+
+  if (Object.keys(ttlData).length) {
+    ttlData = {};
   }
 
   return cacheTotal;
@@ -91,28 +93,30 @@ const newCache = (name: string): Cache => {
     clear: (): number => {
       const cacheDataTotal: number = Object.keys(cacheData[name]).length;
 
-      if (cacheDataTotal) {
-        cacheData[name] = {};
+      if (!cacheDataTotal) {
+        return cacheDataTotal;
+      }
 
-        if (Object.keys(ttlData[name]).length) {
-          ttlData[name] = {};
-        }
+      cacheData[name] = {};
+
+      if (Object.keys(ttlData[name]).length) {
+        ttlData[name] = {};
       }
 
       return cacheDataTotal;
     },
     delete: (key: string): boolean => {
-      if (operations.has(key)) {
-        delete cacheData[name][key];
-
-        if (operations.ttl(key)) {
-          delete ttlData[name][key];
-        }
-
-        return true;
+      if (!operations.has(key)) {
+        return false;
       }
 
-      return false;
+      delete cacheData[name][key];
+
+      if (operations.ttl(key)) {
+        delete ttlData[name][key];
+      }
+
+      return true;
     },
     free: (): boolean => {
       delete cacheData[name];
@@ -154,14 +158,14 @@ const newCache = (name: string): Cache => {
       return operations.set(key, value, ttl);
     },
     take: (key: string): any => {
-      if (operations.has(key)) {
-        const item: any = operations.get(key);
-        operations.delete(key);
-
-        return item;
+      if (!operations.has(key)) {
+        return null;
       }
 
-      return null;
+      const item: any = operations.get(key);
+      operations.delete(key);
+
+      return item;
     },
     ttl: (key: string): number => {
       const timeout: Timeout = ttlData[name][key];

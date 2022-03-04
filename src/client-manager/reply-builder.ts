@@ -82,6 +82,6 @@ export default {
       ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`,
 
   throttleCoolDown: (duration: number): InteractionReplyOptions =>
-    quietReply(`**#RealTalk**, chill... ${duration}s left`),
+    quietReply(`**#RealTalk**, chill... ${msConvert(duration, 'Second')}s left`),
 
 };

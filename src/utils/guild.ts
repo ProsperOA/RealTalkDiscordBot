@@ -1,4 +1,4 @@
-import { Guild, GuildChannel, GuildMember, User } from 'discord.js';
+import { Guild, GuildMember, TextChannel, User } from 'discord.js';
 
 import { client } from '../index';
 
@@ -38,9 +38,8 @@ export const getGuild = (): Guild =>
  * @param   {string} userId - id of user to fetch.
  * @returns {GuildMember}
  */
-export const getMember = (userId: string): GuildMember => {
-  return getGuild()?.members.cache.get(userId) ?? null;
-};
+export const getMember = (userId: string): GuildMember =>
+  getGuild()?.members.cache.get(userId) ?? null;
 
 /**
  * Returns a user from the current client's guild.
@@ -66,12 +65,10 @@ export const isOnlineAndListening = (member: GuildMember): boolean =>
  * @param   {string} channelId - guild channel id.
  * @returns {User[]}
  */
-export const getActiveUsersInChannel = (channelId: string): User[] => {
-  const channel: GuildChannel = client.channels.cache.get(channelId) as GuildChannel;
-
-  return channel.members
+export const getActiveUsersInChannel = (channelId: string): User[] =>
+  (client.channels.cache.get(channelId) as TextChannel)
+    ?.members
     ?.filter(isOnlineAndListening)
     .map(member => member.user)
     .filter(user => !user.bot)
     ?? null;
-};

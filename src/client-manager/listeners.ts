@@ -77,10 +77,12 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
     }
 
     const fullReaction: MessageReaction = reaction.partial
-      ? await fetchFull<MessageReaction>(reaction) : reaction as MessageReaction;
+      ? await fetchFull<MessageReaction>(reaction)
+      : reaction as MessageReaction;
 
     const fullUser: User = user.partial
-      ? await fetchFull<User>(user, true) : user as User;
+      ? await fetchFull<User>(user, true)
+      : user as User;
 
     if (!(fullReaction && fullUser)) {
       await user.send(replyBuilder.internalError().content);

@@ -13,7 +13,7 @@ import { RealTalkCommand, RealTalkSubcommand } from './commands';
 import { ReactionName } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { cache, Cache, fetchFull, isDev } from '../utils';
+import { cache, Cache, fetchFull, isDev, Time } from '../utils';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
@@ -23,7 +23,7 @@ interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
 }
 
-const RESPONSE_CACHE_DURATION: Readonly<number> = isDev ? 0 : 1000 * 60 * 60;
+const RESPONSE_CACHE_DURATION: Readonly<number> = isDev ? 0 : Time.Hour;
 const ACCEPTED_MESSAGE_TYPES: Readonly<string[]> = [ 'DEFAULT', 'REPLY' ];
 
 const reactionResponseCache: Cache = cache.new('reactionResponseCache');
@@ -136,7 +136,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
         name: RealTalkSubcommand.RecordBase,
         type: 'SUB_COMMAND',
       }],
-      get: (param: string) => commandParams[param],
+      get: (name: string) => commandParams[name],
     },
     reply: (data: any) => channel.send(data),
     user,

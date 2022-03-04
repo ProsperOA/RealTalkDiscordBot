@@ -55,7 +55,8 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
   const indentSize: number = indent < 1 ? 1 : indent;
   const space: string = Array.from({ length: indentSize }, () => ' ').join('');
 
-  return str.split('\n')
+  return str
+    .split('\n')
     .map(line => space + line)
     .join('\n');
 };

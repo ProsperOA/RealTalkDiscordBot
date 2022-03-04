@@ -65,8 +65,11 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
  * @param {any[]}          options - additional logging options.
  */
 const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, options: any[] = []): void => {
-  const colorFn = (COLOR_FUNCTIONS as any)[type] || COLOR_FUNCTIONS.custom;
-  const output: string = `[${SERVICE_NAME}] ${snakeCase(type).toUpperCase()} ${message}`;
+  const colorFn: chalk.ChalkFunction =
+    (COLOR_FUNCTIONS as any)[type] || COLOR_FUNCTIONS.custom;
+
+  const output: string =
+    `[${SERVICE_NAME}] ${snakeCase(type).toUpperCase()} ${message}`;
 
   const logFn: LogFunction = (console as any)[type] || console.log;
 
@@ -154,11 +157,8 @@ const formatInteraction = (interaction: CommandInteraction,  options: CustomLogO
   switch (interaction.type) {
     case 'APPLICATION_COMMAND':
       output += `Command Name: ${interaction.commandName}
-        ${formatCustomLogOptions(options)}\n`;
-
-      if ('options' in interaction) {
-        output += formatCommandOptions(interaction.options.data);
-      }
+        ${formatCustomLogOptions(options)}
+        ${formatCommandOptions(interaction.options.data)}`;
       break;
     default:
       logger.warn(`Invalid command interaction type: ${interaction.type}`);
@@ -206,7 +206,7 @@ const buildMessageReactionOutput = (data: CustomMessageReaction, options?: Custo
 };
 
 const customLogger = (data: CustomLogData, options?: CustomLogOptions): void => {
-  const type: CustomLogType = Object.keys(data)[0] as CustomLogType;
+  const type: string = Object.keys(data)[0];
   const isValidLogType: boolean = Boolean(
     Object.values(CustomLogType).find(logType => logType === type)
   );

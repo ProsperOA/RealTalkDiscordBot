@@ -20,7 +20,7 @@ export const useThrottle = (callback: CommandFunction, duration: number): Comman
     }
 
     const userId: string = interaction.user.id;
-    const timeout: number | null = throttleCache.ttl(userId);
+    const timeout: number = throttleCache.ttl(userId);
 
     if (timeout) {
       return interaction.reply(replyBuilder.throttleCoolDown(timeout));
