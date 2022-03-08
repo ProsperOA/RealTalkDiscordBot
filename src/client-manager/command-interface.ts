@@ -6,7 +6,6 @@ import {
   Client,
   CollectorFilter,
   CommandInteraction,
-  CommandInteractionOption,
   Message,
   MessageCollector,
 } from 'discord.js';

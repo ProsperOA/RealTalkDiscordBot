@@ -1,7 +1,7 @@
-import { cloneDeep, isObject, mapValues } from 'lodash';
+import { cloneDeep, isObject } from 'lodash';
 
 import { logger } from './logger';
-import { getRemainingTimeout, Timeout } from './functions';
+import { AnyFunction, getRemainingTimeout, Timeout } from './functions';
 
 interface CacheData {
   [name: string]: {
@@ -30,7 +30,7 @@ export interface Cache {
 let cacheData: CacheData = {};
 let ttlData: TTLData = {};
 
-const OPERATION_RETURN_DEFAULT: Readonly<Record<keyof Cache, number | boolean>> = {
+const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> = {
   clear: 0,
   delete: false,
   free: false,
@@ -42,12 +42,12 @@ const OPERATION_RETURN_DEFAULT: Readonly<Record<keyof Cache, number | boolean>> 
   ttl: null,
 };
 
-const preCheck = (canOperate: boolean, cb: any, args: any[]): any => {
+const preCheck = (canOperate: boolean, callback: AnyFunction, args: any[]): any => {
   if (!canOperate) {
-    return OPERATION_RETURN_DEFAULT[cb.name as keyof Cache];
+    return OPERATION_DEFAULT_RETURN[callback.name as keyof Cache];
   }
 
-  return cb(...args);
+  return callback(...args);
 };
 
 const removeCache = (name: string): boolean => {
@@ -89,7 +89,7 @@ const newCache = (name: string): Cache => {
   cacheData[name] = {};
   ttlData[name] = {};
 
-  const operations: any = {
+  const operations: Record<keyof Cache, AnyFunction> = {
     clear: (): number => {
       const cacheDataTotal: number = Object.keys(cacheData[name]).length;
 
@@ -173,12 +173,11 @@ const newCache = (name: string): Cache => {
     },
   };
 
-  return mapValues(operations, fn => (
-    (...args: any[]): any => {
-      const canOperate: boolean = cacheData[name] !== undefined;
-      return preCheck(canOperate, fn, args);
-    }
-  )) as any as Cache;
+  Object.values(operations).map(fn =>
+    (...args: any[]): any => preCheck(cacheData[name] !== undefined, fn, args)
+  );
+
+  return operations;
 };
 
 export const cache = {

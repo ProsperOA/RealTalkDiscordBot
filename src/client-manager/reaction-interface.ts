@@ -93,10 +93,10 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     return;
   }
 
-  if (
-    !ACCEPTED_MESSAGE_TYPES.includes(fullMessage.type) ||
-    fullMessage.author.id === client.user.id
-  ) {
+  const isValidReaction: boolean = ACCEPTED_MESSAGE_TYPES.includes(fullMessage.type)
+    && fullMessage.author.id !== client.user.id;
+
+  if (!isValidReaction) {
     return;
   }
 

@@ -5,6 +5,8 @@ import { isDev } from './index';
 import { getUser } from './guild';
 import { logger } from './logger';
 
+export type AnyFunction = (...args: any[]) => any;
+
 export interface Timer {
   start: () => Date;
   stop: () => Date;
@@ -69,7 +71,7 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
  * @returns {string}
  */
 export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
-  (typeof pluralize === 'boolean' && !pluralize) || pluralize === 1
+  pluralize === false || pluralize === 1
     ? str
     : `${str}s`;
 
