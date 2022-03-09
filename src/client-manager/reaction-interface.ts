@@ -13,7 +13,7 @@ import { RealTalkCommand, RealTalkSubcommand } from './commands';
 import { ReactionName } from './reactions';
 import { StatementRecord } from '../db/models/statements';
 import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { cache, Cache, fetchFull, isDev, Time } from '../utils';
+import { cache, Cache, Config, fetchFull, Time } from '../utils';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 
 export type ReactionFunction =
@@ -23,13 +23,13 @@ interface ReactionInterfaceMap {
   [reaction: string]: ReactionFunction;
 }
 
-const RESPONSE_CACHE_DURATION: Readonly<number> = isDev ? 0 : Time.Hour;
+const RESPONSE_CACHE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Hour;
 const ACCEPTED_MESSAGE_TYPES: Readonly<string[]> = [ 'DEFAULT', 'REPLY' ];
 
 const reactionResponseCache: Cache = cache.new('reactionResponseCache');
 
 const calcCapThreshold = (max: number): number =>
-  isDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
+  Config.IsDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
 const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
@@ -61,7 +61,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 
   const witnesses: StatementWitnessRecord[] = await db.getStatementWitnesses(statement.id);
 
-  if (!isDev) {
+  if (!Config.IsDev) {
     const isWitness: boolean = Boolean(witnesses.find(witness => witness.user_id === user.id));
     const isAuthor: boolean = user.id === statement.user_id;
 

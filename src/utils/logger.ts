@@ -11,7 +11,7 @@ import {
   User,
 } from 'discord.js';
 
-import { SERVICE_NAME } from '../index';
+import { Config } from './config';
 import { multilineIndent } from './functions';
 
 type LogFunction = (...data: any[]) => void;
@@ -53,7 +53,7 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
   custom: chalk.magenta,
   debug: chalk.cyanBright,
   error: chalk.red,
-  info: chalk.cyan,
+  info: chalk.blueBright,
   warn: chalk.yellow,
 };
 
@@ -69,7 +69,7 @@ const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, 
     (COLOR_FUNCTIONS as any)[type] || COLOR_FUNCTIONS.custom;
 
   const output: string =
-    `[${SERVICE_NAME}] ${snakeCase(type).toUpperCase()} ${message}`;
+    `[${Config.ServiceName}] ${snakeCase(type).toUpperCase()} ${message}`;
 
   const logFn: LogFunction = (console as any)[type] || console.log;
 

@@ -26,7 +26,7 @@ export const useThrottle = (callback: CommandFunction, duration: number): Comman
       return interaction.reply(replyBuilder.throttleCoolDown(timeout));
     }
 
-    throttleCache.setF(userId, new Date().toUTCString(), duration);
+    throttleCache.setF(userId, new Date().toISOString(), duration);
 
     await callback(client, interaction, ...args);
   };

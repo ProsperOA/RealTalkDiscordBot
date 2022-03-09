@@ -56,7 +56,7 @@ export const getUser = (userId: string): User =>
  * @param   {GuildMember} member - guild member.
  * @returns {boolean}
  */
-export const isOnlineAndListening = (member: GuildMember): boolean =>
+const isOnlineAndListening = (member: GuildMember): boolean =>
   member.presence?.status === 'online' && !member.voice.deaf;
 
 /**

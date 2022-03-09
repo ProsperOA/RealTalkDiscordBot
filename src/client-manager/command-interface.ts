@@ -25,9 +25,9 @@ import {
 } from '../db/models/statements';
 
 import {
+  Config,
   extractUserIdFromMention,
   getActiveUsersInChannel,
-  isDev,
   isMention,
   logger,
   Time,
@@ -35,6 +35,7 @@ import {
 
 export type CommandFunction =
   (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
+
 interface CommandInterfaceMap {
   [commandName: string]: CommandFunction;
 }
@@ -42,9 +43,12 @@ interface CommandInterfaceMap {
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
 const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
 
-const COMMAND_OPTION_CONTENT_LENGTH: Readonly<number> = 140;
-const RESPONSE_BODY_CONTENT_LENGTH: Readonly<number> = 2000;
-const THROTTLE_DURATION: Readonly<number> = isDev ? 0 : Time.Second * 30;
+enum MaxContentLength {
+  InteractionOption = 140,
+  ResponseBody = 2000,
+}
+
+const THROTTLE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Second * 30;
 
 let isInitialized: boolean = false;
 
@@ -58,29 +62,14 @@ const checkInit = async (interaction: CommandInteraction): Promise<void> => {
     return;
   }
 
-    await interaction.reply(replyBuilder.internalError());
+  await interaction.reply(replyBuilder.internalError());
 
-    logger.error('Cannot use commands before initializing command interface');
-    process.kill(process.pid, 'SIGTERM');
+  logger.error('Cannot use commands before initializing command interface');
+  process.kill(process.pid, 'SIGTERM');
 };
 
-/**
- * Checks whether user input has an acceptable length.
- *
- * @param   {string}  input - user command option input.
- * @returns {boolean}
- */
-const isValidCommandOptionLength = (input: string): boolean =>
-  input.length <= COMMAND_OPTION_CONTENT_LENGTH;
-
-/**
- * Checks whether a string has a valid content length.
- *
- * @param   {string}  str - string to check.
- * @returns {boolean}
- */
-const isValidContentLength = (str: string): boolean =>
-  str.length <= RESPONSE_BODY_CONTENT_LENGTH;
+const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
+  str.length <= MaxContentLength[type];
 
 /**
  * Handles the realtalk command.
@@ -93,15 +82,15 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction, 
     .filter(user => user.id !== interaction.user.id)
     .map(user => ({ user_id: user.id }));
 
-  if (!isDev && (requireWitnesses && isEmpty(witnesses))) {
+  if (!Config.IsDev && (requireWitnesses && isEmpty(witnesses))) {
     return interaction.reply(replyBuilder.realTalkNoWitnesses());
   }
 
   const statement: string = interaction.options.get('what', true).value as string;
 
-  if (!isValidCommandOptionLength(statement)) {
+  if (!hasValidContentLength(statement, 'InteractionOption')) {
     return interaction.reply(
-      replyBuilder.invalidStatementLength(COMMAND_OPTION_CONTENT_LENGTH)
+      replyBuilder.invalidStatementLength(MaxContentLength.InteractionOption)
     );
   }
 
@@ -137,7 +126,11 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
 
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
-    return isValidContentLength(replyBuilder.realTalkHistory(statementsAcc));
+
+    return hasValidContentLength(
+      replyBuilder.realTalkHistory(statementsAcc),
+      'ResponseBody'
+    );
   });
 
   await interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
@@ -151,9 +144,9 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
  */
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
-  const message: string  = replyBuilder.realTalkStats(stats);
+  const message: string = replyBuilder.realTalkStats(stats);
 
-  if (!isValidContentLength(message)) {
+  if (!hasValidContentLength(message, 'ResponseBody')) {
     const compactStats: RealTalkStatsCompact = { uniqueUsers: 0, uses: 0 };
 
     Object.values(stats).forEach(({ uses }) => {
@@ -185,6 +178,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
 
   const filter: CollectorFilter<[Message<boolean>]> =
     (message: Message) => message.content.startsWith('#RealTalk');
+
   const collector: MessageCollector =
     interaction.channel.createMessageCollector({ filter, time: responseTimeout });
 
@@ -226,10 +220,11 @@ const init = async (client: Client): Promise<void> => {
 
     logger.info('Successfully reloaded application (/) commands.');
 
-    listeners.register(client, isDev);
+    listeners.register(client, Config.IsDev);
     isInitialized = true;
   } catch (error) {
     logger.error(error);
+    process.kill(process.pid, 'SIGTERM');
   }
 };
 

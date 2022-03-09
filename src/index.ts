@@ -3,10 +3,9 @@ import { Client, ClientOptions, Intents } from 'discord.js';
 import { omit } from 'lodash';
 
 import commandInterface from './client-manager/command-interface';
-import { isDev, logger } from './utils';
+import { Config, logger } from './utils';
 
-const { BUGSNAG_API_KEY, SERVICE_ENV } = process.env;
-export const SERVICE_NAME: Readonly<string> = 'RealTalkBot';
+const { CLIENT_TOKEN, BUGSNAG_API_KEY, SERVICE_ENV } = process.env;
 
 const clientOptions: ClientOptions = {
   intents: [
@@ -37,11 +36,11 @@ export const client: Client = new Client(clientOptions);
 commandInterface.init(client);
 
 client.on('ready', (): void => {
-  if (isDev) {
+  if (Config.IsDev) {
     client.user.setActivity('Development Mode');
   }
 
   logger.info(`Logged in as ${client.user.tag}`);
 });
 
-client.login(process.env.CLIENT_TOKEN);
+client.login(CLIENT_TOKEN);

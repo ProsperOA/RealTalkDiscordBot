@@ -57,7 +57,7 @@ const buildWitnessRecords = (witnesses: Partial<StatementWitnessRecord>[], state
     created_at: new Date().toISOString(),
   } as StatementWitnessRecord));
 
-const createStatement = (statement: StatementRecord, witnesses: Partial<StatementWitnessRecord>[])  =>
+const createStatement = (statement: StatementRecord, witnesses: Partial<StatementWitnessRecord>[]): Promise<any> =>
   knex.transaction(trx =>
     knex('statements')
       .transacting(trx)
@@ -68,7 +68,7 @@ const createStatement = (statement: StatementRecord, witnesses: Partial<Statemen
           .transacting(trx)
           .insert(buildWitnessRecords(witnesses, data[0].id))));
 
-const getAllStatements = (): Knex.QueryBuilder =>
+const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
   knex
     .select()
     .table('statements');
@@ -88,13 +88,13 @@ const transformAccusations = (accusations: RealTalkAccusationRecord[]): RealTalk
     [accusation.accused_user_id]: { accusations: Number(accusation.count) }
   }));
 
-const getStatementUses = (): Knex.QueryBuilder =>
+const getStatementUses = (): Knex.QueryBuilder<RealTalkUsageRecord[]> =>
   knex('statements')
     .select('user_id')
     .count('user_id')
     .groupBy('user_id');
 
-const getStatementAccusations = (): Knex.QueryBuilder =>
+const getStatementAccusations = (): Knex.QueryBuilder<RealTalkAccusationRecord[]> =>
   knex('statements')
     .select('accused_user_id')
     .count('accused_user_id')
@@ -107,14 +107,14 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
   return merge({}, ...uses, ...accusations);
 };
 
-const getRandomStatement = (): Knex.QueryBuilder =>
+const getRandomStatement = (): Knex.QueryBuilder<StatementRecord> =>
   knex('statements')
     .select([ 'accused_user_id', 'content' ])
     .orderByRaw('RANDOM()')
     .limit(1)
     .first();
 
-const updateStatementWhere = (where: any, update: any): Knex.QueryBuilder =>
+const updateStatementWhere = (where: any, update: any): Knex.QueryBuilder<any> =>
   knex('statements')
     .where(where)
     .update(update);

@@ -50,7 +50,7 @@ const preCheck = (canOperate: boolean, callback: AnyFunction, args: any[]): any 
   return callback(...args);
 };
 
-const removeCache = (name: string): boolean => {
+const remove = (name: string): boolean => {
   if (cacheData[name] === undefined) {
     return false;
   }
@@ -64,7 +64,7 @@ const removeCache = (name: string): boolean => {
   return true;
 };
 
-const removeAll = (): number => {
+const flushAll = (): number => {
   const cacheTotal: number = Object.keys(cacheData).length;
 
   if (!cacheTotal) {
@@ -181,7 +181,7 @@ const newCache = (name: string): Cache => {
 };
 
 export const cache = {
-  remove: removeCache,
-  remoteAll: removeAll,
+  flushAll,
   new: newCache,
+  remove,
 };

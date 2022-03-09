@@ -1,9 +1,9 @@
 import { User } from 'discord.js';
 import { memberNicknameMention } from '@discordjs/builders';
 
-import { isDev } from './index';
 import { getUser } from './guild';
 import { logger } from './logger';
+import { Config } from './config';
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -89,7 +89,7 @@ export const nicknameMention = (userId: string): string => {
     return `UserID::${userId}`;
   }
 
-  return isDev ? user.tag : memberNicknameMention(userId);
+  return Config.IsDev ? user.tag : memberNicknameMention(userId);
 };
 
 export const fetchFull = async <T>(partial: PartialStructure<T>, force?: boolean): Promise<T> => {
