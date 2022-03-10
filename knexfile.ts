@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
+
 config({ debug: true });
 
 const { DATABASE_URL } = process.env;
@@ -8,7 +9,7 @@ export default {
     client: 'pg',
     connection: {
       connectionString: DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
+      ssl: false,
     },
     migrations: {
       directory: './src/db/migrations',
