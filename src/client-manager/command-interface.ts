@@ -104,11 +104,11 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction, 
     await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
   const statementRecord: StatementRecord = {
-    user_id: interaction.user.id,
     accused_user_id: targetUserId,
-    created_at: new Date(),
     content: statement,
-    link: message.url,
+    created_at: new Date(),
+    url: message.url,
+    user_id: interaction.user.id,
   };
 
   await db.createStatement(statementRecord, witnesses);

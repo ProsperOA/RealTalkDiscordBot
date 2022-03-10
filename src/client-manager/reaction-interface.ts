@@ -51,7 +51,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 
   const statement: StatementRecord = await db.getStatementWhere({
     user_id: targetUser.id,
-    link: fullMessage.url,
+    url: fullMessage.url,
   });
 
   if (statement.is_cap) {
@@ -113,7 +113,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   if (existingStatement) {
     const existingRealTalk: string = replyBuilder.realTalkExists(
       user.id,
-      existingStatement.link
+      existingStatement.url,
     );
 
     if (existingRealTalk !== reactionResponseCache.get(user.id)) {

@@ -5,14 +5,14 @@ import knex from '../db';
 import { StatementWitnessRecord } from './statement-witnesses';
 
 export interface StatementRecord {
-  id?: number;
-  user_id: string;
   accused_user_id: string;
+  content: string;
   created_at: Date;
   deleted_at?: Date;
-  content: string;
-  link: string;
+  id?: number;
   is_cap?: boolean;
+  url: string;
+  user_id: string;
 }
 
 export interface RealTalkStats {
