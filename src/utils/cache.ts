@@ -1,4 +1,4 @@
-import { cloneDeep, isObject } from 'lodash';
+import { cloneDeep, isObject, mapValues } from 'lodash';
 
 import { logger } from './logger';
 import { AnyFunction, getRemainingTimeout, Timeout } from './functions';
@@ -42,8 +42,8 @@ const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> 
   ttl: null,
 };
 
-const preCheck = (canOperate: boolean, callback: AnyFunction, args: any[]): any => {
-  if (!canOperate) {
+const preCheck = (cacheToCheck: any, callback: AnyFunction, args: any[]): any => {
+  if (cacheToCheck === undefined) {
     return OPERATION_DEFAULT_RETURN[callback.name as keyof Cache];
   }
 
@@ -173,11 +173,9 @@ const newCache = (name: string): Cache => {
     },
   };
 
-  Object.values(operations).map(fn =>
-    (...args: any[]): any => preCheck(cacheData[name] !== undefined, fn, args)
+  return mapValues(operations, fn =>
+    (...args: any[]): any => preCheck(cacheData[name], fn, args)
   );
-
-  return operations;
 };
 
 export const cache = {

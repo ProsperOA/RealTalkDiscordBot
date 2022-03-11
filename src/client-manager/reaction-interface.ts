@@ -50,11 +50,11 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
   }
 
   const statement: StatementRecord = await db.getStatementWhere({
-    user_id: targetUser.id,
+    userId: targetUser.id,
     url: fullMessage.url,
   });
 
-  if (statement.is_cap) {
+  if (statement.isCap) {
     await reaction.remove();
     return;
   }
@@ -62,8 +62,8 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
   const witnesses: StatementWitnessRecord[] = await db.getStatementWitnesses(statement.id);
 
   if (!Config.IsDev) {
-    const isWitness: boolean = Boolean(witnesses.find(witness => witness.user_id === user.id));
-    const isAuthor: boolean = user.id === statement.user_id;
+    const isWitness: boolean = Boolean(witnesses.find(witness => witness.userId === user.id));
+    const isAuthor: boolean = user.id === statement.userId;
 
     if (isAuthor || !isWitness) {
       await reaction.remove();
@@ -76,7 +76,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
     fullMessage.reactions.cache.filter(r => r.emoji.name === ReactionName.Cap).size;
 
   if (capCount >= capThreshold) {
-    await db.updateStatementWhere({ id: statement.id }, { is_cap: true });
+    await db.updateStatementWhere({ id: statement.id }, { isCap: true });
     await fullMessage.reply(replyBuilder.realTalkIsCap(statement));
   }
 };
@@ -104,7 +104,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const messageContent: string = fullMessage.content;
 
   const existingStatement: StatementRecord = await db.getStatementWhere({
-    accused_user_id: targetUserId,
+    accusedUserId: targetUserId,
     content: messageContent,
   });
 

@@ -80,7 +80,7 @@ const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength)
 const realTalkRecord = async (_client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(interaction.channelId)
     .filter(user => user.id !== interaction.user.id)
-    .map(user => ({ user_id: user.id }));
+    .map(user => ({ userId: user.id }));
 
   if (!Config.IsDev && (requireWitnesses && isEmpty(witnesses))) {
     return interaction.reply(replyBuilder.realTalkNoWitnesses());
@@ -103,12 +103,12 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction, 
   const message: Message =
     await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
-  const statementRecord: StatementRecord = {
-    accused_user_id: targetUserId,
+  const statementRecord: Partial<StatementRecord> = {
+    accusedUserId: targetUserId,
     content: statement,
-    created_at: new Date(),
+    createdAt: new Date(),
     url: message.url,
-    user_id: interaction.user.id,
+    userId: interaction.user.id,
   };
 
   await db.createStatement(statementRecord, witnesses);
@@ -190,7 +190,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
     const mention: string = words(trim(content))[1];
     const userId: string = extractUserIdFromMention(mention);
     const isValidMention: boolean = mention && isMention(mention);
-    const isCorrectUserId: boolean = userId === statement.accused_user_id;
+    const isCorrectUserId: boolean = userId === statement.accusedUserId;
 
     if (isValidMention && isCorrectUserId) {
       correctAnswerUserIds.push(message.author.id);
@@ -199,7 +199,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
 
   collector.on('end', async () => {
     await interaction.followUp(
-      replyBuilder.realTalkQuizEnd(statement.accused_user_id, correctAnswerUserIds)
+      replyBuilder.realTalkQuizEnd(statement.accusedUserId, correctAnswerUserIds)
     );
   });
 };

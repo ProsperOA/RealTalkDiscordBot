@@ -4,15 +4,15 @@ import { Knex } from 'knex';
 import knex from '../db';
 
 export interface StatementWitnessRecord {
-  created_at: string;
-  statement_id: number;
-  user_id: string;
+  createdAt: string;
+  statementId: number;
+  userId: string;
 }
 
 const getStatementWitnesses = (statementId: number): Knex.QueryBuilder<StatementWitnessRecord> =>
-  knex('statement_witnesses')
-    .select('user_id')
-    .where({ statement_id: statementId });
+  knex('statementWitnesses')
+    .select('userId')
+    .where({ statementId });
 
 export default {
   getStatementWitnesses,
