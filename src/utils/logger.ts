@@ -14,7 +14,13 @@ import {
 import { Config } from './config';
 import { multilineIndent } from './functions';
 
-type LogFunction = (...data: any[]) => void;
+type LogFunction =
+  Console['log'] |
+  Console['info'] |
+  Console['warn'] |
+  Console['error'] |
+  Console['debug'];
+
 export interface CustomLogOptions {
   [name: string]: string;
 }
@@ -66,7 +72,7 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
  */
 const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, options: any[] = []): void => {
   const colorFn: chalk.ChalkFunction =
-    (COLOR_FUNCTIONS as any)[type] || COLOR_FUNCTIONS.custom;
+    COLOR_FUNCTIONS[type as LogColorType] || COLOR_FUNCTIONS.custom;
 
   const output: string =
     `[${Config.ServiceName}] ${snakeCase(type).toUpperCase()} ${message}`;
@@ -207,9 +213,7 @@ const buildMessageReactionOutput = (data: CustomMessageReaction, options?: Custo
 
 const customLogger = (data: CustomLogData, options?: CustomLogOptions): void => {
   const type: string = Object.keys(data)[0];
-  const isValidLogType: boolean = Boolean(
-    Object.values(CustomLogType).find(logType => logType === type)
-  );
+  const isValidLogType: boolean = Object.values<string>(CustomLogType).includes(type);
 
   if (!isValidLogType) {
     return logger.warn(`Invalid custom log type: ${type}`);

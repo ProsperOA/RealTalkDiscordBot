@@ -62,9 +62,8 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
     const { emoji: { name: emojiName } } = reaction;
 
-    const shouldHaveHandlerFn: boolean = Boolean(
-      Object.values(ReactionName).find(name => name === emojiName)
-    );
+    const shouldHaveHandlerFn: boolean = Object.values<string>(ReactionName)
+      .includes(emojiName);
 
     if (!shouldHaveHandlerFn) {
       return;
