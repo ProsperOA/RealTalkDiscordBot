@@ -1,6 +1,7 @@
 import {
   Client,
   CommandInteraction,
+  InteractionReplyOptions,
   Message,
   MessageReaction,
   TextChannel,
@@ -135,7 +136,8 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
       get: (name: string): {value: string} => commandParams[name],
       getSubcommand: (): string => RealTalkSubcommand.RecordBase,
     },
-    reply: (data: any) => channel.send(data),
+    reply: (options: InteractionReplyOptions) =>
+      channel.send(replyBuilder.realTalkEmojiReaction(user.id, options.content)),
     user,
   };
 

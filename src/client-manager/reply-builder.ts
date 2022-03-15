@@ -47,6 +47,11 @@ export default {
       Date: ${time(new Date())}
       ${nicknameMention(userId)}: _"${statement}"_`,
 
+  realTalkEmojiReaction: (userId: string, statement: string): string =>
+    stripIndents`${statement}
+
+      (Created with #RealTalk emoji by ${nicknameMention(userId)})`,
+
   realTalkStats: (stats: RealTalkStats): string =>
     stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
