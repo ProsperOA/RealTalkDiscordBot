@@ -22,10 +22,6 @@ const clientOptions: ClientOptions = {
   ]
 };
 
-process.on('SIGTERM', () => {
-  logger.info(`Exiting...`);
-});
-
 Bugsnag.start({
   apiKey: BUGSNAG_API_KEY,
   logger: omit(logger, 'custom'),

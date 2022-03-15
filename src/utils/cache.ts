@@ -83,7 +83,7 @@ const flushAll = (): number => {
 const newCache = (name: string): Cache => {
   if (cacheData[name]) {
     logger.error(`${name} cache already exists`);
-    process.kill(process.pid, 'SIGTERM');
+    process.exit(1);
   }
 
   cacheData[name] = {};

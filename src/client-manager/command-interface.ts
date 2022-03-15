@@ -52,22 +52,6 @@ const THROTTLE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Second * 30;
 
 let isInitialized: boolean = false;
 
-/**
- * Throws error if isInitialized is false.
- *
- * @throws {Error}
- */
-const checkInit = async (interaction: CommandInteraction): Promise<void> => {
-  if (isInitialized) {
-    return;
-  }
-
-  await interaction.reply(replyBuilder.internalError());
-
-  logger.error('Cannot use commands before initializing command interface');
-  process.kill(process.pid, 'SIGTERM');
-};
-
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
 
@@ -224,13 +208,21 @@ const init = async (client: Client): Promise<void> => {
     isInitialized = true;
   } catch (error) {
     logger.error(error);
-    process.kill(process.pid, 'SIGTERM');
+    process.exit(1);
   }
+};
+
+const checkInit = async (client: Client): Promise<void> => {
+  if (isInitialized) {
+    return;
+  }
+
+  await init(client);
 };
 
 export const commandInterfaceMap: CommandInterfaceMap = {
   [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
-    await checkInit(interaction);
+    await checkInit(client);
     const subcommand: string = interaction.options.getSubcommand(true);
 
     switch(subcommand) {
