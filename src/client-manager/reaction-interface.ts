@@ -132,11 +132,8 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const mockInteraction: any = {
     channelId: fullMessage.channelId,
     options: {
-      data: [{
-        name: RealTalkSubcommand.RecordBase,
-        type: 'SUB_COMMAND',
-      }],
-      get: (name: string) => commandParams[name],
+      get: (name: string): {value: string} => commandParams[name],
+      getSubcommand: (): string => RealTalkSubcommand.RecordBase,
     },
     reply: (data: any) => channel.send(data),
     user,
