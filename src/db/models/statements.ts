@@ -50,11 +50,11 @@ export interface RealTalkQuizRecord {
   content: string;
 }
 
-const buildWitnessRecords = (witnesses: Partial<StatementWitnessRecord>[], statementId: number): StatementWitnessRecord[] =>
+const buildWitnessRecords = (witnesses: Partial<StatementWitnessRecord>[], statementId: number, createdAt: Date): StatementWitnessRecord[] =>
   witnesses.map(witness => ({
     ...witness,
     statementId,
-    createdAt: new Date().toISOString(),
+    createdAt,
   } as StatementWitnessRecord));
 
 const createStatement = (statement: Partial<StatementRecord>, witnesses: Partial<StatementWitnessRecord>[]): Promise<any> =>
@@ -62,11 +62,11 @@ const createStatement = (statement: Partial<StatementRecord>, witnesses: Partial
     knex('statements')
       .transacting(trx)
       .insert(statement, [ 'id' ])
-      .then(data => isEmpty(witnesses)
+      .then(([ data ]) => isEmpty(witnesses)
         ? data
         : knex('statementWitnesses')
           .transacting(trx)
-          .insert(buildWitnessRecords(witnesses, data[0].id))));
+          .insert(buildWitnessRecords(witnesses, data.id, new Date()))));
 
 const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
   knex

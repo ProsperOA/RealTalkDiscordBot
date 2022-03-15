@@ -186,7 +186,7 @@ const buildInteractionOutput = (interaction: CommandInteraction, options: Custom
 
   const output: string = stripIndents`
     Type: ${type}
-    Created: ${interaction.createdAt.toUTCString()}
+    Created: ${interaction.createdAt.toISOString()}
     User: ${user.tag}
     ${formatInteraction(interaction, options)}`;
 
@@ -203,7 +203,7 @@ const buildMessageReactionOutput = (data: CustomMessageReaction, options?: Custo
     User: ${user.tag}
     Message Author: ${message.author.tag}
     Message Content: ${chalk.italic(message.content)}
-    Message Created: ${message.createdAt.toUTCString()}
+    Message Created: ${message.createdAt.toISOString()}
     Emoji Name: ${emoji.name}
     Reaction Count: ${count}
     ${formatCustomLogOptions(options)}`;

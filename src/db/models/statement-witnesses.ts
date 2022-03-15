@@ -4,7 +4,7 @@ import { Knex } from 'knex';
 import knex from '../db';
 
 export interface StatementWitnessRecord {
-  createdAt: string;
+  createdAt: Date;
   statementId: number;
   userId: string;
 }

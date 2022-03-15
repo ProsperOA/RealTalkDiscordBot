@@ -90,7 +90,7 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction, 
   const statementRecord: Partial<StatementRecord> = {
     accusedUserId: targetUserId,
     content: statement,
-    createdAt: new Date(),
+    createdAt: interaction.createdAt,
     url: message.url,
     userId: interaction.user.id,
   };
