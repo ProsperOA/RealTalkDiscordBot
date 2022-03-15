@@ -4,6 +4,7 @@ import {
   InteractionReplyOptions,
   Message,
   MessageReaction,
+  MessageType,
   TextChannel,
   User,
 } from 'discord.js';
@@ -25,7 +26,7 @@ interface ReactionInterfaceMap {
 }
 
 const RESPONSE_CACHE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Hour;
-const ACCEPTED_MESSAGE_TYPES: Readonly<string[]> = [ 'DEFAULT', 'REPLY' ];
+const ACCEPTED_MESSAGE_TYPES: Readonly<MessageType[]> = [ 'DEFAULT', 'REPLY' ];
 
 const reactionResponseCache: Cache = cache.new('reactionResponseCache');
 
@@ -34,6 +35,10 @@ const calcCapThreshold = (max: number): number =>
 
 const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
+
+  if (!message.content) {
+    return;
+  }
 
   const fullMessage: Message = message.partial
     ? await fetchFull<Message>(message)
@@ -44,14 +49,14 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
     return;
   }
 
-  const { user: targetUser } = fullMessage.interaction;
+  const { commandName, user: targetUser } = fullMessage.interaction ?? {};
 
-  if (fullMessage.interaction?.commandName !== RealTalkCommand.RealTalk) {
+  if (commandName !== RealTalkCommand.RealTalk) {
     return;
   }
 
   const statement: StatementRecord = await db.getStatementWhere({
-    userId: targetUser.id,
+    userId: targetUser?.id,
     url: fullMessage.url,
   });
 
@@ -84,6 +89,10 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
   const { message } = reaction;
+
+  if (!message.content) {
+    return;
+  }
 
   const fullMessage: Message = message.partial
     ? await fetchFull<Message>(message)
