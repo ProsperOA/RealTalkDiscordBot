@@ -51,15 +51,6 @@ export const getUser = (userId: string): User =>
   getMember(userId)?.user ?? null;
 
 /**
- * Returns true if member is online and not deafened.
- *
- * @param   {GuildMember} member - guild member.
- * @returns {boolean}
- */
-const isOnlineAndListening = (member: GuildMember): boolean =>
-  member.presence?.status === 'online' && !member.voice.deaf;
-
-/**
  * Returns active users in a guild channel with bots filtered out.
  *
  * @param   {string} channelId - guild channel id.
@@ -68,7 +59,8 @@ const isOnlineAndListening = (member: GuildMember): boolean =>
 export const getActiveUsersInChannel = (channelId: string): User[] =>
   (client.channels.cache.get(channelId) as TextChannel)
     ?.members
-    ?.filter(isOnlineAndListening)
+    .filter(({ presence, voice }) =>
+      voice.channelId === channelId && presence?.status === 'online' && !voice.deaf)
     .map(member => member.user)
     .filter(user => !user.bot)
     ?? null;
