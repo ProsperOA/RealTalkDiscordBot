@@ -12,19 +12,18 @@ import {
   MessageCollector,
 } from 'discord.js';
 
-import db from '../db';
-import listeners from './listeners';
-import replyBuilder from './reply-builder';
-import commands, { RealTalkCommand, RealTalkSubcommand } from './commands';
-import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { useThrottle } from './middleware';
+import db from '../../db';
+import replyBuilder from '../reply-builder';
+import slashCommands, { RealTalkCommand, RealTalkSubcommand } from './slash-commands';
+import { StatementWitnessRecord } from '../../db/models/statement-witnesses';
+import { useThrottle } from '../middleware';
 
 import {
   RealTalkQuizRecord,
   RealTalkStats,
   RealTalkStatsCompact,
   StatementRecord,
-} from '../db/models/statements';
+} from '../../db/models/statements';
 
 import {
   Config,
@@ -33,12 +32,12 @@ import {
   isMention,
   logger,
   Time,
-} from '../utils';
+} from '../../utils';
 
 export type CommandFunction =
   (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
 
-interface CommandInterfaceMap {
+interface CommandMap {
   [commandName: string]: CommandFunction;
 }
 
@@ -200,17 +199,16 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
  * @param   {Client}       client - Reference to Client object.
  * @returns {Promise<void>}
  */
-const init = async (client: Client): Promise<void> => {
+const init = async (): Promise<void> => {
   try {
     logger.info('Started refreshing application (/) commands.');
 
     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
-      body: commands,
+      body: slashCommands,
     });
 
     logger.info('Successfully reloaded application (/) commands.');
 
-    listeners.register(client, Config.IsDev);
     isInitialized = true;
   } catch (error) {
     logger.error(error);
@@ -218,17 +216,15 @@ const init = async (client: Client): Promise<void> => {
   }
 };
 
-const checkInit = async (client: Client): Promise<void> => {
-  if (isInitialized) {
-    return;
+const checkInit = async (): Promise<void> => {
+  if (!isInitialized) {
+    await init();
   }
-
-  await init(client);
 };
 
-export const commandInterfaceMap: CommandInterfaceMap = {
+export const commandMap: CommandMap = {
   [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
-    await checkInit(client);
+    await checkInit();
     const subcommand: string = interaction.options.getSubcommand(true);
 
     switch(subcommand) {

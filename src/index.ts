@@ -2,7 +2,8 @@ import Bugsnag from '@bugsnag/node';
 import { Client, ClientOptions, Intents } from 'discord.js';
 import { omit } from 'lodash';
 
-import commandInterface from './client-manager/command-interface';
+import commands from './client/commands';
+import listeners from './client/listeners';
 import { Config, logger } from './utils';
 
 const { CLIENT_TOKEN, BUGSNAG_API_KEY, SERVICE_ENV } = process.env;
@@ -29,7 +30,9 @@ Bugsnag.start({
 });
 
 export const client: Client = new Client(clientOptions);
-commandInterface.init(client);
+
+commands.init();
+listeners.register(client, Config.IsDev);
 
 client.on('ready', (): void => {
   if (Config.IsDev) {

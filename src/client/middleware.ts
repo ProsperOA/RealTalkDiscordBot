@@ -1,7 +1,7 @@
 import { Client, CommandInteraction } from 'discord.js';
 
 import replyBuilder from './reply-builder';
-import { CommandFunction } from './command-interface';
+import { CommandFunction } from './commands';
 import { cache, Cache } from '../utils';
 
 const throttleCache: Cache = cache.new('throttleCache');

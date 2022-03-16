@@ -11,11 +11,11 @@ import {
   User,
 } from 'discord.js';
 
-import messageInterface from './message-interface';
+import messageInterface from './messages';
 import replyBuilder from './reply-builder';
-import { CommandFunction, commandInterfaceMap } from './command-interface';
-import { ReactionFunction, reactionInterfaceMap } from './reaction-interface';
-import { ReactionName } from './reactions';
+import { CommandFunction, commandMap } from './commands';
+import { ReactionFunction, reactionMap } from './reactions';
+import { ReactionName } from './reactions/message-reactions';
 
 import {
   CustomLogOptions,
@@ -28,7 +28,6 @@ import {
 } from '../utils';
 
 type CommandInteractionHandler = (...args: ClientEvents['interactionCreate']) => Awaitable<void>;
-type MessageDeleteHandler = (...args: ClientEvents['messageDelete']) => Awaitable<void>;
 type MessageReactionHandler = (...args: ClientEvents['messageReactionAdd']) => Awaitable<void>;
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -46,7 +45,7 @@ const onInteractionCreate = (client: Client): CommandInteractionHandler =>
     }
 
     const { commandName } = interaction;
-    const handlerFn: CommandFunction = commandInterfaceMap[commandName];
+    const handlerFn: CommandFunction = commandMap[commandName];
 
     if (!handlerFn) {
       logger.error(`No handler for command ${commandName}`);
@@ -62,18 +61,21 @@ const onInteractionCreate = (client: Client): CommandInteractionHandler =>
     logCustom({ interaction }, t.time());
   };
 
-const onMessageDelete = (client: Client): MessageDeleteHandler =>
-  async (message: Message | PartialMessage): Promise<void> => {
-    if (message.type !== 'APPLICATION_COMMAND') {
-      return;
-    }
+const onMessageDelete = async (message: Message | PartialMessage): Promise<void> => {
+  if (message.type !== 'APPLICATION_COMMAND') {
+    return;
+  }
 
-    const fullMessage: Message = message.partial
-      ? await fetchFull<Message>(message)
-      : message as Message;
+  const fullMessage: Message = message.partial
+    ? await fetchFull<Message>(message)
+    : message as Message;
 
-    await messageInterface.onMessageDelete(client, fullMessage);
-  };
+  const deletedAt: Date = await messageInterface.onMessageDelete(fullMessage);
+
+  if (deletedAt) {
+    logger.info(`Message ${message.id} deleted at ${deletedAt.toISOString()}`);
+  }
+};
 
 const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
@@ -86,7 +88,7 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
       return;
     }
 
-    const handlerFn: ReactionFunction = reactionInterfaceMap[emojiName];
+    const handlerFn: ReactionFunction = reactionMap[emojiName];
 
     if (!handlerFn) {
       return logger.error(`No handler for reaction ${emojiName}`);
@@ -134,7 +136,7 @@ const register = (client: Client, debug?: boolean): void => {
   client.on('error', logger.error);
 
   client.on('interactionCreate', onInteractionCreate(client));
-  client.on('messageDelete', onMessageDelete(client));
+  client.on('messageDelete', onMessageDelete);
   client.on('messageReactionAdd', onMessageReactionAdd(client));
 };
 

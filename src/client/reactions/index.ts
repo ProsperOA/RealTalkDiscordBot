@@ -9,19 +9,19 @@ import {
   User,
 } from 'discord.js';
 
-import db from '../db';
-import replyBuilder from './reply-builder';
-import { RealTalkCommand, RealTalkSubcommand } from './commands';
-import { ReactionName } from './reactions';
-import { StatementRecord } from '../db/models/statements';
-import { StatementWitnessRecord } from '../db/models/statement-witnesses';
-import { cache, Cache, Config, fetchFull, Time } from '../utils';
-import { CommandFunction, commandInterfaceMap } from './command-interface';
+import db from '../../db';
+import replyBuilder from '../reply-builder';
+import { RealTalkCommand, RealTalkSubcommand } from '../commands/slash-commands';
+import { ReactionName } from './message-reactions';
+import { StatementRecord } from '../../db/models/statements';
+import { StatementWitnessRecord } from '../../db/models/statement-witnesses';
+import { cache, Cache, Config, fetchFull, Time } from '../../utils';
+import { CommandFunction, commandMap } from '../commands';
 
 export type ReactionFunction =
   (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
 
-interface ReactionInterfaceMap {
+interface ReactionMap {
   [reaction: string]: ReactionFunction;
 }
 
@@ -151,11 +151,11 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     user,
   };
 
-  const realTalkCommand: CommandFunction = commandInterfaceMap[RealTalkCommand.RealTalk];
+  const realTalkCommand: CommandFunction = commandMap[RealTalkCommand.RealTalk];
   await realTalkCommand(client, mockInteraction as CommandInteraction, false);
 };
 
-export const reactionInterfaceMap: ReactionInterfaceMap = {
+export const reactionMap: ReactionMap = {
   [ReactionName.Cap]: realTalkIsCap,
   [ReactionName.RealTalk]: realTalkEmojiReaction,
 };
