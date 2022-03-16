@@ -1,5 +1,6 @@
-import { Guild, GuildMember, TextChannel, User } from 'discord.js';
+import { Guild, GuildMember, Message, TextChannel, User } from 'discord.js';
 
+import { Config } from './config';
 import { client } from '../index';
 
 export const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
@@ -64,3 +65,6 @@ export const getActiveUsersInChannel = (channelId: string): User[] =>
     .map(member => member.user)
     .filter(user => !user.bot)
     ?? null;
+
+export const buildMessageUrl = ({ channelId, guildId, id }: Message): string =>
+  `${Config.ChannelsURL}/${guildId}/${channelId}/${id}`;

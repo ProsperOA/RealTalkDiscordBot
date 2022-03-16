@@ -17,6 +17,11 @@ const quietReply = (content: string): InteractionReplyOptions => ({
   ephemeral: true
 });
 
+const messageUrlText = (statement: StatementRecord): string =>
+  statement.deletedAt
+    ? `deleted at ${time(statement.deletedAt)}`
+    : hideLinkEmbed(statement.url);
+
 export default {
 
   internalError: (): InteractionReplyOptions =>
@@ -29,9 +34,9 @@ export default {
     `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`,
 
   realTalkHistory: (statements: StatementRecord[]): string =>
-    statements.map(s => stripIndents`
-      > **#RealTalk** ${nicknameMention(s.accusedUserId)} said: _"${s.content}"_.
-      > (provided by ${nicknameMention(s.userId)}) ${hideLinkEmbed(s.url)}`
+    statements.map(statement => stripIndents`
+      > **#RealTalk** ${nicknameMention(statement.accusedUserId)} said: _"${statement.content}"_.
+      > (provided by ${nicknameMention(statement.userId)}) ${messageUrlText(statement)}`
     ).join('\n\n'),
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>

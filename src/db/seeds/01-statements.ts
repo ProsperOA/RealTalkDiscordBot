@@ -2,6 +2,8 @@ import { Knex } from 'knex';
 import { LoremIpsum } from 'lorem-ipsum';
 import { random, repeat, uniq } from 'lodash';
 
+import { Config } from '../../utils';
+
 const today: Date = new Date();
 const unixEpoch: Date = new Date('January 1, 1970');
 
@@ -29,7 +31,7 @@ const buildStatementRecords = (userIds: string[]) => {
         accused_user_id: userIds[random(upperBound)],
         content: lorem.generateParagraphs(1),
         created_at: randomDate(unixEpoch, today),
-        url: 'https://discord.com',
+        url: Config.DiscordURL,
         user_id: userIds[random(upperBound)],
       });
     }

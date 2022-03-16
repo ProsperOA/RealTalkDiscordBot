@@ -3,12 +3,15 @@ import {
   Client,
   ClientEvents,
   CommandInteraction,
+  Message,
   MessageReaction,
+  PartialMessage,
   PartialMessageReaction,
   PartialUser,
   User,
 } from 'discord.js';
 
+import messageInterface from './message-interface';
 import replyBuilder from './reply-builder';
 import { CommandFunction, commandInterfaceMap } from './command-interface';
 import { ReactionFunction, reactionInterfaceMap } from './reaction-interface';
@@ -25,6 +28,7 @@ import {
 } from '../utils';
 
 type CommandInteractionHandler = (...args: ClientEvents['interactionCreate']) => Awaitable<void>;
+type MessageDeleteHandler = (...args: ClientEvents['messageDelete']) => Awaitable<void>;
 type MessageReactionHandler = (...args: ClientEvents['messageReactionAdd']) => Awaitable<void>;
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -56,6 +60,19 @@ const onInteractionCreate = (client: Client): CommandInteractionHandler =>
     t.stop();
 
     logCustom({ interaction }, t.time());
+  };
+
+const onMessageDelete = (client: Client): MessageDeleteHandler =>
+  async (message: Message | PartialMessage): Promise<void> => {
+    if (message.type !== 'APPLICATION_COMMAND') {
+      return;
+    }
+
+    const fullMessage: Message = message.partial
+      ? await fetchFull<Message>(message)
+      : message as Message;
+
+    await messageInterface.onMessageDelete(client, fullMessage);
   };
 
 const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
@@ -115,7 +132,9 @@ const register = (client: Client, debug?: boolean): void => {
 
   client.on('warn', logger.warn);
   client.on('error', logger.error);
+
   client.on('interactionCreate', onInteractionCreate(client));
+  client.on('messageDelete', onMessageDelete(client));
   client.on('messageReactionAdd', onMessageReactionAdd(client));
 };
 
