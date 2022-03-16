@@ -68,8 +68,9 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   const member: GuildMember = guild.members.cache.get(interaction.user.id);
 
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(member.voice.channelId)
-    .filter(user => user.id !== interaction.user.id)
-    .map(user => ({ userId: user.id }));
+    ?.filter(user => user.id !== interaction.user.id)
+    .map(user => ({ userId: user.id }))
+    ?? [];
 
   if (!Config.IsDev && (requireWitnesses && isEmpty(witnesses))) {
     return interaction.reply(replyBuilder.realTalkNoWitnesses());
