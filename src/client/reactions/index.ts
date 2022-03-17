@@ -15,7 +15,7 @@ import { RealTalkCommand, RealTalkSubcommand } from '../commands/slash-commands'
 import { ReactionName } from './message-reactions';
 import { StatementRecord } from '../../db/models/statements';
 import { StatementWitnessRecord } from '../../db/models/statement-witnesses';
-import { cache, Cache, Config, fetchFull, Time } from '../../utils';
+import { cache, Cache, Config, fetchFull, getChannel, Time } from '../../utils';
 import { CommandFunction, commandMap } from '../commands';
 
 export type ReactionFunction =
@@ -118,7 +118,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     content: messageContent,
   });
 
-  const channel: TextChannel = client.channels.cache.get(fullMessage.channelId) as TextChannel;
+  const channel: TextChannel = getChannel<TextChannel>(fullMessage.channelId);
 
   if (existingStatement) {
     const existingRealTalk: string = replyBuilder.realTalkExists(
@@ -152,7 +152,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   };
 
   const realTalkCommand: CommandFunction = commandMap[RealTalkCommand.RealTalk];
-  await realTalkCommand(client, mockInteraction as CommandInteraction, false);
+  await realTalkCommand(mockInteraction as CommandInteraction, false);
 };
 
 export const reactionMap: ReactionMap = {

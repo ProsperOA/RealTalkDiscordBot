@@ -24,6 +24,9 @@ export const extractUserIdFromMention = (mention: string): string =>
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
 
+export const getChannel = <T>(channelId: string): T =>
+  client?.channels.cache.get(channelId) as any as T ?? null;
+
 export const getMember = (userId: string): GuildMember =>
   getGuild()?.members.cache.get(userId) ?? null;
 
@@ -46,11 +49,12 @@ export const nicknameMention = (userId: string): string => {
   return Config.IsDev ? user.tag : memberNicknameMention(userId);
 };
 
+const isActiveInChannel = (channelId: string) => ({ presence, voice }: GuildMember): boolean =>
+  voice.channelId === channelId && presence?.status === 'online' && !voice.deaf;
+
 export const getActiveUsersInChannel = (channelId: string): User[] =>
-  (client.channels.cache.get(channelId) as TextChannel)
-    ?.members
-    .filter(({ presence, voice }) =>
-      voice.channelId === channelId && presence?.status === 'online' && !voice.deaf)
+  getChannel<TextChannel>(channelId)?.members
+    .filter(isActiveInChannel(channelId))
     .map(member => member.user)
     .filter(user => !user.bot)
     ?? null;
