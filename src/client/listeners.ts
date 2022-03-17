@@ -27,9 +27,6 @@ import {
   completeStructure,
 } from '../utils';
 
-type CommandInteractionHandler = (...args: ClientEvents['interactionCreate']) => Awaitable<void>;
-type MessageReactionHandler = (...args: ClientEvents['messageReactionAdd']) => Awaitable<void>;
-
 const logCustom = (data: CustomLogData, responseTime: number): void => {
   const options: CustomLogOptions = {
     'Response Time': `${responseTime}ms`,
@@ -38,28 +35,27 @@ const logCustom = (data: CustomLogData, responseTime: number): void => {
   logger.custom(data, options);
 };
 
-const onInteractionCreate = (client: Client): CommandInteractionHandler =>
-  async (interaction: CommandInteraction): Promise<void> => {
-    if (!interaction.isCommand()) {
-      return;
-    }
+const onInteractionCreate = async (interaction: CommandInteraction): Promise<void> => {
+  if (!interaction.isCommand()) {
+    return;
+  }
 
-    const { commandName } = interaction;
-    const handlerFn: CommandFunction = commandMap[commandName];
+  const { commandName } = interaction;
+  const handlerFn: CommandFunction = commandMap[commandName];
 
-    if (!handlerFn) {
-      logger.error(`No handler for command ${commandName}`);
-      return interaction.reply(replyBuilder.internalError());
-    }
+  if (!handlerFn) {
+    logger.error(`No handler for command ${commandName}`);
+    return interaction.reply(replyBuilder.internalError());
+  }
 
-    const t: Timer = timer();
+  const t: Timer = timer();
 
-    t.start();
-    await handlerFn(interaction);
-    t.stop();
+  t.start();
+  await handlerFn(interaction);
+  t.stop();
 
-    logCustom({ interaction }, t.time());
-  };
+  logCustom({ interaction }, t.time());
+};
 
 const onMessageDelete = async (message: Message | PartialMessage): Promise<void> => {
   if (message.type !== 'APPLICATION_COMMAND') {
@@ -74,7 +70,7 @@ const onMessageDelete = async (message: Message | PartialMessage): Promise<void>
   }
 };
 
-const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
+const onMessageReactionAdd = (client: Client) =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
     const { emoji: { name: emojiName } } = reaction;
 
@@ -115,7 +111,7 @@ const register = (client: Client, debug?: boolean): void => {
   client.on('warn', logger.warn);
   client.on('error', logger.error);
 
-  client.on('interactionCreate', onInteractionCreate(client));
+  client.on('interactionCreate', onInteractionCreate);
   client.on('messageDelete', onMessageDelete);
   client.on('messageReactionAdd', onMessageReactionAdd(client));
 };
