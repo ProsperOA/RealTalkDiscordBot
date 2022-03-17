@@ -6,7 +6,6 @@ import {
   Client,
   CollectorFilter,
   CommandInteraction,
-  Guild,
   GuildMember,
   Message,
   MessageCollector,
@@ -30,6 +29,7 @@ import {
   Config,
   extractUserIdFromMention,
   getActiveUsersInChannel,
+  getMember,
   isMention,
   logger,
   Time,
@@ -60,12 +60,11 @@ const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength)
 /**
  * Handles the realtalk command.
  *
- * @param {Client}             client     - Reference to Client object.
+ * @param {Client}             _client     - Reference to Client object.
  * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
  */
-const realTalkRecord = async (client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
-  const guild: Guild = client.guilds.cache.get(GUILD_ID);
-  const member: GuildMember = guild.members.cache.get(interaction.user.id);
+const realTalkRecord = async (_client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
+  const member: GuildMember = getMember(interaction.user.id);
 
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(member.voice.channelId)
     ?.filter(user => user.id !== interaction.user.id)
