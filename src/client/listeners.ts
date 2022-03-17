@@ -121,12 +121,6 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
     logCustom({ messageReaction: logData }, t.time());
   };
 
-/**
- * Registers client event listeners and calls commands.
- *
- * @param {Client}  client - Reference to client object.
- * @param {boolean} debug  - Whether client debug events are logged.
- */
 const register = (client: Client, debug?: boolean): void => {
   if (debug) {
     client.on('debug', logger.debug);

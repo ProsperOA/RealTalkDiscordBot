@@ -57,12 +57,6 @@ let isInitialized: boolean = false;
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
 
-/**
- * Handles the realtalk command.
- *
- * @param {Client}             _client     - Reference to Client object.
- * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
- */
 const realTalkRecord = async (_client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
   const member: GuildMember = getMember(interaction.user.id);
 
@@ -103,12 +97,6 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction, 
   await db.createStatement(statementRecord, witnesses);
 };
 
-/**
- * Handles the realtalk-list command.
- *
- * @param {Client}             _client     - Reference to Client object.
- * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
- */
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const statementsAcc: StatementRecord[] = [];
   const allStatements: StatementRecord[] = await db.getAllStatements();
@@ -125,12 +113,6 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
   await interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
 };
 
-/**
- * Handles the realtalk stats subcommand.
- *
- * @param {Client}             _client     - Reference to Client object.
- * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
- */
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
   const message: string = replyBuilder.realTalkStats(stats);
@@ -151,12 +133,6 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
   await interaction.reply(message);
 };
 
-/**
- * Handles the realtalk quiz subcommand.
- *
- * @param {Client}             _client     - Reference to Client object.
- * @param {CommandInteraction} interaction - Reference to CommandInteraction object.
- */
 const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const responseTimeout: number = Time.Second * 30;
   const statement: RealTalkQuizRecord = await db.getRandomStatement();
@@ -193,12 +169,6 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
   });
 };
 
-/**
- * Initializes slash commands and registers the client listeners.
- *
- * @param   {Client}       client - Reference to Client object.
- * @returns {Promise<void>}
- */
 const init = async (cb?: AnyFunction): Promise<void> => {
   try {
     logger.info('Started refreshing application (/) commands.');

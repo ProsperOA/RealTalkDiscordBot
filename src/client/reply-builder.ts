@@ -6,12 +6,6 @@ import { stripIndents } from 'common-tags';
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
 import { getUsername, msConvert, nicknameMention, pluralizeIf } from '../utils';
 
-/**
- * Returns a discreet reply message.
- *
- * @param {string} content - reply message content.
- * @returns {InteractionReplyOptions}
- */
 const quietReply = (content: string): InteractionReplyOptions => ({
   content,
   ephemeral: true

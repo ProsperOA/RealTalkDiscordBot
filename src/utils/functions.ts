@@ -18,24 +18,11 @@ export enum Time {
   Day = Hour * 24,
 }
 
-/**
- * Returns remaining time for setTimeout.
- *
- * @param   {Timeout} timeout - Reference to timeout object.
- * @returns {number}
- */
 export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): number => {
   const timeout: number = Math.ceil((_idleStart + _idleTimeout) / 1000 - process.uptime());
   return timeout >= 0 ? timeout : 0;
 };
 
-/**
- * Adds indentation to a multiline string.
- *
- * @param   {string} str    - string to format
- * @param   {number} indent - indent size
- * @returns {string}
- */
 export const multilineIndent = (str: string, indent: number = 1): string => {
   if (str.indexOf('\n') === -1) {
     return str;
@@ -50,24 +37,11 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
     .join('\n');
 };
 
-/**
- * Returns plural form of a string if a pluralize is not 1 or true.
- *
- * @param   {string} str - string to format
- * @param   {boolean | number} pluralize - number or boolean to check
- * @returns {string}
- */
 export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
   pluralize === false || pluralize === 1
     ? str
     : `${str}s`;
 
-/**
- * Provides an interface that calculates the time in ms between a start and end
- * time.
- *
- * @returns {Timer}
- */
 export const timer = (): Timer => {
   let startDate: Date = null;
   let totalTime: number = 0;

@@ -6,13 +6,6 @@ import { cache, Cache } from '../utils';
 
 const throttleCache: Cache = cache.new('throttleCache');
 
-/**
- * Throttles command requests per user.
- *
- * @param   {CommandFunction} callback - Command function callback.
- * @param   {number}          duration - Throttle time in ms.
- * @returns {CommandFunction}
- */
 export const useThrottle = (callback: CommandFunction, duration: number): CommandFunction =>
   async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     if (duration <= 0) {

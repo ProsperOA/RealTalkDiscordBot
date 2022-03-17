@@ -63,13 +63,6 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
   warn: chalk.yellow,
 };
 
-/**
- * Logs output to console.
- *
- * @param {BaseLogType}        type    - type of log message.
- * @param {string | Error} message - message to log to console.
- * @param {any[]}          options - additional logging options.
- */
 const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, options: any[] = []): void => {
   if (type === BaseLogType.Error) {
     Bugsnag.notify(message);
@@ -86,23 +79,11 @@ const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, 
   logFn(colorFn(output, ...options));
 };
 
-/**
- * Formats command middleware options.
- *
- * @param   {CustomLogOptions} options - List of middleware options.
- * @returns {string}
- */
 const formatCustomLogOptions = (options: CustomLogOptions): string =>
   isEmpty(options)
     ? ''
     : Object.keys(options).map(option => `${option}: ${options[option]}`).join('\n');
 
-/**
- * Formats application subcommand values.
- *
- * @param   {CommandInteractionOption} option - Subcommand to format.
- * @returns {string}
- */
 const formatSubCommandValue = (option: CommandInteractionOption): string => {
   switch (option.type) {
     case 'USER':
@@ -112,12 +93,6 @@ const formatSubCommandValue = (option: CommandInteractionOption): string => {
   }
 };
 
-/**
- * Formats application subcommands.
- *
- * @param   {CommandInteractionOption[]} options - List of subcommands.
- * @returns {string}
- */
 const formatSubCommands = (options: CommandInteractionOption[]): string =>
   isEmpty(options)
     ? ''
@@ -127,12 +102,6 @@ const formatSubCommands = (options: CommandInteractionOption[]): string =>
       > > Value: ${formatSubCommandValue(option)}`
     ).join('\n\n');
 
-/**
- * Formats application command options.
- *
- * @param   {Readonly<CommandInteraction<CacheType>[]} interaction - List of interaction options.
- * @returns {string}
- */
 const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheType>[]>): string => {
   let output: string = '';
 
@@ -150,13 +119,6 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
   return output;
 };
 
-/**
- * Formats a portion of the interaction message based on interaction type.
- *
- * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {CustomLogOptions} options       - Additional logging options.
- * @returns {string}
- */
 const formatInteraction = (interaction: CommandInteraction,  options: CustomLogOptions): string => {
   let output: string = '';
 
@@ -174,13 +136,6 @@ const formatInteraction = (interaction: CommandInteraction,  options: CustomLogO
   return output;
 };
 
-/**
- * Builds formatted interaction message.
- *
- * @param   {CommandInteraction} interaction - Reference to interaction object.
- * @param   {CustomLogOptions} options       - Additional logging options.
- * @returns {string}
- */
 const buildInteractionOutput = (interaction: CommandInteraction, options: CustomLogOptions): string => {
   const { type, user } = interaction;
 
