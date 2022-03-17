@@ -26,6 +26,7 @@ import {
 } from '../../db/models/statements';
 
 import {
+  AnyFunction,
   Config,
   extractUserIdFromMention,
   getActiveUsersInChannel,
@@ -199,7 +200,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
  * @param   {Client}       client - Reference to Client object.
  * @returns {Promise<void>}
  */
-const init = async (): Promise<void> => {
+const init = async (cb?: AnyFunction): Promise<void> => {
   try {
     logger.info('Started refreshing application (/) commands.');
 
@@ -207,9 +208,10 @@ const init = async (): Promise<void> => {
       body: slashCommands,
     });
 
+    isInitialized = true;
     logger.info('Successfully reloaded application (/) commands.');
 
-    isInitialized = true;
+    cb?.();
   } catch (error) {
     logger.error(error);
     process.exit(1);

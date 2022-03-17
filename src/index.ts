@@ -31,8 +31,7 @@ Bugsnag.start({
 
 export const client: Client = new Client(clientOptions);
 
-commands.init();
-listeners.register(client, Config.IsDev);
+commands.init(() => listeners.register(client, Config.IsDev));
 
 client.on('ready', (): void => {
   if (Config.IsDev) {
