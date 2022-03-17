@@ -1,10 +1,3 @@
-import { User } from 'discord.js';
-import { memberNicknameMention } from '@discordjs/builders';
-
-import { getUser } from './guild';
-import { logger } from './logger';
-import { Config } from './config';
-
 export type AnyFunction = (...args: any[]) => any;
 
 export interface Timer {
@@ -23,12 +16,6 @@ export enum Time {
   Minute = Second * 60,
   Hour = Minute * 60,
   Day = Hour * 24,
-}
-
-interface PartialStructure<T = any> {
-  partial: boolean;
-  fetch: (force?: boolean) => Promise<T>;
-  [key: string]: any;
 }
 
 /**
@@ -74,35 +61,6 @@ export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
   pluralize === false || pluralize === 1
     ? str
     : `${str}s`;
-
-/**
- * Returns a formatted userId in dev, but nickname mention in prod. This prevents
- * spamming mentions in dev.
- *
- * @param   {string} userId - user id to format
- * @returns {string}
- */
-export const nicknameMention = (userId: string): string => {
-  const user: User = getUser(userId);
-
-  if (!user) {
-    return `UserID::${userId}`;
-  }
-
-  return Config.IsDev ? user.tag : memberNicknameMention(userId);
-};
-
-export const fetchFull = async <T>(partial: PartialStructure<T>, force?: boolean): Promise<T> => {
-  let fullStructure: T = null;
-
-  try {
-    fullStructure = await partial.fetch(force);
-  } catch (error) {
-    logger.error(error);
-  }
-
-  return fullStructure;
-};
 
 /**
  * Provides an interface that calculates the time in ms between a start and end

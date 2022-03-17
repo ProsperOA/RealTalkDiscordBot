@@ -1,7 +1,16 @@
 import { Guild, GuildMember, Message, TextChannel, User } from 'discord.js';
+import { memberNicknameMention } from '@discordjs/builders';
 
 import { Config } from './config';
 import { client } from '../index';
+import { logger } from './logger';
+
+interface PartialStructure<T = any> {
+  partial: boolean;
+  fetch: (force?: boolean) => Promise<T>;
+  [key: string]: any;
+}
+
 
 export const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
 export const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
@@ -51,6 +60,22 @@ export const getMember = (userId: string): GuildMember =>
 export const getUser = (userId: string): User =>
   getMember(userId)?.user ?? null;
 
+const formatUserId = (userId: string): string =>
+  `UserID::${userId}`;
+
+export const getUsername = (userId: string): string =>
+  getUser(userId)?.username ?? formatUserId(userId);
+
+export const nicknameMention = (userId: string): string => {
+  const user: User = getUser(userId);
+
+  if (!user) {
+    return formatUserId(userId);
+  }
+
+  return Config.IsDev ? user.tag : memberNicknameMention(userId);
+};
+
 /**
  * Returns active users in a guild channel with bots filtered out.
  *
@@ -68,3 +93,15 @@ export const getActiveUsersInChannel = (channelId: string): User[] =>
 
 export const buildMessageUrl = ({ channelId, guildId, id }: Message): string =>
   `${Config.ChannelsURL}/${guildId}/${channelId}/${id}`;
+
+export const fetchFull = async <T>(partial: PartialStructure<T>, force?: boolean): Promise<T> => {
+  let fullStructure: T = null;
+
+  try {
+    fullStructure = await partial.fetch(force);
+  } catch (error) {
+    logger.error(error);
+  }
+
+  return fullStructure;
+};

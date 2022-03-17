@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash';
 import { stripIndents } from 'common-tags';
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from '../db/models/statements';
-import { msConvert, nicknameMention, pluralizeIf } from '../utils';
+import { getUsername, msConvert, nicknameMention, pluralizeIf } from '../utils';
 
 /**
  * Returns a discreet reply message.
@@ -19,7 +19,7 @@ const quietReply = (content: string): InteractionReplyOptions => ({
 
 const formatStatementUrl = (statement: StatementRecord): string =>
   statement.deletedAt
-    ? `deleted at ${time(statement.deletedAt)}`
+    ? `deleted on ${time(statement.deletedAt)}`
     : hideLinkEmbed(statement.url);
 
 export default {
@@ -35,8 +35,8 @@ export default {
 
   realTalkHistory: (statements: StatementRecord[]): string =>
     statements.map(statement => stripIndents`
-      > **#RealTalk** ${nicknameMention(statement.accusedUserId)} said: _"${statement.content}"_.
-      > (provided by ${nicknameMention(statement.userId)}) ${formatStatementUrl(statement)}`
+      > **#RealTalk** ${getUsername(statement.accusedUserId)} said: _"${statement.content}"_.
+      > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join('\n\n'),
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
@@ -52,17 +52,17 @@ export default {
       Date: ${time(new Date())}
       ${nicknameMention(userId)}: _"${statement}"_`,
 
-  realTalkEmojiReaction: (userId: string, statement: string): string =>
-    stripIndents`${statement}
+  realTalkEmojiReaction: (userId: string, message: string): string =>
+    stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
 
-      (Created with #RealTalk emoji by ${nicknameMention(userId)})`,
+      ${message}`,
 
   realTalkStats: (stats: RealTalkStats): string =>
     stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
         const { uses, accusations } = stats[userId];
 
-        let message: string = `> ${nicknameMention(userId)}: `;
+        let message: string = `> ${getUsername(userId)}: `;
         const usesPart: string = `${uses} ${pluralizeIf('use', uses)}`;
         const accusationsPart: string = `${accusations} ${pluralizeIf('accusation', accusations)}`;
 
