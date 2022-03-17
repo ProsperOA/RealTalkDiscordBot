@@ -3,9 +3,8 @@ import { memberNicknameMention } from '@discordjs/builders';
 
 import { Config } from './config';
 import { client } from '../index';
-import { logger } from './logger';
 
-interface PartialStructure<T = any> {
+interface Structure<T = any> {
   partial: boolean;
   fetch: (force?: boolean) => Promise<T>;
   [key: string]: any;
@@ -62,14 +61,5 @@ export const getActiveUsersInChannel = (channelId: string): User[] =>
 export const buildMessageUrl = ({ channelId, guildId, id }: Message): string =>
   `${Config.ChannelsURL}/${guildId}/${channelId}/${id}`;
 
-export const fetchFull = async <T>(partial: PartialStructure<T>, force?: boolean): Promise<T> => {
-  let fullStructure: T = null;
-
-  try {
-    fullStructure = await partial.fetch(force);
-  } catch (error) {
-    logger.error(error);
-  }
-
-  return fullStructure;
-};
+export const completeStructure = async <T = any>(structure: Structure<T>, force: boolean = true): Promise<T> =>
+  structure.partial ? await structure.fetch(force) : structure as any as T;

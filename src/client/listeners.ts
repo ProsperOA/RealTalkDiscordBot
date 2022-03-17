@@ -24,7 +24,7 @@ import {
   logger,
   Timer,
   timer,
-  fetchFull,
+  completeStructure,
 } from '../utils';
 
 type CommandInteractionHandler = (...args: ClientEvents['interactionCreate']) => Awaitable<void>;
@@ -66,10 +66,7 @@ const onMessageDelete = async (message: Message | PartialMessage): Promise<void>
     return;
   }
 
-  const fullMessage: Message = message.partial
-    ? await fetchFull<Message>(message)
-    : message as Message;
-
+  const fullMessage: Message = await completeStructure<Message>(message);
   const deletedAt: Date = await messageInterface.onMessageDelete(fullMessage);
 
   if (deletedAt) {
@@ -94,19 +91,8 @@ const onMessageReactionAdd = (client: Client): MessageReactionHandler =>
       return logger.error(`No handler for reaction ${emojiName}`);
     }
 
-    const fullReaction: MessageReaction = reaction.partial
-      ? await fetchFull<MessageReaction>(reaction)
-      : reaction as MessageReaction;
-
-    const fullUser: User = user.partial
-      ? await fetchFull<User>(user, true)
-      : user as User;
-
-    if (!(fullReaction && fullUser)) {
-      await user.send(replyBuilder.internalError().content);
-      return;
-    }
-
+    const fullReaction: MessageReaction = await completeStructure<MessageReaction>(reaction);
+    const fullUser: User = await completeStructure<User>(user);
     const t: Timer = timer();
 
     t.start();

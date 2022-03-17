@@ -15,7 +15,7 @@ import { RealTalkCommand, RealTalkSubcommand } from '../commands/slash-commands'
 import { ReactionName } from './message-reactions';
 import { StatementRecord } from '../../db/models/statements';
 import { StatementWitnessRecord } from '../../db/models/statement-witnesses';
-import { cache, Cache, Config, fetchFull, getChannel, Time } from '../../utils';
+import { cache, Cache, completeStructure, Config, getChannel, Time } from '../../utils';
 import { CommandFunction, commandMap } from '../commands';
 
 export type ReactionFunction =
@@ -40,15 +40,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
     return;
   }
 
-  const fullMessage: Message = message.partial
-    ? await fetchFull<Message>(message)
-    : message as Message;
-
-  if (!fullMessage) {
-    await user.send(replyBuilder.internalError().content);
-    return;
-  }
-
+  const fullMessage: Message = await completeStructure<Message>(message);
   const { commandName, user: targetUser } = fullMessage.interaction ?? {};
 
   if (commandName !== RealTalkCommand.RealTalk) {
@@ -94,15 +86,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     return;
   }
 
-  const fullMessage: Message = message.partial
-    ? await fetchFull<Message>(message)
-    : message as Message;
-
-  if (!fullMessage) {
-    await user.send(replyBuilder.internalError().content);
-    return;
-  }
-
+  const fullMessage: Message = await completeStructure<Message>(message);
   const isValidReaction: boolean = ACCEPTED_MESSAGE_TYPES.includes(fullMessage.type)
     && fullMessage.author.id !== client.user.id;
 
