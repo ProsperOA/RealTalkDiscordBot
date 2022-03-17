@@ -3,7 +3,6 @@ import { Routes } from 'discord-api-types/v9';
 import { isEmpty, takeRightWhile, trim, words } from 'lodash';
 
 import {
-  Client,
   CollectorFilter,
   CommandInteraction,
   GuildMember,
@@ -35,8 +34,7 @@ import {
   Time,
 } from '../../utils';
 
-export type CommandFunction =
-  (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
+export type CommandFunction = (interaction: CommandInteraction, ...args: any[]) => Promise<void>;
 
 interface CommandMap {
   [commandName: string]: CommandFunction;
@@ -57,7 +55,7 @@ let isInitialized: boolean = false;
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
 
-const realTalkRecord = async (_client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
+const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
   const member: GuildMember = getMember(interaction.user.id);
 
   const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(member.voice.channelId)
@@ -97,7 +95,7 @@ const realTalkRecord = async (_client: Client, interaction: CommandInteraction, 
   await db.createStatement(statementRecord, witnesses);
 };
 
-const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkHistory = async (interaction: CommandInteraction): Promise<void> => {
   const statementsAcc: StatementRecord[] = [];
   const allStatements: StatementRecord[] = await db.getAllStatements();
 
@@ -113,7 +111,7 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
   await interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
 };
 
-const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkStats = async (interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
   const message: string = replyBuilder.realTalkStats(stats);
 
@@ -133,7 +131,7 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
   await interaction.reply(message);
 };
 
-const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   const responseTimeout: number = Time.Second * 30;
   const statement: RealTalkQuizRecord = await db.getRandomStatement();
 
@@ -194,21 +192,21 @@ const checkInit = async (): Promise<void> => {
 };
 
 export const commandMap: CommandMap = {
-  [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
+  [RealTalkCommand.RealTalk]: async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     await checkInit();
     const subcommand: string = interaction.options.getSubcommand(true);
 
     switch(subcommand) {
       case RealTalkSubcommand.Record:
-        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
+        return useThrottle(realTalkRecord, THROTTLE_DURATION)(interaction);
       case RealTalkSubcommand.RecordBase:
-        return realTalkRecord(client, interaction, ...args);
+        return realTalkRecord(interaction, ...args);
       case RealTalkSubcommand.History:
-        return realTalkHistory(client, interaction);
+        return realTalkHistory(interaction);
       case RealTalkSubcommand.Stats:
-        return realTalkStats(client, interaction);
+        return realTalkStats(interaction);
       case RealTalkSubcommand.Quiz:
-        return realTalkQuiz(client, interaction);
+        return realTalkQuiz(interaction);
       default:
         logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
         return interaction.reply(replyBuilder.internalError());

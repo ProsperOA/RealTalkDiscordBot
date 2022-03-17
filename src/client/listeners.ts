@@ -55,7 +55,7 @@ const onInteractionCreate = (client: Client): CommandInteractionHandler =>
     const t: Timer = timer();
 
     t.start();
-    await handlerFn(client, interaction);
+    await handlerFn(interaction);
     t.stop();
 
     logCustom({ interaction }, t.time());
