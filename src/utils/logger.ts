@@ -71,6 +71,10 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
  * @param {any[]}          options - additional logging options.
  */
 const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, options: any[] = []): void => {
+  if (type === BaseLogType.Error) {
+    Bugsnag.notify(message);
+  }
+
   const colorFn: chalk.ChalkFunction =
     COLOR_FUNCTIONS[type as LogColorType] || COLOR_FUNCTIONS.custom;
 
@@ -78,10 +82,6 @@ const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, 
     `[${Config.ServiceName}] ${snakeCase(type).toUpperCase()} ${message}`;
 
   const logFn: LogFunction = (console as any)[type] || console.log;
-
-  if (type === BaseLogType.Error) {
-    Bugsnag.notify(output);
-  }
 
   logFn(colorFn(output, ...options));
 };
