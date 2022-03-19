@@ -1,6 +1,6 @@
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { isEmpty, takeRightWhile, trim, words } from 'lodash';
+import { isEmpty, takeRightWhile } from 'lodash';
 
 import {
   CollectorFilter,
@@ -157,7 +157,7 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   collector.on('collect', message => {
     const { content } = message;
 
-    const mention: string = words(trim(content))[1];
+    const mention: string = content.trim().split(' ')[1] ?? '';
     const userId: string = extractUserIdFromMention(mention);
     const isValidMention: boolean = mention && isMention(mention);
     const isCorrectUserId: boolean = userId === statement.accusedUserId;
