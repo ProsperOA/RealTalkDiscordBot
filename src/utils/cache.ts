@@ -1,4 +1,4 @@
-import { cloneDeep, isObject, mapValues } from 'lodash';
+import { cloneDeep, isEqual, isObject, mapValues } from 'lodash';
 
 import { logger } from './logger';
 import { AnyFunction, getRemainingTimeout, Timeout } from './functions';
@@ -18,6 +18,7 @@ interface TTLData {
 export interface Cache {
   clear: () => number;
   delete: (key: string) => boolean;
+  isEqual: (key: string, value: any) => boolean;
   free: () => boolean;
   get: (key: string) => any;
   has: (key: string) => boolean;
@@ -33,6 +34,7 @@ let ttlData: TTLData = {};
 const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> = {
   clear: 0,
   delete: false,
+  isEqual: false,
   free: false,
   get: null,
   has: false,
@@ -118,6 +120,7 @@ const newCache = (name: string): Cache => {
 
       return true;
     },
+    isEqual: (key: string, value: any): boolean => isEqual(cacheData[name][key], value),
     free: (): boolean => {
       delete cacheData[name];
       return true;

@@ -25,6 +25,8 @@ import {
 
 import {
   AnyFunction,
+  cache,
+  Cache,
   Config,
   extractUserIdFromMention,
   getActiveUsersInChannel,
@@ -49,6 +51,7 @@ enum MaxContentLength {
 }
 
 const THROTTLE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Second * 30;
+const realTalkQuizCache: Cache = cache.new('realTalkQuizCache');
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
@@ -131,7 +134,13 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
 
 const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   const responseTimeout: number = Time.Second * 30;
-  const statement: RealTalkQuizRecord = await db.getRandomStatement();
+  let statement: RealTalkQuizRecord = await db.getRandomStatement();
+
+  while (realTalkQuizCache.isEqual('lastStatement', statement)) {
+    statement = await db.getRandomStatement();
+  }
+
+  realTalkQuizCache.setF('lastStatement', statement, Time.Hour);
 
   await interaction.reply(
     replyBuilder.realTalkQuiz(statement.content, responseTimeout)

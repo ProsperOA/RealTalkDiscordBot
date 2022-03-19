@@ -109,7 +109,7 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
 
 const getRandomStatement = (): Knex.QueryBuilder<StatementRecord> =>
   knex('statements')
-    .select([ 'accusedUserId', 'content' ])
+    .select()
     .orderByRaw('RANDOM()')
     .limit(1)
     .first();
