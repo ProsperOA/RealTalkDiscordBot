@@ -20,7 +20,7 @@ export enum Time {
 
 export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): number => {
   const timeout: number = Math.ceil((_idleStart + _idleTimeout) / 1000 - process.uptime());
-  return timeout >= 0 ? timeout : 0;
+  return timeout >= 0 ? timeout * 1000 : 0;
 };
 
 export const multilineIndent = (str: string, indent: number = 1): string => {
