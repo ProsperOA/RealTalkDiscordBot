@@ -50,8 +50,6 @@ enum MaxContentLength {
 
 const THROTTLE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Second * 30;
 
-let isInitialized: boolean = false;
-
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
 
@@ -175,7 +173,6 @@ const init = async (cb?: AnyFunction): Promise<void> => {
       body: slashCommands,
     });
 
-    isInitialized = true;
     logger.info('Successfully reloaded application (/) commands.');
 
     cb?.();
@@ -185,15 +182,8 @@ const init = async (cb?: AnyFunction): Promise<void> => {
   }
 };
 
-const checkInit = async (): Promise<void> => {
-  if (!isInitialized) {
-    await init();
-  }
-};
-
 export const commandMap: CommandMap = {
   [RealTalkCommand.RealTalk]: async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
-    await checkInit();
     const subcommand: string = interaction.options.getSubcommand(true);
 
     switch(subcommand) {
