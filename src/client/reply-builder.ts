@@ -80,6 +80,9 @@ export default {
       You have ${msConvert(duration, 'Second')}s to respond in chat with: #RealTalk @Username
       _Ex: #RealTalk @JohnDoe_`,
 
+  realTalkQuizActive: (duration: number): InteractionReplyOptions =>
+    quietReply(`**#RealTalk** wait for the current quiz to end (${msConvert(duration, 'Second')}s left).`),
+
   realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>
     stripIndents`
       ${isEmpty(userIds) ? 'No one' : userIds.map(nicknameMention).join(', ')} got it right.

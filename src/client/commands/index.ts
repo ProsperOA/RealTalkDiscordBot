@@ -133,24 +133,30 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
 };
 
 const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
-  const responseTimeout: number = Time.Second * 30;
+  const previousQuizTimeout: number = realTalkQuizCache.ttl('lastStatement');
+
+  if (previousQuizTimeout) {
+    return interaction.reply(replyBuilder.realTalkQuizActive(previousQuizTimeout));
+  }
+
   let statement: RealTalkQuizRecord = await db.getRandomStatement();
 
   while (realTalkQuizCache.isEqual('lastStatement', statement)) {
     statement = await db.getRandomStatement();
   }
 
-  realTalkQuizCache.setF('lastStatement', statement, Time.Hour);
+  const quizTimeout: number = Time.Second * 30;
+  realTalkQuizCache.setF('lastStatement', statement, quizTimeout);
 
   await interaction.reply(
-    replyBuilder.realTalkQuiz(statement.content, responseTimeout)
+    replyBuilder.realTalkQuiz(statement.content, quizTimeout)
   );
 
   const filter: CollectorFilter<[Message<boolean>]> =
     (message: Message) => message.content.startsWith('#RealTalk');
 
   const collector: MessageCollector =
-    interaction.channel.createMessageCollector({ filter, time: responseTimeout });
+    interaction.channel.createMessageCollector({ filter, time: quizTimeout });
 
   const correctAnswerUserIds: string[] = [];
 
