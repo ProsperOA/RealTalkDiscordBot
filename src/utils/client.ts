@@ -58,8 +58,5 @@ export const getActiveUsersInChannel = (channelId: string): User[] =>
     .filter(user => !user.bot)
     ?? null;
 
-export const buildMessageUrl = ({ channelId, guildId, id }: Message): string =>
-  `${Config.ChannelsURL}/${guildId}/${channelId}/${id}`;
-
 export const completeStructure = async <T = any>(structure: Structure<T>, force: boolean = true): Promise<T> =>
   structure.partial ? await structure.fetch(force) : structure as any as T;

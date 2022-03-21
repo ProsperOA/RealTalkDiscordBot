@@ -24,6 +24,8 @@ import {
   completeStructure,
   logger,
   timer,
+  getUsername,
+  getUser,
 } from "../utils";
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -60,8 +62,12 @@ const onMessageDelete = async (message: Message | PartialMessage): Promise<void>
   const fullMessage: Message = await completeStructure<Message>(message);
   const deletedAt: Date = await messageHandlers.setDeleted(fullMessage);
 
+  const { author, id } = fullMessage;
+
   if (deletedAt) {
-    logger.info(`Message ${message.id} deleted at ${deletedAt.toISOString()}`);
+    logger.info(
+      `Statement ${id} from ${getUser(author.id).tag} deleted at ${deletedAt.toISOString()}`
+    );
   }
 };
 
