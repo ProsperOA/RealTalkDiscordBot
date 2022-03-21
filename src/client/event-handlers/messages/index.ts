@@ -1,7 +1,11 @@
-import messageReactionAddHandlers from "./message-reaction-add";
-import messageDeleteHandlers from "./message-delete";
+import messageReactionAddHandlers, { MessageReactionHandler } from "./message-reaction-add";
+import messageDeleteHandlers, { MessageDeleteHandler } from "./message-delete";
+
+interface MessageHandlers {
+  [name: string]: MessageReactionHandler | MessageDeleteHandler;
+}
 
 export default {
   ...messageDeleteHandlers,
   ...messageReactionAddHandlers,
-} as any;
+} as MessageHandlers;

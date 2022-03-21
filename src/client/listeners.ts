@@ -13,6 +13,7 @@ import interactionHandlers from "./event-handlers/interactions";
 import messageHandlers from "./event-handlers/messages";
 import replyBuilder from "../client/reply-builder";
 import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
+import { MessageDeleteHandler } from "./event-handlers/messages/message-delete";
 import { MessageReactionHandler } from "./event-handlers/messages/message-reaction-add";
 import { MessageReactionName } from "../client/message-reactions";
 
@@ -24,7 +25,6 @@ import {
   completeStructure,
   logger,
   timer,
-  getUsername,
   getUser,
 } from "../utils";
 
@@ -60,7 +60,8 @@ const onInteractionCreate = async (interaction: CommandInteraction): Promise<voi
 
 const onMessageDelete = async (message: Message | PartialMessage): Promise<void> => {
   const fullMessage: Message = await completeStructure<Message>(message);
-  const deletedAt: Date = await messageHandlers.setDeleted(fullMessage);
+  const handlerFn: MessageDeleteHandler = messageHandlers.setDeleted as MessageDeleteHandler;
+  const deletedAt: Date = await handlerFn(fullMessage);
 
   const { author, id } = fullMessage;
 
@@ -82,7 +83,7 @@ const onMessageReactionAdd = (client: Client) =>
       return;
     }
 
-    const handlerFn: MessageReactionHandler = messageHandlers[emojiName];
+    const handlerFn: MessageReactionHandler = messageHandlers[emojiName] as MessageReactionHandler;
 
     if (!handlerFn) {
       return logger.error(`No handler for reaction ${emojiName}`);

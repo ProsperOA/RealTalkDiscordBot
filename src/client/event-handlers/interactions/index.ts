@@ -1,5 +1,9 @@
-import interactionCreateHandler from "./interaction-create";
+import interactionCreateHandler, { InteractionCreateHandler } from "./interaction-create";
+
+interface InteractionHandlers {
+  [name: string]: InteractionCreateHandler;
+}
 
 export default {
   ...interactionCreateHandler,
-} as any;
+} as InteractionHandlers;
