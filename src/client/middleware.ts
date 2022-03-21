@@ -1,12 +1,12 @@
-import { CommandInteraction } from 'discord.js';
+import { CommandInteraction } from "discord.js";
 
-import replyBuilder from './reply-builder';
-import { CommandFunction } from './commands';
-import { cache, Cache } from '../utils';
+import replyBuilder from "./reply-builder";
+import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
+import { cache, Cache } from "../utils";
 
-const throttleCache: Cache = cache.new('throttleCache');
+const throttleCache: Cache = cache.new("throttleCache");
 
-export const useThrottle = (callback: CommandFunction, duration: number): CommandFunction =>
+export const useThrottle = (callback: InteractionCreateHandler, duration: number): InteractionCreateHandler =>
   async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     if (duration <= 0) {
       return callback(interaction, ...args);

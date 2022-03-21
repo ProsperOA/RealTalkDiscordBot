@@ -5,7 +5,7 @@
     "no-console": false,
     "no-trailing-whitespace": true,
     "semicolon": true,
-    "quotemark": [ true, "single" ],
+    "quotemark": [ true, "double" ],
     "indent": [ true, "spaces" ]
   },
   "exclude": [

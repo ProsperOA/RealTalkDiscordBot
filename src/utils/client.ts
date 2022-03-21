@@ -1,8 +1,8 @@
-import { Guild, GuildMember, Message, TextChannel, User } from 'discord.js';
-import { memberNicknameMention } from '@discordjs/builders';
+import { Guild, GuildMember, Message, TextChannel, User } from "discord.js";
+import { memberNicknameMention } from "@discordjs/builders";
 
-import { Config } from './config';
-import { client } from '../index';
+import { Config } from "../utils/config";
+import { client } from "../index";
 
 interface Structure<T = any> {
   partial: boolean;
@@ -18,7 +18,7 @@ export const isMention = (mention: string): boolean =>
     .test(mention);
 
 export const extractUserIdFromMention = (mention: string): string =>
-  isMention(mention) ? mention.match(/[0-9]{18}/)[0] : '';
+  isMention(mention) ? mention.match(/[0-9]{18}/)[0] : "";
 
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
@@ -49,7 +49,7 @@ export const nicknameMention = (userId: string): string => {
 };
 
 const isActiveInChannel = (channelId: string) => ({ presence, voice }: GuildMember): boolean =>
-  voice.channelId === channelId && presence?.status === 'online' && !voice.deaf;
+  voice.channelId === channelId && presence?.status === "online" && !voice.deaf;
 
 export const getActiveUsersInChannel = (channelId: string): User[] =>
   getChannel<TextChannel>(channelId)?.members

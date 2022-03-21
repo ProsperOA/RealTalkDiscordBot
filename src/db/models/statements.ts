@@ -1,8 +1,8 @@
-import { Knex } from 'knex';
-import { isEmpty, merge } from 'lodash';
+import { Knex } from "knex";
+import { isEmpty, merge } from "lodash";
 
-import knex from '../db';
-import { StatementWitnessRecord } from './statement-witnesses';
+import knex from "../../db/db";
+import { StatementWitnessRecord } from "../../db/models/statement-witnesses";
 
 export interface StatementRecord {
   accusedUserId: string;
@@ -59,22 +59,27 @@ const buildWitnessRecords = (witnesses: Partial<StatementWitnessRecord>[], state
 
 const createStatement = (statement: Partial<StatementRecord>, witnesses: Partial<StatementWitnessRecord>[]): Promise<any> =>
   knex.transaction(trx =>
-    knex('statements')
+    knex("statements")
       .transacting(trx)
-      .insert(statement, [ 'id' ])
+      .insert(statement, [ "id" ])
       .then(([ data ]) => isEmpty(witnesses)
         ? data
-        : knex('statementWitnesses')
+        : knex("statementWitnesses")
           .transacting(trx)
           .insert(buildWitnessRecords(witnesses, data.id, new Date()))));
+
+const deleteStatementWhere = (where: any): Knex.QueryBuilder<number> =>
+  knex("statements")
+    .where(where)
+    .del();
 
 const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
   knex
     .select()
-    .table('statements');
+    .table("statements");
 
 const getStatementWhere = (where: any): Knex.QueryBuilder =>
-  knex('statements')
+  knex("statements")
     .where(where)
     .first();
 
@@ -89,16 +94,16 @@ const transformAccusations = (accusations: RealTalkAccusationRecord[]): RealTalk
   }));
 
 const getStatementUses = (): Knex.QueryBuilder<RealTalkUsageRecord[]> =>
-  knex('statements')
-    .select('userId')
-    .count('userId')
-    .groupBy('userId');
+  knex("statements")
+    .select("userId")
+    .count("userId")
+    .groupBy("userId");
 
 const getStatementAccusations = (): Knex.QueryBuilder<RealTalkAccusationRecord[]> =>
-  knex('statements')
-    .select('accusedUserId')
-    .count('accusedUserId')
-    .groupBy('accusedUserId');
+  knex("statements")
+    .select("accusedUserId")
+    .count("accusedUserId")
+    .groupBy("accusedUserId");
 
 const getStatementStats = async (): Promise<RealTalkStats> => {
   const uses: RealTalkUsage[] = transformUses(await getStatementUses());
@@ -108,19 +113,20 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
 };
 
 const getRandomStatement = (): Knex.QueryBuilder<StatementRecord> =>
-  knex('statements')
+  knex("statements")
     .select()
-    .orderByRaw('RANDOM()')
+    .orderByRaw("RANDOM()")
     .limit(1)
     .first();
 
 const updateStatementWhere = (where: any, update: any): Knex.QueryBuilder<any> =>
-  knex('statements')
+  knex("statements")
     .where(where)
     .update(update);
 
-export default {
+export const statements = {
   createStatement,
+  deleteStatementWhere,
   getAllStatements,
   getRandomStatement,
   getStatementStats,

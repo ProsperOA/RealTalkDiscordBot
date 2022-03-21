@@ -1,5 +1,4 @@
-import statements from './models/statements';
-import statementWitnesses from './models/statement-witnesses';
+import { statements, statementWitnesses } from "../db/models";
 
 export default {
   ...statements,

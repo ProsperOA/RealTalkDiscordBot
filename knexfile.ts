@@ -12,10 +12,10 @@ export default {
       ssl: false,
     },
     migrations: {
-      directory: './src/db/migrations',
+      directory: 'db/migrations',
     },
     seeds: {
-      directory: './src/db/seeds',
+      directory: 'db/seeds',
     },
   },
   production: {
@@ -29,7 +29,7 @@ export default {
       max: 20,
     },
     migrations: {
-      directory: './src/db/migrations',
+      directory: 'db/migrations',
     },
   },
 };

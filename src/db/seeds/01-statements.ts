@@ -1,11 +1,11 @@
-import { Knex } from 'knex';
-import { LoremIpsum } from 'lorem-ipsum';
-import { random, repeat, uniq } from 'lodash';
+import { Knex } from "knex";
+import { LoremIpsum } from "lorem-ipsum";
+import { random, repeat, uniq } from "lodash";
 
-import { Config } from '../../utils';
+import { Config } from "../../utils";
 
 const today: Date = new Date();
-const unixEpoch: Date = new Date('January 1, 1970');
+const unixEpoch: Date = new Date("January 1, 1970");
 
 const lorem = new LoremIpsum({
   sentencesPerParagraph: {
@@ -57,20 +57,20 @@ const buildWitnesses = (statements: any[], userIds: string[]) => {
 };
 
 export const seed = async (knex: Knex): Promise<void> => {
-  await knex('statements').del();
+  await knex("statements").del();
 
   const totalUsers: number = 30;
-  const minUserId: number = parseInt(repeat('1', 18), 10);
-  const maxUserId: number = parseInt(repeat('9', 18), 10);
+  const minUserId: number = parseInt(repeat("1", 18), 10);
+  const maxUserId: number = parseInt(repeat("9", 18), 10);
 
   const userIds: string[] = uniq(
     Array.from({ length: totalUsers }, () => String(random(minUserId, maxUserId)))
   );
 
   const statements = buildStatementRecords(userIds);
-  await knex('statements').insert(statements);
+  await knex("statements").insert(statements);
 
-  const statementRecords = await knex('statements').select();
+  const statementRecords = await knex("statements").select();
   const witnesses = buildWitnesses(statementRecords, userIds);
-  await knex('statement_witnesses').insert(witnesses);
+  await knex("statement_witnesses").insert(witnesses);
 };

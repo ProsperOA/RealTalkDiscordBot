@@ -1,10 +1,10 @@
-import Bugsnag from '@bugsnag/node';
-import { Client, ClientOptions, Intents } from 'discord.js';
-import { omit } from 'lodash';
+import Bugsnag from "@bugsnag/node";
+import { Client, ClientOptions, Intents } from "discord.js";
+import { omit } from "lodash";
 
-import commands from './client/commands';
-import listeners from './client/listeners';
-import { Config, logger } from './utils';
+import listeners from "./client/listeners";
+import slashCommands from "./client/slash-commands";
+import { Config, logger } from "./utils";
 
 const { CLIENT_TOKEN, BUGSNAG_API_KEY, SERVICE_ENV } = process.env;
 
@@ -17,25 +17,25 @@ const clientOptions: ClientOptions = {
     Intents.FLAGS.GUILD_PRESENCES,
   ],
   partials: [
-    'CHANNEL',
-    'MESSAGE',
-    'REACTION',
+    "CHANNEL",
+    "MESSAGE",
+    "REACTION",
   ]
 };
 
 Bugsnag.start({
   apiKey: BUGSNAG_API_KEY,
-  logger: omit(logger, 'custom'),
+  logger: omit(logger, "custom"),
   releaseStage: SERVICE_ENV,
 });
 
 export const client: Client = new Client(clientOptions);
 
-commands.init(() => listeners.register(client, Config.IsDev));
+slashCommands.init(() => listeners.register(client, Config.IsDev));
 
-client.on('ready', (): void => {
+client.on("ready", (): void => {
   if (Config.IsDev) {
-    client.user.setActivity('Development Mode');
+    client.user.setActivity("Development Mode");
   }
 
   logger.info(`Logged in as ${client.user.tag}`);

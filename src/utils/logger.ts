@@ -1,7 +1,7 @@
-import * as chalk from 'chalk';
-import Bugsnag from '@bugsnag/node';
-import { isEmpty, snakeCase } from 'lodash';
-import { stripIndents } from 'common-tags';
+import * as chalk from "chalk";
+import Bugsnag from "@bugsnag/node";
+import { isEmpty, snakeCase } from "lodash";
+import { stripIndents } from "common-tags";
 
 import {
   CacheType,
@@ -9,32 +9,31 @@ import {
   CommandInteractionOption,
   MessageReaction,
   User,
-} from 'discord.js';
+} from "discord.js";
 
-import { Config } from './config';
-import { multilineIndent } from './functions';
+import { Config, multilineIndent } from "../utils";
 
 type LogFunction =
-  Console['log'] |
-  Console['info'] |
-  Console['warn'] |
-  Console['error'] |
-  Console['debug'];
+  Console["log"] |
+  Console["info"] |
+  Console["warn"] |
+  Console["error"] |
+  Console["debug"];
 
 export interface CustomLogOptions {
   [name: string]: string;
 }
 
 enum BaseLogType {
-  Debug = 'debug',
-  Error = 'error',
-  Info = 'info',
-  Warn = 'warn',
+  Debug = "debug",
+  Error = "error",
+  Info = "info",
+  Warn = "warn",
 }
 
 enum CustomLogType {
-  Interaction = 'interaction',
-  MessageReaction = 'messageReaction',
+  Interaction = "interaction",
+  MessageReaction = "messageReaction",
 }
 
 export interface CustomMessageReaction {
@@ -49,7 +48,7 @@ export type CustomLogData =
   {[CustomLogType.MessageReaction]: CustomMessageReaction};
 
 type LogColorType =
-  'custom' |
+  "custom" |
   BaseLogType.Debug |
   BaseLogType.Error |
   BaseLogType.Info |
@@ -81,12 +80,12 @@ const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, 
 
 const formatCustomLogOptions = (options: CustomLogOptions): string =>
   isEmpty(options)
-    ? ''
-    : Object.keys(options).map(option => `${option}: ${options[option]}`).join('\n');
+    ? ""
+    : Object.keys(options).map(option => `${option}: ${options[option]}`).join("\n");
 
 const formatSubCommandValue = (option: CommandInteractionOption): string => {
   switch (option.type) {
-    case 'USER':
+    case "USER":
       return `${option.value} (${option.user.tag})`;
     default:
       return String(option.value);
@@ -95,22 +94,22 @@ const formatSubCommandValue = (option: CommandInteractionOption): string => {
 
 const formatSubCommands = (options: CommandInteractionOption[]): string =>
   isEmpty(options)
-    ? ''
+    ? ""
     : options.map(option =>
       `> > Type: ${option.type}
       > > Name: ${option.name}
       > > Value: ${formatSubCommandValue(option)}`
-    ).join('\n\n');
+    ).join("\n\n");
 
 const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheType>[]>): string => {
-  let output: string = '';
+  let output: string = "";
 
   options.forEach((option, index) => {
     output += `\nCommand Option #${index + 1}:
       > Type: ${option.type}
       > Name: ${option.name}`;
 
-    if (option.type === 'SUB_COMMAND' && !isEmpty(option.options)) {
+    if (option.type === "SUB_COMMAND" && !isEmpty(option.options)) {
       output += `\n\n> Command Option #${index + 1} Options:
         ${formatSubCommands(option.options)}`;
     }
@@ -120,10 +119,10 @@ const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheTy
 };
 
 const formatInteraction = (interaction: CommandInteraction,  options: CustomLogOptions): string => {
-  let output: string = '';
+  let output: string = "";
 
   switch (interaction.type) {
-    case 'APPLICATION_COMMAND':
+    case "APPLICATION_COMMAND":
       output += `Command Name: ${interaction.commandName}
         ${formatCustomLogOptions(options)}
         ${formatCommandOptions(interaction.options.data)}`;

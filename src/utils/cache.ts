@@ -1,7 +1,6 @@
-import { cloneDeep, isEqual, isObject, mapValues } from 'lodash';
+import { cloneDeep, isEqual, isObject, mapValues } from "lodash";
 
-import { logger } from './logger';
-import { AnyFunction, getRemainingTimeout, Timeout } from './functions';
+import { AnyFunction, getRemainingTimeout, logger, Timeout } from "../utils";
 
 interface CacheData {
   [name: string]: {

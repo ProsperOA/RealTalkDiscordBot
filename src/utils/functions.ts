@@ -24,17 +24,17 @@ export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): numb
 };
 
 export const multilineIndent = (str: string, indent: number = 1): string => {
-  if (str.indexOf('\n') === -1) {
+  if (str.indexOf("\n") === -1) {
     return str;
   }
 
   const indentSize: number = indent < 1 ? 1 : indent;
-  const space: string = Array.from({ length: indentSize }, () => ' ').join('');
+  const space: string = Array.from({ length: indentSize }, () => " ").join("");
 
   return str
-    .split('\n')
+    .split("\n")
     .map(line => space + line)
-    .join('\n');
+    .join("\n");
 };
 
 export const pluralizeIf = (str: string, pluralize: boolean | number): string =>

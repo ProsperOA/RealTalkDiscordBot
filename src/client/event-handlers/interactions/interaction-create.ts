@@ -1,6 +1,4 @@
-import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
-import { isEmpty, takeRightWhile } from 'lodash';
+import { isEmpty, takeRightWhile } from "lodash";
 
 import {
   CollectorFilter,
@@ -8,42 +6,34 @@ import {
   GuildMember,
   Message,
   MessageCollector,
-} from 'discord.js';
+} from "discord.js";
 
-import db from '../../db';
-import replyBuilder from '../reply-builder';
-import slashCommands, { RealTalkCommand, RealTalkSubcommand } from './slash-commands';
-import { StatementWitnessRecord } from '../../db/models/statement-witnesses';
-import { useThrottle } from '../middleware';
+import db from "../../../db";
+import replyBuilder from "../../reply-builder";
+import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
+import { useThrottle } from "../../middleware";
 
 import {
   RealTalkQuizRecord,
   RealTalkStats,
   RealTalkStatsCompact,
   StatementRecord,
-} from '../../db/models/statements';
+  StatementWitnessRecord ,
+} from "../../../db/models";
 
 import {
-  AnyFunction,
-  cache,
   Cache,
   Config,
+  Time,
+  cache,
   extractUserIdFromMention,
   getActiveUsersInChannel,
   getMember,
   isMention,
   logger,
-  Time,
-} from '../../utils';
+} from "../../../utils";
 
-export type CommandFunction = (interaction: CommandInteraction, ...args: any[]) => Promise<void>;
-
-interface CommandMap {
-  [commandName: string]: CommandFunction;
-}
-
-const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
-const rest: REST = new REST({ version: '9' }).setToken(CLIENT_TOKEN);
+export type InteractionCreateHandler = (interaction: CommandInteraction, ...args: any[]) => Promise<void>;
 
 enum MaxContentLength {
   InteractionOption = 140,
@@ -51,7 +41,7 @@ enum MaxContentLength {
 }
 
 const THROTTLE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Second * 30;
-const realTalkQuizCache: Cache = cache.new('realTalkQuizCache');
+const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
@@ -68,15 +58,15 @@ const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses:
     return interaction.reply(replyBuilder.realTalkNoWitnesses());
   }
 
-  const statement: string = interaction.options.get('what', true).value as string;
+  const statement: string = interaction.options.get("what", true).value as string;
 
-  if (!hasValidContentLength(statement, 'InteractionOption')) {
+  if (!hasValidContentLength(statement, "InteractionOption")) {
     return interaction.reply(
       replyBuilder.invalidStatementLength(MaxContentLength.InteractionOption)
     );
   }
 
-  const targetUserId: string = interaction.options.get('who', true).value as string;
+  const targetUserId: string = interaction.options.get("who", true).value as string;
   const incriminatingEvidence: string = replyBuilder.realTalkRecord(
     targetUserId,
     statement
@@ -105,7 +95,7 @@ const realTalkHistory = async (interaction: CommandInteraction): Promise<void> =
 
     return hasValidContentLength(
       replyBuilder.realTalkHistory(statementsAcc),
-      'ResponseBody'
+      "ResponseBody"
     );
   });
 
@@ -116,7 +106,7 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
   const stats: RealTalkStats = await db.getStatementStats();
   const message: string = replyBuilder.realTalkStats(stats);
 
-  if (!hasValidContentLength(message, 'ResponseBody')) {
+  if (!hasValidContentLength(message, "ResponseBody")) {
     const compactStats: RealTalkStatsCompact = { uniqueUsers: 0, uses: 0 };
 
     Object.values(stats).forEach(({ uses }) => {
@@ -133,7 +123,7 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
 };
 
 const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
-  const previousQuizTimeout: number = realTalkQuizCache.ttl('lastStatement');
+  const previousQuizTimeout: number = realTalkQuizCache.ttl("lastStatement");
 
   if (previousQuizTimeout) {
     return interaction.reply(replyBuilder.realTalkQuizActive(previousQuizTimeout));
@@ -141,29 +131,29 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
 
   let statement: RealTalkQuizRecord = await db.getRandomStatement();
 
-  while (realTalkQuizCache.isEqual('lastStatement', statement)) {
+  while (realTalkQuizCache.isEqual("lastStatement", statement)) {
     statement = await db.getRandomStatement();
   }
 
   const quizTimeout: number = Time.Second * 30;
-  realTalkQuizCache.setF('lastStatement', statement, quizTimeout);
+  realTalkQuizCache.setF("lastStatement", statement, quizTimeout);
 
   await interaction.reply(
     replyBuilder.realTalkQuiz(statement.content, quizTimeout)
   );
 
   const filter: CollectorFilter<[Message<boolean>]> =
-    (message: Message) => message.content.startsWith('#RealTalk');
+    (message: Message) => message.content.startsWith("#RealTalk");
 
   const collector: MessageCollector =
     interaction.channel.createMessageCollector({ filter, time: quizTimeout });
 
   const correctAnswerUserIds: string[] = [];
 
-  collector.on('collect', message => {
+  collector.on("collect", message => {
     const { content } = message;
 
-    const mention: string = content.trim().split(' ')[1] ?? '';
+    const mention: string = content.trim().split(" ")[1] ?? "";
     const userId: string = extractUserIdFromMention(mention);
     const isValidMention: boolean = mention && isMention(mention);
     const isCorrectUserId: boolean = userId === statement.accusedUserId;
@@ -173,31 +163,14 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
     }
   });
 
-  collector.on('end', async () => {
+  collector.on("end", async () => {
     await interaction.followUp(
       replyBuilder.realTalkQuizEnd(statement.accusedUserId, correctAnswerUserIds)
     );
   });
 };
 
-const init = async (cb?: AnyFunction): Promise<void> => {
-  try {
-    logger.info('Started refreshing application (/) commands.');
-
-    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
-      body: slashCommands,
-    });
-
-    logger.info('Successfully reloaded application (/) commands.');
-
-    cb?.();
-  } catch (error) {
-    logger.error(error);
-    process.exit(1);
-  }
-};
-
-export const commandMap: CommandMap = {
+export default {
   [RealTalkCommand.RealTalk]: async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     const subcommand: string = interaction.options.getSubcommand(true);
 
@@ -218,5 +191,3 @@ export const commandMap: CommandMap = {
     }
   },
 };
-
-export default { init };

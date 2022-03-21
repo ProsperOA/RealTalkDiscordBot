@@ -7,28 +7,24 @@ import {
   MessageType,
   TextChannel,
   User,
-} from 'discord.js';
+} from "discord.js";
 
-import db from '../../db';
-import replyBuilder from '../reply-builder';
-import { RealTalkCommand, RealTalkSubcommand } from '../commands/slash-commands';
-import { ReactionName } from './message-reactions';
-import { StatementRecord } from '../../db/models/statements';
-import { StatementWitnessRecord } from '../../db/models/statement-witnesses';
-import { cache, Cache, completeStructure, Config, getChannel, Time } from '../../utils';
-import { CommandFunction, commandMap } from '../commands';
+import db from "../../../db";
+import interactionHandlers from "../interactions";
+import replyBuilder from "../../reply-builder";
+import { InteractionCreateHandler } from "../interactions/interaction-create";
+import { MessageReactionName } from "../../message-reactions";
+import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
+import { StatementRecord, StatementWitnessRecord } from "../../../db/models";
+import { cache, Cache, completeStructure, Config, getChannel, Time } from "../../../utils";
 
-export type ReactionFunction =
+export type MessageReactionHandler =
   (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
 
-interface ReactionMap {
-  [reaction: string]: ReactionFunction;
-}
-
 const RESPONSE_CACHE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Hour;
-const ACCEPTED_MESSAGE_TYPES: Readonly<MessageType[]> = [ 'DEFAULT', 'REPLY' ];
+const ACCEPTED_MESSAGE_TYPES: Readonly<MessageType[]> = [ "DEFAULT", "REPLY" ];
 
-const reactionResponseCache: Cache = cache.new('reactionResponseCache');
+const responseCache: Cache = cache.new("responseCache");
 
 const calcCapThreshold = (max: number): number =>
   Config.IsDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
@@ -71,7 +67,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 
   const capThreshold: number = calcCapThreshold(witnesses.length);
   const capCount: number =
-    fullMessage.reactions.cache.filter(r => r.emoji.name === ReactionName.Cap).size;
+    fullMessage.reactions.cache.filter(r => r.emoji.name === MessageReactionName.Cap).size;
 
   if (capCount >= capThreshold) {
     await db.updateStatementWhere({ id: statement.id }, { isCap: true });
@@ -110,9 +106,9 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
       existingStatement.url,
     );
 
-    if (reactionResponseCache.isEqual(user.id, existingRealTalk)) {
+    if (responseCache.isEqual(user.id, existingRealTalk)) {
       await channel.send(existingRealTalk);
-      reactionResponseCache.setF(user.id, existingRealTalk, RESPONSE_CACHE_DURATION);
+      responseCache.setF(user.id, existingRealTalk, RESPONSE_CACHE_DURATION);
     }
 
     return;
@@ -135,11 +131,11 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     user,
   };
 
-  const realTalkCommand: CommandFunction = commandMap[RealTalkCommand.RealTalk];
+  const realTalkCommand: InteractionCreateHandler = interactionHandlers[RealTalkCommand.RealTalk];
   await realTalkCommand(mockInteraction as CommandInteraction, false);
 };
 
-export const reactionMap: ReactionMap = {
-  [ReactionName.Cap]: realTalkIsCap,
-  [ReactionName.RealTalk]: realTalkEmojiReaction,
+export default {
+  [MessageReactionName.Cap]: realTalkIsCap,
+  [MessageReactionName.RealTalk]: realTalkEmojiReaction,
 };
