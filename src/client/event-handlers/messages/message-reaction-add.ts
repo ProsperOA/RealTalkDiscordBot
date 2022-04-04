@@ -106,7 +106,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
       existingStatement.url,
     );
 
-    if (responseCache.isEqual(user.id, existingRealTalk)) {
+    if (responseCache.equals(user.id, existingRealTalk)) {
       await channel.send(existingRealTalk);
       responseCache.setF(user.id, existingRealTalk, RESPONSE_CACHE_DURATION);
     }

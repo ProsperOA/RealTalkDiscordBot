@@ -1,4 +1,4 @@
-import { Guild, GuildMember, Message, TextChannel, User } from "discord.js";
+import { Guild, GuildMember, TextChannel, User } from "discord.js";
 import { memberNicknameMention } from "@discordjs/builders";
 
 import { Config } from "../utils/config";
@@ -14,8 +14,10 @@ export const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
 export const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
 
 export const isMention = (mention: string): boolean =>
-  new RegExp(`${USER_MENTION_REGEX.source}|${NICKNAME_MENTION_REGEX.source}`)
-    .test(mention);
+  mention
+    ? new RegExp(`${USER_MENTION_REGEX.source}|${NICKNAME_MENTION_REGEX.source}`)
+      .test(mention)
+    : false;
 
 export const extractUserIdFromMention = (mention: string): string =>
   isMention(mention) ? mention.match(/[0-9]{18}/)[0] : "";

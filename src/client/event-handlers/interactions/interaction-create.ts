@@ -123,20 +123,19 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
 };
 
 const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
-  const previousQuizTimeout: number = realTalkQuizCache.ttl("lastStatement");
-
-  if (previousQuizTimeout) {
-    return interaction.reply(replyBuilder.realTalkQuizActive(previousQuizTimeout));
+  if (realTalkQuizCache.has("previousStatement")) {
+    const ttl: number = realTalkQuizCache.ttl("previousStatement");
+    return interaction.reply(replyBuilder.realTalkQuizActive(ttl));
   }
 
-  let statement: RealTalkQuizRecord = await db.getRandomStatement();
+  let statement: RealTalkQuizRecord;
 
-  while (realTalkQuizCache.isEqual("lastStatement", statement)) {
+  do {
     statement = await db.getRandomStatement();
-  }
+  } while (realTalkQuizCache.equals("previousStatement", statement));
 
   const quizTimeout: number = Time.Second * 30;
-  realTalkQuizCache.setF("lastStatement", statement, quizTimeout);
+  realTalkQuizCache.setF("previousStatement", statement, quizTimeout);
 
   await interaction.reply(
     replyBuilder.realTalkQuiz(statement.content, quizTimeout)
@@ -151,14 +150,11 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   const correctAnswerUserIds: string[] = [];
 
   collector.on("collect", message => {
-    const { content } = message;
-
-    const mention: string = content.trim().split(" ")[1] ?? "";
+    const mention: string = message.content.trim().split(" ")[1];
     const userId: string = extractUserIdFromMention(mention);
-    const isValidMention: boolean = mention && isMention(mention);
     const isCorrectUserId: boolean = userId === statement.accusedUserId;
 
-    if (isValidMention && isCorrectUserId) {
+    if (isMention(mention) && isCorrectUserId) {
       correctAnswerUserIds.push(message.author.id);
     }
   });
