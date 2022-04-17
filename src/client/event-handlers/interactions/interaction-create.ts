@@ -9,7 +9,7 @@ import {
 } from "discord.js";
 
 import db from "../../../db";
-import replyBuilder from "../../reply-builder";
+import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { useThrottle } from "../../middleware";
 
@@ -55,19 +55,19 @@ const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses:
     ?? [];
 
   if (!Config.IsDev && (requireWitnesses && isEmpty(witnesses))) {
-    return interaction.reply(replyBuilder.realTalkNoWitnesses());
+    return interaction.reply(replies.realTalkNoWitnesses());
   }
 
   const statement: string = interaction.options.get("what", true).value as string;
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
     return interaction.reply(
-      replyBuilder.invalidStatementLength(MaxContentLength.InteractionOption)
+      replies.invalidStatementLength(MaxContentLength.InteractionOption)
     );
   }
 
   const targetUserId: string = interaction.options.get("who", true).value as string;
-  const incriminatingEvidence: string = replyBuilder.realTalkRecord(
+  const incriminatingEvidence: string = replies.realTalkRecord(
     targetUserId,
     statement
   );
@@ -94,17 +94,17 @@ const realTalkHistory = async (interaction: CommandInteraction): Promise<void> =
     statementsAcc.push(s);
 
     return hasValidContentLength(
-      replyBuilder.realTalkHistory(statementsAcc),
+      replies.realTalkHistory(statementsAcc),
       "ResponseBody"
     );
   });
 
-  await interaction.reply(replyBuilder.realTalkHistory(statementsSlice));
+  await interaction.reply(replies.realTalkHistory(statementsSlice));
 };
 
 const realTalkStats = async (interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
-  const message: string = replyBuilder.realTalkStats(stats);
+  const message: string = replies.realTalkStats(stats);
 
   if (!hasValidContentLength(message, "ResponseBody")) {
     const compactStats: RealTalkStatsCompact = { uniqueUsers: 0, uses: 0 };
@@ -116,16 +116,17 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
       }
     });
 
-    return interaction.reply(replyBuilder.realTalkStatsCompact(compactStats));
+    return interaction.reply(replies.realTalkStatsCompact(compactStats));
   }
 
   await interaction.reply(message);
 };
 
 const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
-  if (realTalkQuizCache.has("previousStatement")) {
-    const ttl: number = realTalkQuizCache.ttl("previousStatement");
-    return interaction.reply(replyBuilder.realTalkQuizActive(ttl));
+  const previousTimeout: number = realTalkQuizCache.ttl("previousStatement");
+
+  if (previousTimeout) {
+    return interaction.reply(replies.realTalkQuizActive(previousTimeout));
   }
 
   let statement: RealTalkQuizRecord;
@@ -138,7 +139,7 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   realTalkQuizCache.setF("previousStatement", statement, quizTimeout);
 
   await interaction.reply(
-    replyBuilder.realTalkQuiz(statement.content, quizTimeout)
+    replies.realTalkQuiz(statement.content, quizTimeout)
   );
 
   const filter: CollectorFilter<[Message<boolean>]> =
@@ -161,7 +162,7 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
 
   collector.on("end", async () => {
     await interaction.followUp(
-      replyBuilder.realTalkQuizEnd(statement.accusedUserId, correctAnswerUserIds)
+      replies.realTalkQuizEnd(statement.accusedUserId, correctAnswerUserIds)
     );
   });
 };
@@ -183,7 +184,7 @@ export default {
         return realTalkQuiz(interaction);
       default:
         logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
-        return interaction.reply(replyBuilder.internalError());
+        return interaction.reply(replies.internalError());
     }
   },
 };

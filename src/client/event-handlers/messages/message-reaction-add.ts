@@ -11,7 +11,7 @@ import {
 
 import db from "../../../db";
 import interactionHandlers from "../interactions";
-import replyBuilder from "../../reply-builder";
+import replies from "../../replies";
 import { InteractionCreateHandler } from "../interactions/interaction-create";
 import { MessageReactionName } from "../../message-reactions";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
@@ -71,7 +71,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 
   if (capCount >= capThreshold) {
     await db.updateStatementWhere({ id: statement.id }, { isCap: true });
-    await fullMessage.reply(replyBuilder.realTalkIsCap(statement));
+    await fullMessage.reply(replies.realTalkIsCap(statement));
   }
 };
 
@@ -101,7 +101,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const channel: TextChannel = getChannel<TextChannel>(fullMessage.channelId);
 
   if (existingStatement) {
-    const existingRealTalk: string = replyBuilder.realTalkExists(
+    const existingRealTalk: string = replies.realTalkExists(
       user.id,
       existingStatement.url,
     );
@@ -127,7 +127,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
       getSubcommand: (): string => RealTalkSubcommand.RecordBase,
     },
     reply: (options: InteractionReplyOptions) =>
-      channel.send(replyBuilder.realTalkEmojiReaction(user.id, options.content)),
+      channel.send(replies.realTalkEmojiReaction(user.id, options.content)),
     user,
   };
 

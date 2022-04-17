@@ -11,7 +11,7 @@ import {
 
 import interactionHandlers from "./event-handlers/interactions";
 import messageHandlers from "./event-handlers/messages";
-import replyBuilder from "../client/reply-builder";
+import replies from "./replies";
 import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
 import { MessageDeleteHandler } from "./event-handlers/messages/message-delete";
 import { MessageReactionHandler } from "./event-handlers/messages/message-reaction-add";
@@ -46,7 +46,7 @@ const onInteractionCreate = async (interaction: CommandInteraction): Promise<voi
 
   if (!handlerFn) {
     logger.error(`No handler for command ${commandName}`);
-    return interaction.reply(replyBuilder.internalError());
+    return interaction.reply(replies.internalError());
   }
 
   const t: Timer = timer();

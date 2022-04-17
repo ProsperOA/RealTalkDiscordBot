@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 
-import replyBuilder from "./reply-builder";
+import replies from "./replies";
 import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
 import { cache, Cache } from "../utils";
 
@@ -16,7 +16,7 @@ export const useThrottle = (callback: InteractionCreateHandler, duration: number
     const timeout: number = throttleCache.ttl(userId);
 
     if (timeout) {
-      return interaction.reply(replyBuilder.throttleCoolDown(timeout));
+      return interaction.reply(replies.throttleCoolDown(timeout));
     }
 
     throttleCache.setF(userId, new Date().toISOString(), duration);
