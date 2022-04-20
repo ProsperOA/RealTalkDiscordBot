@@ -6,6 +6,8 @@ import {
   GuildMember,
   Message,
   MessageCollector,
+  User,
+  VoiceChannel,
 } from "discord.js";
 
 import db from "../../../db";
@@ -27,10 +29,10 @@ import {
   Time,
   cache,
   extractUserIdFromMention,
-  getActiveUsersInChannel,
   getMember,
   isMention,
   logger,
+  getChannel,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -46,10 +48,17 @@ const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
 
+const getRealTalkWitnesses = async (channelId: string): Promise<User[]> =>
+  (await getChannel(channelId) as VoiceChannel)
+    ?.members
+    .filter(({ voice }) => !voice.serverDeaf && !voice.selfDeaf)
+    .map(({ user }) => user)
+    ?? null;
+
 const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
   const member: GuildMember = getMember(interaction.user.id);
 
-  const witnesses: Partial<StatementWitnessRecord>[] = getActiveUsersInChannel(member.voice.channelId)
+  const witnesses: Partial<StatementWitnessRecord>[] = (await getRealTalkWitnesses(member.voice.channelId))
     ?.filter(user => user.id !== interaction.user.id)
     .map(user => ({ userId: user.id }))
     ?? [];

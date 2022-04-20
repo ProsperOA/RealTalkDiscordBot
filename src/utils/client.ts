@@ -1,4 +1,4 @@
-import { Guild, GuildMember, TextChannel, User } from "discord.js";
+import { Guild, GuildMember, User } from "discord.js";
 import { memberNicknameMention } from "@discordjs/builders";
 
 import { Config } from "../utils/config";
@@ -25,8 +25,8 @@ export const extractUserIdFromMention = (mention: string): string =>
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
 
-export const getChannel = <T>(channelId: string): T =>
-  client?.channels.cache.get(channelId) as any as T ?? null;
+export const getChannel = async <T>(channelId: string): Promise<T> =>
+  await client?.channels.fetch(channelId) as any as T ?? null;
 
 export const getMember = (userId: string): GuildMember =>
   getGuild()?.members.cache.get(userId) ?? null;
@@ -49,16 +49,6 @@ export const nicknameMention = (userId: string): string => {
 
   return Config.IsDev ? user.tag : memberNicknameMention(userId);
 };
-
-const isActiveInChannel = (channelId: string) => ({ presence, voice }: GuildMember): boolean =>
-  voice.channelId === channelId && presence?.status === "online" && !voice.deaf;
-
-export const getActiveUsersInChannel = (channelId: string): User[] =>
-  getChannel<TextChannel>(channelId)?.members
-    .filter(isActiveInChannel(channelId))
-    .map(member => member.user)
-    .filter(user => !user.bot)
-    ?? null;
 
 export const completeStructure = async <T = any>(structure: Structure<T>, force: boolean = true): Promise<T> =>
   structure.partial ? await structure.fetch(force) : structure as any as T;
