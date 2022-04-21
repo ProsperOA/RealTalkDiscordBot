@@ -25,7 +25,6 @@ import {
   completeStructure,
   logger,
   timer,
-  getUser,
 } from "../utils";
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -58,19 +57,22 @@ const onInteractionCreate = async (interaction: CommandInteraction): Promise<voi
   logCustom({ interaction }, t.time());
 };
 
-const onMessageDelete = async (message: Message | PartialMessage): Promise<void> => {
-  const fullMessage: Message = await completeStructure<Message>(message);
-  const handlerFn: MessageDeleteHandler = messageHandlers.setDeleted as MessageDeleteHandler;
-  const deletedAt: Date = await handlerFn(fullMessage);
+const onMessageDelete = (client: Client) =>
+  async (message: Message | PartialMessage): Promise<void> => {
+    const fullMessage: Message = await completeStructure<Message>(message);
+    const shouldHardDelete: boolean = message.author.id === client.user.id;
 
-  const { author, id } = fullMessage;
+    const handlerFn: MessageDeleteHandler = shouldHardDelete
+      ? messageHandlers.hardDelete as MessageDeleteHandler
+      : messageHandlers.softDelete as MessageDeleteHandler;
 
-  if (deletedAt) {
-    logger.info(
-      `Statement ${id} from ${getUser(author.id).tag} deleted at ${deletedAt.toISOString()}`
-    );
-  }
-};
+    const [ id, deletedAt ]: [number, Date] = await handlerFn(fullMessage);
+
+    if (id) {
+      const deleteType: string = shouldHardDelete ? "hard" : "soft";
+      logger.info(`Statement ${id} ${deleteType} deleted at ${deletedAt.toISOString()}`);
+    }
+  };
 
 const onMessageReactionAdd = (client: Client) =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
@@ -114,7 +116,7 @@ const register = (client: Client, debug?: boolean): void => {
   client.on("error", logger.error);
 
   client.on("interactionCreate", onInteractionCreate);
-  client.on("messageDelete", onMessageDelete);
+  client.on("messageDelete", onMessageDelete(client));
   client.on("messageReactionAdd", onMessageReactionAdd(client));
 };
 

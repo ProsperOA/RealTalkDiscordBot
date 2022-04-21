@@ -6,6 +6,18 @@ import { stripIndents } from "common-tags";
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
 import { getUsername, msConvert, nicknameMention, pluralizeIf } from "../utils";
 
+export const extractStatementContent = (formattedStatement: string): string => {
+  if (!formattedStatement) {
+    return formattedStatement;
+  }
+
+  const result = formattedStatement.match(/_"(.)*"_/);
+
+  return result
+    ? result[0].replace("_\"", "").replace("\"_", "")
+    : "";
+};
+
 const quietReply = (content: string): InteractionReplyOptions => ({
   content,
   ephemeral: true

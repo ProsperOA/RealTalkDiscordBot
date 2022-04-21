@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { isEmpty, merge } from "lodash";
+import { head, isEmpty, merge } from "lodash";
 
 import knex from "../../db/db";
 import { StatementWitnessRecord } from "../../db/models/statement-witnesses";
@@ -68,10 +68,11 @@ const createStatement = (statement: Partial<StatementRecord>, witnesses: Partial
           .transacting(trx)
           .insert(buildWitnessRecords(witnesses, data.id, new Date()))));
 
-const deleteStatementWhere = (where: any): Knex.QueryBuilder<number> =>
+const deleteStatementWhere = (where: any): Promise<number> =>
   knex("statements")
     .where(where)
-    .del();
+    .del("id")
+    .then(head);
 
 const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
   knex
