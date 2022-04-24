@@ -66,11 +66,11 @@ const onMessageDelete = (client: Client) =>
       ? messageHandlers.hardDelete as MessageDeleteHandler
       : messageHandlers.softDelete as MessageDeleteHandler;
 
-    const statementId: number = await handlerFn(fullMessage);
+    const id: number = await handlerFn(fullMessage);
 
-    if (statementId) {
+    if (id) {
       const deleteType: string = shouldHardDelete ? "hard" : "soft";
-      logger.info(`Statement ${statementId} ${deleteType} deleted at ${new Date().toISOString()}`);
+      logger.info(`Statement ${id} ${deleteType} deleted at ${new Date().toISOString()}`);
     }
   };
 

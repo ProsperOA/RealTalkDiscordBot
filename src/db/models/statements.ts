@@ -71,8 +71,8 @@ const createStatement = (statement: Partial<StatementRecord>, witnesses: Partial
 const deleteStatementWhere = (where: any): Promise<number> =>
   knex("statements")
     .where(where)
-    .del("id")
-    .then(head);
+    .del<{id: number}[]>([ "id" ])
+    .then(result => result ? result[0].id : null);
 
 const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
   knex
@@ -120,10 +120,11 @@ const getRandomStatement = (): Knex.QueryBuilder<StatementRecord> =>
     .limit(1)
     .first();
 
-const updateStatementWhere = (where: any, update: any): Knex.QueryBuilder<any> =>
+const updateStatementWhere = (where: any, update: any): Promise<number> =>
   knex("statements")
     .where(where)
-    .update(update);
+    .update<{id: number}[]>(update, [ "id" ])
+    .then(result => result ? result[0].id : null);
 
 export const statements = {
   createStatement,
