@@ -53,6 +53,7 @@ const getRealTalkWitnesses = async (channelId: string): Promise<User[]> =>
     ?.members
     .filter(({ voice }) => !voice.serverDeaf && !voice.selfDeaf)
     .map(({ user }) => user)
+    .filter(user => !user.bot)
     ?? null;
 
 const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
@@ -67,7 +68,8 @@ const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses:
     return interaction.reply(replies.realTalkNoWitnesses());
   }
 
-  const statement: string = interaction.options.get("what", true).value as string;
+  const statement: string = (interaction.options.get("what", true).value as string)
+    .trim();
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
     return interaction.reply(

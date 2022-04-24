@@ -11,7 +11,7 @@ export const extractStatementContent = (formattedStatement: string): string => {
     return formattedStatement;
   }
 
-  const result = formattedStatement.match(/_"(.)*"_/);
+  const result: RegExpMatchArray = formattedStatement.match(/_"(.)*"_/);
 
   return result
     ? result[0].replace("_\"", "").replace("\"_", "")
