@@ -3,29 +3,19 @@ import { Message } from "discord.js";
 import db from "../../../db";
 import { extractStatementContent } from "../../replies";
 
-export type MessageDeleteHandler = (message: Message) => Promise<[number, Date]>;
+export type MessageDeleteHandler = (message: Message) => Promise<number>;
 
-const hardDelete = async ({ content, url }: Message): Promise<[number, Date]> => {
-  const deletedAt: Date = new Date();
-
-  const id: number = await db.deleteStatementWhere({
+const hardDelete = async ({ content, url }: Message): Promise<number> =>
+  db.deleteStatementWhere({
     content: extractStatementContent(content),
     url,
   });
 
-  return id ? [ id, deletedAt ] : null;
-};
-
-const softDelete = async ({ author, content }: Message): Promise<[number, Date]> => {
-  const deletedAt: Date = new Date();
-
-  const id: number = await db.updateStatementWhere(
+const softDelete = async ({ author, content }: Message): Promise<number> =>
+  db.updateStatementWhere(
     { accusedUserId: author.id, content },
-    { deletedAt },
+    { deletedAt: new Date() },
   );
-
-  return id ? [ id, deletedAt ] : null;
-};
 
 export default {
   hardDelete,
