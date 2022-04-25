@@ -10,6 +10,7 @@ export enum RealTalkCommand {
 
 export enum RealTalkSubcommand {
   History = "history",
+  Image = "image",
   Quiz = "quiz",
   Record = "record",
   RecordBase = "recordBase",
@@ -45,7 +46,11 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.Quiz)
-      .setDescription("Quiz us, pls."));
+      .setDescription("Quiz us, pls."))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(RealTalkSubcommand.Image)
+      .setDescription("Put it on cam."));
 
 const slashCommands = [
   realTalk,

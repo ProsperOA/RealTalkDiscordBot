@@ -59,6 +59,10 @@ const onInteractionCreate = async (interaction: CommandInteraction): Promise<voi
 
 const onMessageDelete = (client: Client) =>
   async (message: Message | PartialMessage): Promise<void> => {
+    if (!message.content) {
+      return;
+    }
+
     const fullMessage: Message = await completeStructure<Message>(message);
     const shouldHardDelete: boolean = message.author.id === client.user.id;
 

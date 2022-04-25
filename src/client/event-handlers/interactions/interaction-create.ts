@@ -1,4 +1,8 @@
-import { isEmpty, takeRightWhile } from "lodash";
+import * as Jimp from "jimp";
+import * as fs from "fs";
+import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
+import { Random as RandomPhoto } from "unsplash-js/dist/methods/photos/types";
+import { isArray, isEmpty, takeRightWhile } from "lodash";
 
 import {
   CollectorFilter,
@@ -14,6 +18,7 @@ import db from "../../../db";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { useThrottle } from "../../middleware";
+import { unsplash } from "../../../index";
 
 import {
   RealTalkQuizRecord,
@@ -33,6 +38,8 @@ import {
   isMention,
   logger,
   getChannel,
+  nicknameMention,
+  getUser,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -178,6 +185,61 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   });
 };
 
+const realTalkImage = async (interaction: CommandInteraction): Promise<void> => {
+  const imagePath: string = "./image.jpeg";
+  const imageHeight: number = 600;
+  const imageWidth: number = 600;
+  const imageFontSize: number = 32;
+
+  let unsplashPhoto: RandomPhoto;
+  let statement: StatementRecord;
+
+  await interaction.deferReply();
+
+  try {
+    const { response }: UnsplashApiResponse<RandomPhoto | RandomPhoto[]> =
+      await unsplash.photos.getRandom({ count: 1 });
+
+    unsplashPhoto = isArray(response) ? response[0] : response;
+    const imageFile: Jimp = await Jimp.read(unsplashPhoto.urls.small);
+    imageFile.resize(imageHeight, imageWidth);
+    const font: any = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+
+    statement = await db.getRandomStatement();
+
+    imageFile.print(
+      font,
+      10,
+      imageHeight / 2,
+      statement.content,
+      imageWidth - 10,
+      imageHeight - (imageFontSize + 10),
+    );
+
+    imageFile.print(
+      font,
+      10,
+      imageHeight - (imageFontSize + 10),
+      `- ${getUser(statement.accusedUserId)?.username ?? nicknameMention(statement.accusedUserId)}`,
+      imageWidth - 10,
+      imageHeight + 10,
+    );
+
+    await imageFile.writeAsync(imagePath);
+  } catch (error) {
+    logger.error(error);
+    return interaction.reply(replies.internalError());
+  }
+
+  await interaction.editReply({ files: [ imagePath ] });
+
+  try {
+    fs.unlinkSync(imagePath);
+  } catch (error) {
+    logger.error(error);
+  }
+};
+
 export default {
   [RealTalkCommand.RealTalk]: async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     const subcommand: string = interaction.options.getSubcommand(true);
@@ -193,6 +255,8 @@ export default {
         return realTalkStats(interaction);
       case RealTalkSubcommand.Quiz:
         return realTalkQuiz(interaction);
+      case RealTalkSubcommand.Image:
+        return realTalkImage(interaction);
       default:
         logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
         return interaction.reply(replies.internalError());

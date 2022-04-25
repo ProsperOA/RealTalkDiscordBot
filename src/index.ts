@@ -1,12 +1,19 @@
 import Bugsnag from "@bugsnag/node";
+import fetch from "cross-fetch";
 import { Client, ClientOptions, Intents } from "discord.js";
+import { createApi } from "unsplash-js";
 import { omit } from "lodash";
 
 import listeners from "./client/listeners";
 import slashCommands from "./client/slash-commands";
 import { Config, logger } from "./utils";
 
-const { CLIENT_TOKEN, BUGSNAG_API_KEY, SERVICE_ENV } = process.env;
+const {
+  CLIENT_TOKEN,
+  BUGSNAG_API_KEY,
+  SERVICE_ENV,
+  UNSPLASH_API_KEY,
+} = process.env;
 
 const clientOptions: ClientOptions = {
   intents: [
@@ -27,6 +34,11 @@ Bugsnag.start({
   apiKey: BUGSNAG_API_KEY,
   logger: omit(logger, "custom"),
   releaseStage: SERVICE_ENV,
+});
+
+export const unsplash = createApi({
+  accessKey: UNSPLASH_API_KEY,
+  fetch: fetch as any,
 });
 
 export const client: Client = new Client(clientOptions);
