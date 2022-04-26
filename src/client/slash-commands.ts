@@ -50,7 +50,13 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.Image)
-      .setDescription("Put it on cam."));
+      .setDescription("Put it on cam.")
+      .addUserOption(option =>
+        option.setName("who")
+          .setDescription("Who they is?"))
+      .addStringOption(option =>
+        option.setName("topic")
+          .setDescription("Image topic")));
 
 const slashCommands = [
   realTalk,

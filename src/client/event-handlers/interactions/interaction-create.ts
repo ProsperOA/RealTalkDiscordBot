@@ -2,6 +2,7 @@ import * as Jimp from "jimp";
 import * as fs from "fs";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
 import { Random as RandomPhoto } from "unsplash-js/dist/methods/photos/types";
+import { RandomParams } from "unsplash-js/dist/methods/photos";
 import { isArray, isEmpty, takeRightWhile } from "lodash";
 
 import {
@@ -186,51 +187,56 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
 };
 
 const realTalkImage = async (interaction: CommandInteraction): Promise<void> => {
+  await interaction.deferReply();
+
+  let imageFile: Jimp;
+  let font: any;
   const imagePath: string = "./image.jpeg";
   const imageHeight: number = 600;
   const imageWidth: number = 600;
   const imageFontSize: number = 32;
 
-  let unsplashPhoto: RandomPhoto;
-  let statement: StatementRecord;
-
-  await interaction.deferReply();
+  const unsplashPayload: RandomParams = {
+    count: 1,
+    query: interaction.options.get("topic")?.value as string ?? "",
+  };
 
   try {
     const { response }: UnsplashApiResponse<RandomPhoto | RandomPhoto[]> =
-      await unsplash.photos.getRandom({ count: 1 });
+      await unsplash.photos.getRandom(unsplashPayload);
 
-    unsplashPhoto = isArray(response) ? response[0] : response;
-    const imageFile: Jimp = await Jimp.read(unsplashPhoto.urls.small);
+    const unsplashPhoto: RandomPhoto = isArray(response) ? response[0] : response;
+    imageFile = await Jimp.read(unsplashPhoto.urls.small);
     imageFile.resize(imageHeight, imageWidth);
-    const font: any = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-
-    statement = await db.getRandomStatement();
-
-    imageFile.print(
-      font,
-      10,
-      imageHeight / 2,
-      statement.content,
-      imageWidth - 10,
-      imageHeight - (imageFontSize + 10),
-    );
-
-    imageFile.print(
-      font,
-      10,
-      imageHeight - (imageFontSize + 10),
-      `- ${getUser(statement.accusedUserId)?.username ?? nicknameMention(statement.accusedUserId)}`,
-      imageWidth - 10,
-      imageHeight + 10,
-    );
-
-    await imageFile.writeAsync(imagePath);
+    font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
   } catch (error) {
     logger.error(error);
     return interaction.reply(replies.internalError());
   }
 
+  const accusedUserId: string = interaction.options.get("who")?.value as string;
+  const statement: StatementRecord =
+    await db.getRandomStatement(accusedUserId && { accusedUserId });
+
+  imageFile.print(
+    font,
+    10,
+    imageHeight / 2,
+    statement.content,
+    imageWidth - 10,
+    imageHeight - (imageFontSize + 10),
+  );
+
+  imageFile.print(
+    font,
+    10,
+    imageHeight - (imageFontSize + 10),
+    `- ${getUser(statement.accusedUserId)?.username ?? nicknameMention(statement.accusedUserId)}`,
+    imageWidth - 10,
+    imageHeight + 10,
+  );
+
+  await imageFile.writeAsync(imagePath);
   await interaction.editReply({ files: [ imagePath ] });
 
   try {
