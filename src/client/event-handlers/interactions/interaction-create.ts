@@ -211,7 +211,8 @@ const realTalkImage = async (interaction: CommandInteraction): Promise<void> => 
     font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
   } catch (error) {
     logger.error(error);
-    return interaction.reply(replies.internalError());
+    await interaction.editReply(replies.internalError());
+    return;
   }
 
   const accusedUserId: string = interaction.options.get("who")?.value as string;
