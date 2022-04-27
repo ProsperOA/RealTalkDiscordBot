@@ -36,6 +36,9 @@ export default {
   invalidStatementLength: (length: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, the statement must be ${length} characters or less`),
 
+  noImagesFound: (topic: string): InteractionReplyOptions =>
+    quietReply(`**#RealTalk**, no images found for topic "${topic}".`),
+
   realTalkExists: (userId: string, url: string): string =>
     `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`,
 

@@ -196,22 +196,36 @@ const realTalkImage = async (interaction: CommandInteraction): Promise<void> => 
   const imageWidth: number = 600;
   const imageFontSize: number = 32;
 
-  const unsplashPayload: RandomParams = {
-    count: 1,
-    query: interaction.options.get("topic")?.value as string ?? "",
-  };
+  const deferDeleteReply = () =>
+    setTimeout(() => interaction.deleteReply(), Time.Second * 5);
+
+  const topic: string = interaction.options.get("topic")?.value as string ?? "";
+  const unsplashPayload: RandomParams = { count: 1, query: topic };
 
   try {
-    const { response }: UnsplashApiResponse<RandomPhoto | RandomPhoto[]> =
+    const res: UnsplashApiResponse<RandomPhoto | RandomPhoto[]> =
       await unsplash.photos.getRandom(unsplashPayload);
 
-    const unsplashPhoto: RandomPhoto = isArray(response) ? response[0] : response;
+    if (res.status !== 200) {
+      if (res.status === 404) {
+        interaction.editReply(replies.noImagesFound(topic));
+        deferDeleteReply();
+        return;
+      }
+
+      await interaction.editReply(replies.internalError());
+      deferDeleteReply();
+      return;
+    }
+
+    const unsplashPhoto: RandomPhoto = isArray(res.response) ? res.response[0] : res.response;
     imageFile = await Jimp.read(unsplashPhoto.urls.small);
     imageFile.resize(imageHeight, imageWidth);
     font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
   } catch (error) {
     logger.error(error);
     await interaction.editReply(replies.internalError());
+    deferDeleteReply();
     return;
   }
 
