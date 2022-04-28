@@ -43,6 +43,7 @@ import {
   getChannel,
   nicknameMention,
   getUser,
+  delayDeleteReply,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -203,8 +204,8 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const imageWidth: number = 600;
   const imageFontSize: number = 32;
 
-  const deferDeleteReply = () =>
-    setTimeout(() => interaction.deleteReply(), Time.Second * 5);
+  const deleteReply: (interaction: CommandInteraction) => Promise<void> =
+    delayDeleteReply(Time.Second * 5);
 
   const topic: string = interaction.options.get("topic")?.value as string ?? "";
   const unsplashPayload: RandomParams = { count: 1, query: topic };
@@ -214,14 +215,12 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
       await unsplash.photos.getRandom(unsplashPayload);
 
     if (res.status !== 200) {
-      if (res.status === 404) {
-        interaction.editReply(replies.noImagesFound(topic));
-        deferDeleteReply();
-        return;
-      }
+      const message: string | InteractionReplyOptions = res.status === 404
+        ? replies.noImagesFound(topic)
+        : replies.internalError();
 
-      await interaction.editReply(replies.internalError());
-      deferDeleteReply();
+      await interaction.editReply(message);
+      await deleteReply(interaction);
       return;
     }
 
@@ -232,7 +231,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   } catch (error) {
     logger.error(error);
     await interaction.editReply(replies.internalError());
-    deferDeleteReply();
+    await deleteReply(interaction);
     return;
   }
 

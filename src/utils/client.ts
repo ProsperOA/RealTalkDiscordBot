@@ -1,4 +1,4 @@
-import { Guild, GuildMember, User } from "discord.js";
+import { CommandInteraction, Guild, GuildMember, User } from "discord.js";
 import { memberNicknameMention } from "@discordjs/builders";
 
 import { Config } from "../utils/config";
@@ -52,3 +52,12 @@ export const nicknameMention = (userId: string): string => {
 
 export const completeStructure = async <T = any>(structure: Structure<T>, force: boolean = true): Promise<T> =>
   structure.partial ? await structure.fetch(force) : structure as any as T;
+
+export const delayDeleteReply = (delay: number) =>
+  (interaction: CommandInteraction): Promise<void> =>
+    new Promise(resolve => {
+      setTimeout(async () => {
+        await interaction.deleteReply();
+        return resolve();
+      }, delay);
+    });
