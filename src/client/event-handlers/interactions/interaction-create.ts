@@ -6,9 +6,11 @@ import { RandomParams } from "unsplash-js/dist/methods/photos";
 import { isArray, isEmpty, takeRightWhile } from "lodash";
 
 import {
+  Client,
   CollectorFilter,
   CommandInteraction,
   GuildMember,
+  InteractionReplyOptions,
   Message,
   MessageCollector,
   User,
@@ -43,7 +45,7 @@ import {
   getUser,
 } from "../../../utils";
 
-export type InteractionCreateHandler = (interaction: CommandInteraction, ...args: any[]) => Promise<void>;
+export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
 
 enum MaxContentLength {
   InteractionOption = 140,
@@ -64,7 +66,13 @@ const getRealTalkWitnesses = async (channelId: string): Promise<User[]> =>
     .filter(user => !user.bot)
     ?? null;
 
-const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
+const realTalkRecord = async (client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
+  const targetUserId: string = interaction.options.get("who", true).value as string;
+
+  if (targetUserId === client.user.id) {
+    return interaction.reply(replies.noRealTalkingMe());
+  }
+
   const member: GuildMember = getMember(interaction.user.id);
 
   const witnesses: Partial<StatementWitnessRecord>[] = (await getRealTalkWitnesses(member.voice.channelId))
@@ -85,7 +93,6 @@ const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses:
     );
   }
 
-  const targetUserId: string = interaction.options.get("who", true).value as string;
   const incriminatingEvidence: string = replies.realTalkRecord(
     targetUserId,
     statement
@@ -105,7 +112,7 @@ const realTalkRecord = async (interaction: CommandInteraction, requireWitnesses:
   await db.createStatement(statementRecord, witnesses);
 };
 
-const realTalkHistory = async (interaction: CommandInteraction): Promise<void> => {
+const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const statementsAcc: StatementRecord[] = [];
   const allStatements: StatementRecord[] = await db.getAllStatements();
 
@@ -121,7 +128,7 @@ const realTalkHistory = async (interaction: CommandInteraction): Promise<void> =
   await interaction.reply(replies.realTalkHistory(statementsSlice));
 };
 
-const realTalkStats = async (interaction: CommandInteraction): Promise<void> => {
+const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
   const message: string = replies.realTalkStats(stats);
 
@@ -141,7 +148,7 @@ const realTalkStats = async (interaction: CommandInteraction): Promise<void> => 
   await interaction.reply(message);
 };
 
-const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
+const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const previousTimeout: number = realTalkQuizCache.ttl("previousStatement");
 
   if (previousTimeout) {
@@ -186,7 +193,7 @@ const realTalkQuiz = async (interaction: CommandInteraction): Promise<void> => {
   });
 };
 
-const realTalkImage = async (interaction: CommandInteraction): Promise<void> => {
+const realTalkImage = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   await interaction.deferReply();
 
   let imageFile: Jimp;
@@ -262,22 +269,22 @@ const realTalkImage = async (interaction: CommandInteraction): Promise<void> => 
 };
 
 export default {
-  [RealTalkCommand.RealTalk]: async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
+  [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     const subcommand: string = interaction.options.getSubcommand(true);
 
     switch(subcommand) {
       case RealTalkSubcommand.Record:
-        return useThrottle(realTalkRecord, THROTTLE_DURATION)(interaction);
+        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
       case RealTalkSubcommand.RecordBase:
-        return realTalkRecord(interaction, ...args);
+        return realTalkRecord(client, interaction, ...args);
       case RealTalkSubcommand.History:
-        return realTalkHistory(interaction);
+        return realTalkHistory(client, interaction);
       case RealTalkSubcommand.Stats:
-        return realTalkStats(interaction);
+        return realTalkStats(client, interaction);
       case RealTalkSubcommand.Quiz:
-        return realTalkQuiz(interaction);
+        return realTalkQuiz(client, interaction);
       case RealTalkSubcommand.Image:
-        return realTalkImage(interaction);
+        return realTalkImage(client, interaction);
       default:
         logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
         return interaction.reply(replies.internalError());

@@ -35,27 +35,28 @@ const logCustom = (data: CustomLogData, responseTime: number): void => {
   logger.custom(data, options);
 };
 
-const onInteractionCreate = async (interaction: CommandInteraction): Promise<void> => {
-  if (!interaction.isCommand()) {
-    return;
-  }
+const onInteractionCreate = (client: Client) =>
+  async (interaction: CommandInteraction): Promise<void> => {
+    if (!interaction.isCommand()) {
+      return;
+    }
 
-  const { commandName } = interaction;
-  const handlerFn: InteractionCreateHandler = interactionHandlers[commandName];
+    const { commandName } = interaction;
+    const handlerFn: InteractionCreateHandler = interactionHandlers[commandName];
 
-  if (!handlerFn) {
-    logger.error(`No handler for command ${commandName}`);
-    return interaction.reply(replies.internalError());
-  }
+    if (!handlerFn) {
+      logger.error(`No handler for command ${commandName}`);
+      return interaction.reply(replies.internalError());
+    }
 
-  const t: Timer = timer();
+    const t: Timer = timer();
 
-  t.start();
-  await handlerFn(interaction);
-  t.stop();
+    t.start();
+    await handlerFn(client, interaction);
+    t.stop();
 
-  logCustom({ interaction }, t.time());
-};
+    logCustom({ interaction }, t.time());
+  };
 
 const onMessageDelete = (client: Client) =>
   async (message: Message | PartialMessage): Promise<void> => {
@@ -119,7 +120,7 @@ const register = (client: Client, debug?: boolean): void => {
   client.on("warn", logger.warn);
   client.on("error", logger.error);
 
-  client.on("interactionCreate", onInteractionCreate);
+  client.on("interactionCreate", onInteractionCreate(client));
   client.on("messageDelete", onMessageDelete(client));
   client.on("messageReactionAdd", onMessageReactionAdd(client));
 };

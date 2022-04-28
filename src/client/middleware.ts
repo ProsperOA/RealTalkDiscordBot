@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { Client, CommandInteraction } from "discord.js";
 
 import replies from "./replies";
 import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
@@ -7,9 +7,9 @@ import { cache, Cache } from "../utils";
 const throttleCache: Cache = cache.new("throttleCache");
 
 export const useThrottle = (callback: InteractionCreateHandler, duration: number): InteractionCreateHandler =>
-  async (interaction: CommandInteraction, ...args: any[]): Promise<void> => {
+  async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     if (duration <= 0) {
-      return callback(interaction, ...args);
+      return callback(client, interaction, ...args);
     }
 
     const userId: string = interaction.user.id;
@@ -21,5 +21,5 @@ export const useThrottle = (callback: InteractionCreateHandler, duration: number
 
     throttleCache.setF(userId, new Date().toISOString(), duration);
 
-    await callback(interaction, ...args);
+    await callback(client, interaction, ...args);
   };

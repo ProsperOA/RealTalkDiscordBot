@@ -39,6 +39,9 @@ export default {
   noImagesFound: (topic: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, no images found for topic "${topic}".`),
 
+  noRealTalkingMe: (): InteractionReplyOptions =>
+    quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
+
   realTalkExists: (userId: string, url: string): string =>
     `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`,
 
