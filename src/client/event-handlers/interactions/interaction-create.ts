@@ -258,7 +258,11 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   );
 
   await imageFile.writeAsync(imagePath);
-  await interaction.editReply({ files: [ imagePath ] });
+
+  await interaction.editReply({
+    content: replies.realTalkImage(statement.userId),
+    files: [ imagePath ]
+  });
 
   try {
     fs.unlinkSync(imagePath);

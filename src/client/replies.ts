@@ -1,10 +1,27 @@
 import { InteractionReplyOptions } from "discord.js";
 import { hideLinkEmbed, time } from "@discordjs/builders";
-import { isEmpty } from "lodash";
+import { isEmpty, isObject } from "lodash";
 import { stripIndents } from "common-tags";
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
-import { getUsername, msConvert, nicknameMention, pluralizeIf } from "../utils";
+import { Config, getUsername, msConvert, nicknameMention, pluralizeIf } from "../utils";
+
+const DEV_MODE_LABEL: string = "**[DEVELOPMENT MODE]**";
+
+export const devModeLabel = (message: string | InteractionReplyOptions): string | InteractionReplyOptions => {
+  if (!Config.IsDev) {
+    return "";
+  }
+
+  const content: string =
+    stripIndents`${DEV_MODE_LABEL}
+
+    ${isObject(message) ? message.content : message}`;
+
+  return isObject(message)
+    ? { ...message, content }
+    : content;
+};
 
 export const extractStatementContent = (formattedStatement: string): string => {
   if (!formattedStatement) {
@@ -18,10 +35,10 @@ export const extractStatementContent = (formattedStatement: string): string => {
     : "";
 };
 
-const quietReply = (content: string): InteractionReplyOptions => ({
+const quietReply = (content: string): InteractionReplyOptions => devModeLabel({
   content,
   ephemeral: true
-});
+}) as InteractionReplyOptions;
 
 const formatStatementUrl = (statement: StatementRecord): string =>
   statement.deletedAt
@@ -30,8 +47,8 @@ const formatStatementUrl = (statement: StatementRecord): string =>
 
 export default {
 
-  internalError: (): InteractionReplyOptions =>
-    quietReply("**#RealTalk**, an error occurred. \:grimacing:"),
+  internalError: (): InteractionReplyOptions => devModeLabel(
+    quietReply("**#RealTalk**, an error occurred. \:grimacing:")) as InteractionReplyOptions,
 
   invalidStatementLength: (length: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, the statement must be ${length} characters or less`),
@@ -43,34 +60,39 @@ export default {
     quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
 
   realTalkExists: (userId: string, url: string): string =>
-    `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`,
+    devModeLabel(
+      `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`
+    ) as string,
 
   realTalkHistory: (statements: StatementRecord[]): string =>
-    statements.map(statement => stripIndents`
+    devModeLabel(statements.map(statement => stripIndents`
       > **#RealTalk** ${getUsername(statement.accusedUserId)} said: _"${statement.content}"_.
       > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
-    ).join("\n\n"),
+    ).join("\n\n")) as string,
+
+  realTalkImage: (userId: string): string =>
+    devModeLabel(`**#RealTalk** courtesy of ${nicknameMention(userId)}`) as string,
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
-    stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
+    devModeLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
       _"${content}"_
-      ${hideLinkEmbed(url)}`,
+      ${hideLinkEmbed(url)}`) as string,
 
   realTalkNoWitnesses: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement."),
 
   realTalkRecord: (userId: string, statement: string): string =>
-    stripIndents`**The following is provided under the terms of #RealTalk**
+    devModeLabel(stripIndents`**The following is provided under the terms of #RealTalk**
       Date: ${time(new Date())}
-      ${nicknameMention(userId)}: _"${statement}"_`,
+      ${nicknameMention(userId)}: _"${statement}"_`) as string,
 
   realTalkEmojiReaction: (userId: string, message: string): string =>
-    stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
+    devModeLabel(stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
 
-      ${message}`,
+      ${message}`) as string,
 
   realTalkStats: (stats: RealTalkStats): string =>
-    stripIndents`**#RealTalk Stats**
+    devModeLabel(stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
         const { uses, accusations } = stats[userId];
 
@@ -87,24 +109,26 @@ export default {
         }
 
         return message;
-      }).join("\n")}`,
+      }).join("\n")}`) as string,
 
   realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
-    `**#RealTalk** has been used ${uses} ${pluralizeIf("time", uses)} by ${uniqueUsers} ${pluralizeIf("user", uniqueUsers)}`,
+    devModeLabel(
+      `**#RealTalk** has been used ${uses} ${pluralizeIf("time", uses)} by ${uniqueUsers} ${pluralizeIf("user", uniqueUsers)}`
+    ) as string,
 
   realTalkQuiz: (statement: string, duration: number): string =>
-    stripIndents`
+    devModeLabel(stripIndents`
       Who's the type of person to say: _"${statement}"_?
       You have ${msConvert(duration, "Second")}s to respond in chat with: #RealTalk @Username
-      _Ex: #RealTalk @JohnDoe_`,
+      _Ex: #RealTalk @JohnDoe_`) as string,
 
   realTalkQuizActive: (duration: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk** wait for the current quiz to end (${msConvert(duration, "Second")}s left).`),
 
   realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>
-    stripIndents`
+    devModeLabel(stripIndents`
       ${isEmpty(userIds) ? "No one" : userIds.map(nicknameMention).join(", ")} got it right.
-      ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`,
+      ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`) as string,
 
   throttleCoolDown: (duration: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, chill... ${msConvert(duration, "Second")}s left`),
