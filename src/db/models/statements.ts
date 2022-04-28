@@ -72,7 +72,8 @@ const deleteStatementWhere = (where: any): Promise<number> =>
   knex("statements")
     .where(where)
     .del<{id: number}[]>([ "id" ])
-    .then(result => result[0]?.id ?? null);
+    .then(head)
+    .then(result => result?.id ?? null);
 
 const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
   knex
@@ -129,7 +130,8 @@ const updateStatementWhere = (where: any, update: any): Promise<number> =>
   knex("statements")
     .where(where)
     .update<{id: number}[]>(update, [ "id" ])
-    .then(result => result ? result[0].id : null);
+    .then(head)
+    .then(result => result?.id ?? null);
 
 export const statements = {
   createStatement,
