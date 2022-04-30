@@ -10,13 +10,14 @@ const DEV_MODE_LABEL: string = "**[DEVELOPMENT MODE]**";
 
 export const devModeLabel = (message: string | InteractionReplyOptions): string | InteractionReplyOptions => {
   if (!Config.IsDev) {
-    return "";
+    return message;
   }
 
-  const content: string =
+  const content: string = (
     stripIndents`${DEV_MODE_LABEL}
 
-    ${isObject(message) ? message.content : message}`;
+    ${isObject(message) ? message.content : message}`
+  );
 
   return isObject(message)
     ? { ...message, content }
