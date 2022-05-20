@@ -95,7 +95,7 @@ export default {
   realTalkStats: (stats: RealTalkStats): string =>
     devModeLabel(stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
-        const { uses, accusations } = stats[userId];
+        const { uses, accusations }: RealTalkStats["userId"] = stats[userId];
 
         let message: string = `> ${getUsername(userId)}: `;
         const usesPart: string = `${uses} ${pluralizeIf("use", uses)}`;

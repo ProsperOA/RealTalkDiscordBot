@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
-import { AnyFunction, logger } from "../utils";
 
+import { AnyFunction, logger } from "../utils";
 
 export enum RealTalkCommand {
   RealTalk = "realtalk",
@@ -17,7 +17,7 @@ export enum RealTalkSubcommand {
   Stats = "stats",
 }
 
-const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID } = process.env;
+const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID }: NodeJS.ProcessEnv = process.env;
 const rest: REST = new REST({ version: "9" }).setToken(CLIENT_TOKEN);
 
 const realTalk = new SlashCommandBuilder()

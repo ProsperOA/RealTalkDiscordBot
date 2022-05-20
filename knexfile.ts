@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 
 config({ debug: true });
 
-const { DATABASE_URL } = process.env;
+const { DATABASE_URL }: NodeJS.ProcessEnv = process.env;
 
 export default {
   development: {

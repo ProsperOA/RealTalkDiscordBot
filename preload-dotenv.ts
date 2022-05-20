@@ -1,6 +1,6 @@
-import { config } from 'dotenv';
+import { config, DotenvConfigOutput } from "dotenv";
 
-const { error } = config({ debug: true });
+const { error }: DotenvConfigOutput = config({ debug: true });
 
 if (error) {
   throw error;

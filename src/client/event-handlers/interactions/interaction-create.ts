@@ -1,8 +1,8 @@
 import * as Jimp from "jimp";
 import * as fs from "fs";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
-import { Random as RandomPhoto } from "unsplash-js/dist/methods/photos/types";
-import { RandomParams } from "unsplash-js/dist/methods/photos";
+import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
+import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
 import { isArray, isEmpty, takeRightWhile } from "lodash";
 
 import {
@@ -208,10 +208,10 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     delayDeleteReply(Time.Second * 5);
 
   const topic: string = interaction.options.get("topic")?.value as string ?? "";
-  const unsplashPayload: RandomParams = { count: 1, query: topic };
+  const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };
 
   try {
-    const res: UnsplashApiResponse<RandomPhoto | RandomPhoto[]> =
+    const res: UnsplashApiResponse<UnsplashRandomPhoto | UnsplashRandomPhoto[]> =
       await unsplash.photos.getRandom(unsplashPayload);
 
     if (res.status !== 200) {
@@ -224,7 +224,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
       return;
     }
 
-    const unsplashPhoto: RandomPhoto = isArray(res.response) ? res.response[0] : res.response;
+    const unsplashPhoto: UnsplashRandomPhoto = isArray(res.response) ? res.response[0] : res.response;
     imageFile = await Jimp.read(unsplashPhoto.urls.small);
     imageFile.resize(imageHeight, imageWidth);
     font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);

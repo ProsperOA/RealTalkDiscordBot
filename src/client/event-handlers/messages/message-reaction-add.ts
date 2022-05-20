@@ -3,6 +3,7 @@ import {
   CommandInteraction,
   InteractionReplyOptions,
   Message,
+  MessageInteraction,
   MessageReaction,
   MessageType,
   TextChannel,
@@ -30,14 +31,15 @@ const calcCapThreshold = (max: number): number =>
   Config.IsDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
 const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  const { message } = reaction;
+  const { message }: MessageReaction = reaction;
 
   if (!message.content) {
     return;
   }
 
   const fullMessage: Message = await completeStructure<Message>(message);
-  const { commandName, user: targetUser } = fullMessage.interaction ?? {};
+  const { commandName, user: targetUser }: MessageInteraction =
+    fullMessage.interaction ?? {} as MessageInteraction;
 
   if (commandName !== RealTalkCommand.RealTalk) {
     return;
@@ -76,7 +78,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
 };
 
 const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
-  const { message } = reaction;
+  const { message }: MessageReaction = reaction;
 
   if (message.author.id === client.user.id) {
     await reaction.remove();
@@ -131,7 +133,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
       get: (name: string): {value: string} => commandParams[name],
       getSubcommand: (): string => RealTalkSubcommand.RecordBase,
     },
-    reply: (options: InteractionReplyOptions) =>
+    reply: (options: InteractionReplyOptions): Promise<Message> =>
       channel.send(replies.realTalkEmojiReaction(user.id, options.content)),
     user,
   };

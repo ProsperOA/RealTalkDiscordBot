@@ -136,7 +136,7 @@ const formatInteraction = (interaction: CommandInteraction,  options: CustomLogO
 };
 
 const buildInteractionOutput = (interaction: CommandInteraction, options: CustomLogOptions): string => {
-  const { type, user } = interaction;
+  const { type, user }: CommandInteraction = interaction;
 
   const output: string = stripIndents`
     Type: ${type}
@@ -151,7 +151,7 @@ const buildMessageReactionOutput = (data: CustomMessageReaction, options?: Custo
   const {
     reaction: { count, emoji, message },
     user,
-  } = data;
+  }: CustomMessageReaction = data;
 
   const output = stripIndents`
     User: ${user.tag}

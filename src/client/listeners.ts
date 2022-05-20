@@ -41,7 +41,7 @@ const onInteractionCreate = (client: Client) =>
       return;
     }
 
-    const { commandName } = interaction;
+    const { commandName }: CommandInteraction = interaction;
     const handlerFn: InteractionCreateHandler = interactionHandlers[commandName];
 
     if (!handlerFn) {
@@ -81,7 +81,7 @@ const onMessageDelete = (client: Client) =>
 
 const onMessageReactionAdd = (client: Client) =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
-    const { emoji: { name: emojiName } } = reaction;
+    const { emoji: { name: emojiName } }: MessageReaction | PartialMessageReaction = reaction;
 
     const shouldHaveHandlerFn: boolean = Object.values<string>(MessageReactionName)
       .includes(emojiName);

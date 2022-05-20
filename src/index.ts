@@ -13,7 +13,7 @@ const {
   BUGSNAG_API_KEY,
   SERVICE_ENV,
   UNSPLASH_API_KEY,
-} = process.env;
+}: NodeJS.ProcessEnv = process.env;
 
 const clientOptions: ClientOptions = {
   intents: [
@@ -38,7 +38,7 @@ Bugsnag.start({
 
 export const unsplash = createApi({
   accessKey: UNSPLASH_API_KEY,
-  fetch: fetch as any,
+  fetch,
 });
 
 export const client: Client = new Client(clientOptions);
