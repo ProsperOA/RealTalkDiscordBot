@@ -17,7 +17,7 @@ export interface StatementRecord {
 
 export interface RealTalkStats {
   [userId: string]: {
-    accusations?: number;
+    statements?: number;
     uses?: number;
   };
 }
@@ -27,11 +27,11 @@ export interface RealTalkStatsCompact {
   uses: number;
 }
 
-interface RealTalkAccusation {
-  [accusedUserId: string]: {accusations: number};
+interface RealTalkUserStatement {
+  [accusedUserId: string]: {statements: number};
 }
 
-interface RealTalkAccusationRecord {
+interface RealTalkUserStatementRecord {
   accusedUserId: string;
   count: string;
 }
@@ -90,9 +90,9 @@ const transformUses = (uses: RealTalkUsageRecord[]): RealTalkUsage[] =>
     [use.userId]: { uses: Number(use.count) }
   }));
 
-const transformAccusations = (accusations: RealTalkAccusationRecord[]): RealTalkAccusation[] =>
-  accusations.map(accusation => ({
-    [accusation.accusedUserId]: { accusations: Number(accusation.count) }
+const transformStatements = (userStatements: RealTalkUserStatementRecord[]): RealTalkUserStatement[] =>
+  userStatements.map(statement => ({
+    [statement.accusedUserId]: { statements: Number(statement.count) }
   }));
 
 const getStatementUses = (): Knex.QueryBuilder<RealTalkUsageRecord[]> =>
@@ -101,7 +101,7 @@ const getStatementUses = (): Knex.QueryBuilder<RealTalkUsageRecord[]> =>
     .count("userId")
     .groupBy("userId");
 
-const getStatementAccusations = (): Knex.QueryBuilder<RealTalkAccusationRecord[]> =>
+const getStatementAccusations = (): Knex.QueryBuilder<RealTalkUserStatementRecord[]> =>
   knex("statements")
     .select("accusedUserId")
     .count("accusedUserId")
@@ -109,9 +109,9 @@ const getStatementAccusations = (): Knex.QueryBuilder<RealTalkAccusationRecord[]
 
 const getStatementStats = async (): Promise<RealTalkStats> => {
   const uses: RealTalkUsage[] = transformUses(await getStatementUses());
-  const accusations: RealTalkAccusation[] = transformAccusations(await getStatementAccusations());
+  const userStatements: RealTalkUserStatement[] = transformStatements(await getStatementAccusations());
 
-  return merge({}, ...uses, ...accusations);
+  return merge({}, ...uses, ...userStatements);
 };
 
 const getRandomStatement = (where?: any): Knex.QueryBuilder<StatementRecord> =>

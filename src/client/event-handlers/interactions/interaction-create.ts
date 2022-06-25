@@ -260,7 +260,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   await imageFile.writeAsync(imagePath);
 
   await interaction.editReply({
-    content: replies.realTalkImage(statement.userId),
+    content: replies.realTalkImage(statement.userId, statement.accusedUserId),
     files: [ imagePath ]
   });
 

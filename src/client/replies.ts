@@ -69,8 +69,8 @@ export default {
       > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join("\n\n")) as string,
 
-  realTalkImage: (userId: string): string =>
-    withDevLabel(`**#RealTalk** courtesy of ${nicknameMention(userId)}`) as string,
+  realTalkImage: (userId: string, accusedUserId: string): string =>
+    withDevLabel(`**#RealTalk** recorded by ${nicknameMention(userId)}`) as string,
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
     withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
@@ -93,18 +93,18 @@ export default {
   realTalkStats: (stats: RealTalkStats): string =>
     withDevLabel(stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
-        const { uses, accusations }: RealTalkStats["userId"] = stats[userId];
+        const { uses, statements }: RealTalkStats["userId"] = stats[userId];
 
         let message: string = `> ${getUsername(userId)}: `;
         const usesPart: string = `${uses} ${pluralizeIf("use", uses)}`;
-        const accusationsPart: string = `${accusations} ${pluralizeIf("accusation", accusations)}`;
+        const statementsPart: string = `${statements} ${pluralizeIf("statement", statements)}`;
 
-        if (uses && accusations) {
-          message += `${usesPart}, ${accusationsPart}`;
+        if (uses && statements) {
+          message += `${usesPart}, ${statementsPart}`;
         } else if (uses) {
           message += usesPart;
         } else {
-          message += accusationsPart;
+          message += statementsPart;
         }
 
         return message;
