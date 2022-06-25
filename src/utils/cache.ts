@@ -134,16 +134,13 @@ const newCache = (name: string): Cache => {
         return false;
       }
 
-      if (ttl) {
-        if (ttl < 0) {
-          return false;
-        }
-
-        ttlData[name][key] = setTimeout(() => operations.delete(key), ttl) as Timeout;
-      }
-
       try {
         cacheData[name][key] = isObject(value) ? cloneDeep(value) : value;
+
+        if (ttl && ttl > 0) {
+          ttlData[name][key] = setTimeout(() => operations.delete(key), ttl) as Timeout;
+        }
+
         return true;
       } catch (error) {
         logger.error(`stack overflow while setting ${key} in ${name}`);

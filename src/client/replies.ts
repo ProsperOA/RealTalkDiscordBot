@@ -6,22 +6,20 @@ import { stripIndents } from "common-tags";
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
 import { Config, getUsername, msConvert, nicknameMention, pluralizeIf } from "../utils";
 
-const DEV_MODE_LABEL: string = "**[DEVELOPMENT MODE]**";
-
-export const devModeLabel = (message: string | InteractionReplyOptions): string | InteractionReplyOptions => {
+export const withDevLabel = (message: string | InteractionReplyOptions): string | InteractionReplyOptions => {
   if (!Config.IsDev) {
     return message;
   }
 
   const content: string = (
-    stripIndents`${DEV_MODE_LABEL}
+    stripIndents`**[DEVELOPMENT MODE]**
 
     ${isObject(message) ? message.content : message}`
   );
 
-  return isObject(message)
-    ? { ...message, content }
-    : content;
+  return typeof message === "string"
+    ? content
+    : { ...message, content };
 };
 
 export const extractStatementContent = (formattedStatement: string): string => {
@@ -36,7 +34,7 @@ export const extractStatementContent = (formattedStatement: string): string => {
     : "";
 };
 
-const quietReply = (content: string): InteractionReplyOptions => devModeLabel({
+const quietReply = (content: string): InteractionReplyOptions => withDevLabel({
   content,
   ephemeral: true
 }) as InteractionReplyOptions;
@@ -48,7 +46,7 @@ const formatStatementUrl = (statement: StatementRecord): string =>
 
 export default {
 
-  internalError: (): InteractionReplyOptions => devModeLabel(
+  internalError: (): InteractionReplyOptions => withDevLabel(
     quietReply("**#RealTalk**, an error occurred. \:grimacing:")) as InteractionReplyOptions,
 
   invalidStatementLength: (length: number): InteractionReplyOptions =>
@@ -61,21 +59,21 @@ export default {
     quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
 
   realTalkExists: (userId: string, url: string): string =>
-    devModeLabel(
+    withDevLabel(
       `Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`
     ) as string,
 
   realTalkHistory: (statements: StatementRecord[]): string =>
-    devModeLabel(statements.map(statement => stripIndents`
+    withDevLabel(statements.map(statement => stripIndents`
       > **#RealTalk** ${getUsername(statement.accusedUserId)} said: _"${statement.content}"_.
       > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join("\n\n")) as string,
 
   realTalkImage: (userId: string): string =>
-    devModeLabel(`**#RealTalk** courtesy of ${nicknameMention(userId)}`) as string,
+    withDevLabel(`**#RealTalk** courtesy of ${nicknameMention(userId)}`) as string,
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
-    devModeLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
+    withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
       _"${content}"_
       ${hideLinkEmbed(url)}`) as string,
 
@@ -83,17 +81,17 @@ export default {
     quietReply("**#RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement."),
 
   realTalkRecord: (userId: string, statement: string): string =>
-    devModeLabel(stripIndents`**The following is provided under the terms of #RealTalk**
+    withDevLabel(stripIndents`**The following is provided under the terms of #RealTalk**
       Date: ${time(new Date())}
       ${nicknameMention(userId)}: _"${statement}"_`) as string,
 
   realTalkEmojiReaction: (userId: string, message: string): string =>
-    devModeLabel(stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
+    withDevLabel(stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
 
       ${message}`) as string,
 
   realTalkStats: (stats: RealTalkStats): string =>
-    devModeLabel(stripIndents`**#RealTalk Stats**
+    withDevLabel(stripIndents`**#RealTalk Stats**
       ${Object.keys(stats).map(userId => {
         const { uses, accusations }: RealTalkStats["userId"] = stats[userId];
 
@@ -113,12 +111,12 @@ export default {
       }).join("\n")}`) as string,
 
   realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
-    devModeLabel(
+    withDevLabel(
       `**#RealTalk** has been used ${uses} ${pluralizeIf("time", uses)} by ${uniqueUsers} ${pluralizeIf("user", uniqueUsers)}`
     ) as string,
 
   realTalkQuiz: (statement: string, duration: number): string =>
-    devModeLabel(stripIndents`
+    withDevLabel(stripIndents`
       Who's the type of person to say: _"${statement}"_?
       You have ${msConvert(duration, "Second")}s to respond in chat with: #RealTalk @Username
       _Ex: #RealTalk @JohnDoe_`) as string,
@@ -127,7 +125,7 @@ export default {
     quietReply(`**#RealTalk** wait for the current quiz to end (${msConvert(duration, "Second")}s left).`),
 
   realTalkQuizEnd: (accusedUserId: string, userIds: string[]): string =>
-    devModeLabel(stripIndents`
+    withDevLabel(stripIndents`
       ${isEmpty(userIds) ? "No one" : userIds.map(nicknameMention).join(", ")} got it right.
       ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`) as string,
 
