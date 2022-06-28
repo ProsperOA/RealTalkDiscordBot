@@ -169,11 +169,11 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
     replies.realTalkQuiz(statement.content, quizTimeout)
   );
 
-  const filter: CollectorFilter<[Message<boolean>]> =
-    (message: Message) => message.content.startsWith("#RealTalk");
-
-  const collector: MessageCollector =
-    interaction.channel.createMessageCollector({ filter, time: quizTimeout });
+  const collector: MessageCollector = interaction.channel.createMessageCollector({
+    filter: ({ content }: Message): boolean =>
+      content.toLocaleLowerCase().startsWith(`#${RealTalkCommand.RealTalk}`),
+    time: quizTimeout,
+  });
 
   const correctAnswerUserIds: string[] = [];
 
