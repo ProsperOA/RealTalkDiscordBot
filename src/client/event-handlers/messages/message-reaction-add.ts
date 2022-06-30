@@ -105,8 +105,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     content: messageContent,
   });
 
-  const channel: TextChannel =
-    await fullMessage.guild.channels.fetch(fullMessage.channelId) as TextChannel;
+  const channel: TextChannel = await client.channels.fetch(fullMessage.channelId) as TextChannel;
 
   if (existingStatement) {
     const existingRealTalk: string = replies.realTalkExists(
