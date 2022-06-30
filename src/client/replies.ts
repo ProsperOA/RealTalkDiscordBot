@@ -86,9 +86,9 @@ export default {
       ${nicknameMention(userId)}: _"${statement}"_`) as string,
 
   realTalkEmojiReaction: (userId: string, message: string): string =>
-    withDevLabel(stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
+    stripIndents`__${nicknameMention(userId)} used the #RealTalk emoji__
 
-      ${message}`) as string,
+      ${message}`,
 
   realTalkStats: (stats: RealTalkStats): string =>
     withDevLabel(stripIndents`**#RealTalk Stats**
