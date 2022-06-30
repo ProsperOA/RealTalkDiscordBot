@@ -4,7 +4,7 @@ import { isEmpty, isObject } from "lodash";
 import { stripIndents } from "common-tags";
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
-import { Config, getUsername, msConvert, nicknameMention, pluralizeIf } from "../utils";
+import { Config, getUsername, msConvert, nicknameMention, pluralize } from "../utils";
 
 export const withDevLabel = (message: string | InteractionReplyOptions): string | InteractionReplyOptions => {
   if (!Config.IsDev) {
@@ -96,8 +96,8 @@ export default {
         const { uses, statements }: RealTalkStats["userId"] = stats[userId];
 
         let message: string = `> ${getUsername(userId)}: `;
-        const usesPart: string = `${uses} ${pluralizeIf("use", uses)}`;
-        const statementsPart: string = `${statements} ${pluralizeIf("statement", statements)}`;
+        const usesPart: string = `${uses} ${pluralize("use", uses)}`;
+        const statementsPart: string = `${statements} ${pluralize("statement", statements)}`;
 
         if (uses && statements) {
           message += `${usesPart}, ${statementsPart}`;
@@ -112,7 +112,7 @@ export default {
 
   realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
     withDevLabel(
-      `**#RealTalk** has been used ${uses} ${pluralizeIf("time", uses)} by ${uniqueUsers} ${pluralizeIf("user", uniqueUsers)}`
+      `**#RealTalk** has been used ${uses} ${pluralize("time", uses)} by ${uniqueUsers} ${pluralize("user", uniqueUsers)}`
     ) as string,
 
   realTalkQuiz: (userId: string, statement: string, duration: number): string =>

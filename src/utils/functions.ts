@@ -37,10 +37,8 @@ export const multilineIndent = (str: string, indent: number = 1): string => {
     .join("\n");
 };
 
-export const pluralizeIf = (str: string, pluralize: boolean | number): string =>
-  pluralize === false || pluralize === 1
-    ? str
-    : `${str}s`;
+export const pluralize = (str: string, cond: boolean | number): string =>
+  cond === false || cond === 1 ? str : `${str}s`;
 
 export const timer = (): Timer => {
   let startDate: Date = null;

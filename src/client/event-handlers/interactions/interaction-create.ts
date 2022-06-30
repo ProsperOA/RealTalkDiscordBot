@@ -3,11 +3,10 @@ import * as fs from "fs";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
-import { isArray, isEmpty, takeRightWhile } from "lodash";
+import { isArray, takeRightWhile } from "lodash";
 
 import {
   Client,
-  CollectorFilter,
   CommandInteraction,
   GuildMember,
   InteractionReplyOptions,
@@ -95,13 +94,8 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     );
   }
 
-  const incriminatingEvidence: string = replies.realTalkRecord(
-    targetUserId,
-    statement
-  );
-
-  const message: Message =
-    await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
+  const incriminatingEvidence: string = replies.realTalkRecord(targetUserId, statement);
+  const message: Message = await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
   const statementRecord: Partial<StatementRecord> = {
     accusedUserId: targetUserId,

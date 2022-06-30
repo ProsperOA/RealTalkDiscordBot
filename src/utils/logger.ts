@@ -23,14 +23,14 @@ export interface CustomLogOptions {
   [name: string]: string;
 }
 
-enum BaseLogType {
+enum BaseLogLevel {
   Debug = "debug",
   Error = "error",
   Info = "info",
   Warn = "warn",
 }
 
-enum CustomLogType {
+enum CustomLogLevel {
   Interaction = "interaction",
   MessageReaction = "messageReaction",
 }
@@ -43,15 +43,15 @@ export interface CustomMessageReaction {
 type CustomLogOutput = CommandInteraction | CustomMessageReaction;
 
 export type CustomLogData =
-  {[CustomLogType.Interaction]: CommandInteraction} |
-  {[CustomLogType.MessageReaction]: CustomMessageReaction};
+  {[CustomLogLevel.Interaction]: CommandInteraction} |
+  {[CustomLogLevel.MessageReaction]: CustomMessageReaction};
 
 type LogColorType =
   "custom" |
-  BaseLogType.Debug |
-  BaseLogType.Error |
-  BaseLogType.Info |
-  BaseLogType.Warn;
+  BaseLogLevel.Debug |
+  BaseLogLevel.Error |
+  BaseLogLevel.Info |
+  BaseLogLevel.Warn;
 
 const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
   custom: chalk.magenta,
@@ -61,14 +61,14 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
   warn: chalk.yellow,
 };
 
-const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, options: any[] = []): void => {
+const baseLogger = (level: BaseLogLevel | CustomLogLevel, message: string | Error, options: any[] = []): void => {
   const colorFn: chalk.ChalkFunction =
-    COLOR_FUNCTIONS[type as LogColorType] || COLOR_FUNCTIONS.custom;
+    (COLOR_FUNCTIONS as any)[level] || COLOR_FUNCTIONS.custom;
 
   const output: string =
-    `[${Config.ServiceName}] ${snakeCase(type).toUpperCase()} ${message}`;
+    `[${Config.ServiceName}] ${snakeCase(level).toUpperCase()} ${message}`;
 
-  const logFn: LogFunction = (console as any)[type] || console.log;
+  const logFn: LogFunction = (console as any)[level] || console.log;
 
   logFn(colorFn(output, ...options));
 };
@@ -161,20 +161,20 @@ const buildMessageReactionOutput = (data: CustomMessageReaction, options?: Custo
 };
 
 const customLogger = (data: CustomLogData, options?: CustomLogOptions): void => {
-  const type: string = Object.keys(data)[0];
-  const isValidLogType: boolean = Object.values<string>(CustomLogType).includes(type);
+  const level: string = Object.keys(data)[0];
+  const isValidLogLevel: boolean = Object.values<string>(CustomLogLevel).includes(level);
 
-  if (!isValidLogType) {
-    return logger.warn(`Invalid custom log type: ${type}`);
+  if (!isValidLogLevel) {
+    return logger.warn(`Invalid custom log level: ${level}`);
   }
 
-  const output: CustomLogOutput = (data as any)[type];
-  const logFn: LogFunction = baseLogger.bind(null, type);
+  const output: CustomLogOutput = (data as any)[level];
+  const logFn: LogFunction = baseLogger.bind(null, level);
 
-  switch (type) {
-    case CustomLogType.Interaction:
+  switch (level) {
+    case CustomLogLevel.Interaction:
       return logFn(buildInteractionOutput(output as CommandInteraction, options));
-    case CustomLogType.MessageReaction:
+    case CustomLogLevel.MessageReaction:
       return logFn(buildMessageReactionOutput(output as CustomMessageReaction, options));
   }
 };
@@ -183,11 +183,11 @@ export const logger = {
   custom: (data: CustomLogData, options?: CustomLogOptions): void =>
     customLogger(data, options),
   debug: (message: string, ...options: any[]): void =>
-    baseLogger(BaseLogType.Debug, message, options),
+    baseLogger(BaseLogLevel.Debug, message, options),
   error: (message: string | Error, ...options: any[]): void =>
-    baseLogger(BaseLogType.Error, message, options),
+    baseLogger(BaseLogLevel.Error, message, options),
   info: (message: string, ...options: any[]): void =>
-    baseLogger(BaseLogType.Info, message, options),
+    baseLogger(BaseLogLevel.Info, message, options),
   warn: (message: string, ...options: any[]): void =>
-    baseLogger(BaseLogType.Warn, message, options),
+    baseLogger(BaseLogLevel.Warn, message, options),
 };
