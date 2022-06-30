@@ -62,11 +62,11 @@ const createStatement = (statement: Partial<StatementRecord>, witnesses: Partial
     knex("statements")
       .transacting(trx)
       .insert(statement, [ "id" ])
-      .then(([ data ]) => isEmpty(witnesses)
-        ? data
-        : knex("statementWitnesses")
+      .then(([ data ]) => witnesses
+        ? knex("statementWitnesses")
           .transacting(trx)
-          .insert(buildWitnessRecords(witnesses, data.id, new Date()))));
+          .insert(buildWitnessRecords(witnesses, data.id, new Date()))
+        : data));
 
 const deleteStatementWhere = (where: any): Promise<number> =>
   knex("statements")

@@ -73,15 +73,17 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     return interaction.reply(replies.noRealTalkingMe());
   }
 
+  let witnesses: Partial<StatementWitnessRecord>[];
   const member: GuildMember = getMember(interaction.user.id);
 
-  const witnesses: Partial<StatementWitnessRecord>[] = (await getRealTalkWitnesses(client, member.voice.channelId))
-    ?.filter(user => user.id !== interaction.user.id)
-    .map(user => ({ userId: user.id }))
-    ?? [];
+  if (!Config.IsDev && requireWitnesses) {
+    witnesses = (await getRealTalkWitnesses(client, member.voice.channelId))
+      ?.filter(user => user.id !== interaction.user.id)
+      .map(user => ({ userId: user.id }));
 
-  if (!Config.IsDev && (requireWitnesses && isEmpty(witnesses))) {
-    return interaction.reply(replies.realTalkNoWitnesses());
+    if (!witnesses) {
+      return interaction.reply(replies.realTalkNoWitnesses());
+    }
   }
 
   const statement: string = (interaction.options.get("what", true).value as string)
