@@ -115,11 +115,11 @@ export default {
       `**#RealTalk** has been used ${uses} ${pluralizeIf("time", uses)} by ${uniqueUsers} ${pluralizeIf("user", uniqueUsers)}`
     ) as string,
 
-  realTalkQuiz: (statement: string, duration: number): string =>
+  realTalkQuiz: (userId: string, statement: string, duration: number): string =>
     withDevLabel(stripIndents`
       Who's the type of person to say: _"${statement}"_?
-      You have ${msConvert(duration, "Second")}s to respond in chat with: #RealTalk @Username
-      _Ex: #RealTalk @JohnDoe_`) as string,
+      You have ${msConvert(duration, "Second")}s to respond in chat with: **#RealTalk @Username**
+      _e.g. #RealTalk ${nicknameMention(userId)}_`) as string,
 
   realTalkQuizActive: (duration: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk** wait for the current quiz to end (${msConvert(duration, "Second")}s left).`),

@@ -167,7 +167,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
   realTalkQuizCache.setF("previousStatement", statement, quizTimeout);
 
   await interaction.reply(
-    replies.realTalkQuiz(statement.content, quizTimeout)
+    replies.realTalkQuiz(interaction.user.id, statement.content, quizTimeout)
   );
 
   const collector: MessageCollector = interaction.channel.createMessageCollector({
