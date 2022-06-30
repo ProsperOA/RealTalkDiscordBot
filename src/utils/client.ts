@@ -25,9 +25,6 @@ export const extractUserIdFromMention = (mention: string): string =>
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
 
-export const getChannel = async <T>(channelId: string): Promise<T> =>
-  await client?.channels.fetch(channelId) as any as T ?? null;
-
 export const getMember = (userId: string): GuildMember =>
   getGuild()?.members.cache.get(userId) ?? null;
 

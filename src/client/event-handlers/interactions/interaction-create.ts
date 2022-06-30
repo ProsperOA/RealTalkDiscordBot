@@ -40,7 +40,6 @@ import {
   getMember,
   isMention,
   logger,
-  getChannel,
   nicknameMention,
   getUser,
   delayDeleteReply,
@@ -59,8 +58,8 @@ const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
 
-const getRealTalkWitnesses = async (channelId: string): Promise<User[]> =>
-  (await getChannel(channelId) as VoiceChannel)
+const getRealTalkWitnesses = async ({ channels }: Client, channelId: string): Promise<User[]> =>
+  (await channels.fetch(channelId) as VoiceChannel)
     ?.members
     .filter(({ voice }) => !voice.serverDeaf && !voice.selfDeaf)
     .map(({ user }) => user)
@@ -76,7 +75,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
 
   const member: GuildMember = getMember(interaction.user.id);
 
-  const witnesses: Partial<StatementWitnessRecord>[] = (await getRealTalkWitnesses(member.voice.channelId))
+  const witnesses: Partial<StatementWitnessRecord>[] = (await getRealTalkWitnesses(client, member.voice.channelId))
     ?.filter(user => user.id !== interaction.user.id)
     .map(user => ({ userId: user.id }))
     ?? [];

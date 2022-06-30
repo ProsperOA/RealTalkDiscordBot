@@ -17,7 +17,7 @@ import { InteractionCreateHandler } from "../interactions/interaction-create";
 import { MessageReactionName } from "../../message-reactions";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { StatementRecord, StatementWitnessRecord } from "../../../db/models";
-import { cache, Cache, completeStructure, Config, getChannel, Time } from "../../../utils";
+import { cache, Cache, completeStructure, Config, Time } from "../../../utils";
 
 export type MessageReactionHandler =
   (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
@@ -105,7 +105,8 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     content: messageContent,
   });
 
-  const channel: TextChannel = await getChannel<TextChannel>(fullMessage.channelId);
+  const channel: TextChannel =
+    await fullMessage.guild.channels.fetch(fullMessage.channelId) as TextChannel;
 
   if (existingStatement) {
     const existingRealTalk: string = replies.realTalkExists(
