@@ -1,5 +1,4 @@
 import * as chalk from "chalk";
-import Bugsnag from "@bugsnag/node";
 import { isEmpty, snakeCase } from "lodash";
 import { stripIndents } from "common-tags";
 
@@ -63,10 +62,6 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
 };
 
 const baseLogger = (type: BaseLogType | CustomLogType, message: string | Error, options: any[] = []): void => {
-  if (type === BaseLogType.Error) {
-    Bugsnag.notify(message);
-  }
-
   const colorFn: chalk.ChalkFunction =
     COLOR_FUNCTIONS[type as LogColorType] || COLOR_FUNCTIONS.custom;
 
