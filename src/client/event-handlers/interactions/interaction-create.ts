@@ -35,8 +35,7 @@ import {
   Config,
   Time,
   cache,
-  extractUserIdFromMention,
-  isMention,
+  getUserIdFromMention,
   logger,
   delayDeleteReply,
   getUsername,
@@ -64,9 +63,9 @@ const getRealTalkWitnesses = async ({ channels }: Client, channelId: string): Pr
     ?? null;
 
 const realTalkRecord = async (client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
-  const targetUserId: string = interaction.options.get("who", true).value as string;
+  const targetUser: User = interaction.options.getUser("who");
 
-  if (targetUserId === client.user.id) {
+  if (targetUser.id === client.user.id) {
     return interaction.reply(replies.noRealTalkingMe());
   }
 
@@ -78,7 +77,6 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
       return interaction.reply(replies.realTalkNotInVoiceChat());
     }
 
-
     witnesses = (await getRealTalkWitnesses(client, voice.channelId))
       .filter(user => user.id !== interaction.user.id)
       .map(user => ({ userId: user.id }));
@@ -88,8 +86,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     }
   }
 
-  const statement: string = (interaction.options.get("what", true).value as string)
-    .trim();
+  const statement: string = interaction.options.getString("what").trim();
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
     return interaction.reply(
@@ -97,11 +94,11 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     );
   }
 
-  const incriminatingEvidence: string = replies.realTalkRecord(targetUserId, statement);
+  const incriminatingEvidence: string = replies.realTalkRecord(targetUser.id, statement);
   const message: Message = await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
   const statementRecord: Partial<StatementRecord> = {
-    accusedUserId: targetUserId,
+    accusedUserId: targetUser.id,
     content: statement,
     createdAt: interaction.createdAt,
     url: message.url,
@@ -177,10 +174,10 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
 
   collector.on("collect", message => {
     const mention: string = message.content.trim().split(" ")[1];
-    const userId: string = extractUserIdFromMention(mention);
+    const userId: string = getUserIdFromMention(mention);
     const isCorrectUserId: boolean = userId === statement.accusedUserId;
 
-    if (isMention(mention) && isCorrectUserId) {
+    if (isCorrectUserId) {
       correctAnswerUserIds.push(message.author.id);
     }
   });
@@ -205,7 +202,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const deleteReply: (interaction: CommandInteraction) => Promise<void> =
     delayDeleteReply(Time.Second * 5);
 
-  const topic: string = interaction.options.get("topic")?.value as string ?? "";
+  const topic: string = interaction.options.getString("topic") || "";
   const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };
 
   try {
@@ -218,8 +215,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
         : replies.internalError();
 
       await interaction.editReply(message);
-      await deleteReply(interaction);
-      return;
+      return deleteReply(interaction);
     }
 
     const unsplashPhoto: UnsplashRandomPhoto = isArray(res.response) ? res.response[0] : res.response;
@@ -229,13 +225,12 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   } catch (error) {
     logger.error(error);
     await interaction.editReply(replies.internalError());
-    await deleteReply(interaction);
-    return;
+    return deleteReply(interaction);
   }
 
-  const accusedUserId: string = interaction.options.get("who")?.value as string;
+  const accusedUser: User = interaction.options.getUser("who");
   const statement: StatementRecord =
-    await db.getRandomStatement(accusedUserId && { accusedUserId });
+    await db.getRandomStatement(accusedUser && { accusedUserId: accusedUser.id });
 
   imageFile.print(
     font,
@@ -256,11 +251,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   );
 
   await imageFile.writeAsync(imagePath);
-
-  await interaction.editReply({
-    content: replies.realTalkImage(statement.userId, statement.accusedUserId),
-    files: [ imagePath ]
-  });
+  await interaction.editReply({ files: [ imagePath ] });
 
   try {
     fs.unlinkSync(imagePath);
@@ -271,13 +262,11 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
 export default {
   [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
-    const subcommand: string = interaction.options.getSubcommand(true);
+    const subcommand: string = interaction.options.getSubcommand();
 
     switch(subcommand) {
       case RealTalkSubcommand.Record:
-        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction);
-      case RealTalkSubcommand.RecordBase:
-        return realTalkRecord(client, interaction, ...args);
+        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction, ...args);
       case RealTalkSubcommand.History:
         return realTalkHistory(client, interaction);
       case RealTalkSubcommand.Stats:

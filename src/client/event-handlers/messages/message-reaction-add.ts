@@ -17,7 +17,7 @@ import { InteractionCreateHandler } from "../interactions/interaction-create";
 import { MessageReactionName } from "../../message-reactions";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { StatementRecord, StatementWitnessRecord } from "../../../db/models";
-import { cache, Cache, completeStructure, Config, Time } from "../../../utils";
+import { cache, Cache, completeStructure, Config, getMember, getUser, Time } from "../../../utils";
 
 export type MessageReactionHandler =
   (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
@@ -38,15 +38,14 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
   }
 
   const fullMessage: Message = await completeStructure<Message>(message);
-  const { commandName, user: targetUser }: MessageInteraction =
-    fullMessage.interaction ?? {} as MessageInteraction;
+  const { interaction }: Message = fullMessage;
 
-  if (commandName !== RealTalkCommand.RealTalk) {
+  if (interaction?.commandName !== RealTalkCommand.RealTalk) {
     return;
   }
 
   const statement: StatementRecord = await db.getStatementWhere({
-    userId: targetUser?.id,
+    userId: interaction.user.id,
     url: fullMessage.url,
   });
 
@@ -121,17 +120,14 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
     return;
   }
 
-  const commandParams: any = {
-    what: { value: messageContent },
-    who: { value: targetUserId },
-  };
-
   const mockInteraction: any = {
     channelId: fullMessage.channelId,
     createdAt: new Date(),
+    member: getMember(targetUserId),
     options: {
-      get: (name: string): {value: string} => commandParams[name],
-      getSubcommand: (): string => RealTalkSubcommand.RecordBase,
+      getUser: (): User => getUser(targetUserId),
+      getString: (): string => messageContent,
+      getSubcommand: (): string => RealTalkSubcommand.Record,
     },
     reply: (options: InteractionReplyOptions): Promise<Message> =>
       channel.send(replies.realTalkEmojiReaction(user.id, options.content)),

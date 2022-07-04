@@ -69,9 +69,6 @@ export default {
       > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join("\n\n")) as string,
 
-  realTalkImage: (userId: string, accusedUserId: string): string =>
-    withDevLabel(`**#RealTalk** recorded by ${nicknameMention(userId)}`) as string,
-
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
     withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
       _"${content}"_

@@ -1,4 +1,4 @@
-import { CommandInteraction, Guild, GuildMember, User } from "discord.js";
+import { CommandInteraction, Guild, GuildMember, MessageMentions, User } from "discord.js";
 import { memberNicknameMention } from "@discordjs/builders";
 
 import { Config } from "../utils/config";
@@ -10,17 +10,8 @@ interface Structure<T> {
   [key: string]: any;
 }
 
-export const USER_MENTION_REGEX: Readonly<RegExp> = /^<@[0-9]{18}>$/;
-export const NICKNAME_MENTION_REGEX: Readonly<RegExp> = /^<@![0-9]{18}>$/;
-
-export const isMention = (mention: string): boolean =>
-  mention
-    ? new RegExp(`${USER_MENTION_REGEX.source}|${NICKNAME_MENTION_REGEX.source}`)
-      .test(mention)
-    : false;
-
-export const extractUserIdFromMention = (mention: string): string =>
-  isMention(mention) ? mention.match(/[0-9]{18}/)[0] : "";
+export const getUserIdFromMention = (mention: string): string =>
+  mention.matchAll(MessageMentions.USERS_PATTERN).next().value?.[1];
 
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;

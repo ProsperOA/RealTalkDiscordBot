@@ -13,7 +13,6 @@ export enum RealTalkSubcommand {
   Image = "image",
   Quiz = "quiz",
   Record = "record",
-  RecordBase = "recordBase",
   Stats = "stats",
 }
 

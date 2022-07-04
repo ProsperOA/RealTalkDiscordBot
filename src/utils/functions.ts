@@ -23,17 +23,17 @@ export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): numb
   return timeout >= 0 ? timeout * 1000 : 0;
 };
 
-export const multilineIndent = (str: string, indent: number = 1): string => {
-  if (str.indexOf("\n") === -1) {
-    return str;
-  }
+export const indent = (str: string, length: number = 1, char: string = " "): string => {
+  const indentSize: number = length < 1 ? 1 : length;
+  const padding: string = Array.from({ length: indentSize }, () => char).join("");
 
-  const indentSize: number = indent < 1 ? 1 : indent;
-  const space: string = Array.from({ length: indentSize }, () => " ").join("");
+  if (str.indexOf("\n") === -1) {
+    return padding + str;
+  }
 
   return str
     .split("\n")
-    .map(line => space + line)
+    .map(line => padding + line)
     .join("\n");
 };
 

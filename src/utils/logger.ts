@@ -10,7 +10,7 @@ import {
   User,
 } from "discord.js";
 
-import { Config, multilineIndent } from "../utils";
+import { Config, indent } from "../utils";
 
 type LogFunction =
   Console["log"] |
@@ -66,7 +66,7 @@ const baseLogger = (level: BaseLogLevel | CustomLogLevel, message: string | Erro
     (COLOR_FUNCTIONS as any)[level] || COLOR_FUNCTIONS.custom;
 
   const output: string =
-    `[${Config.ServiceName}] ${snakeCase(level).toUpperCase()} ${message}`;
+    `[${Config.ServiceName}] ${new Date().toISOString()} ${snakeCase(level).toUpperCase()} ${message}`;
 
   const logFn: LogFunction = (console as any)[level] || console.log;
 
@@ -90,23 +90,22 @@ const formatSubCommandValue = (option: CommandInteractionOption): string => {
 const formatSubCommands = (options: CommandInteractionOption[]): string =>
   isEmpty(options)
     ? ""
-    : options.map(option =>
-      `> > Type: ${option.type}
-      > > Name: ${option.name}
-      > > Value: ${formatSubCommandValue(option)}`
-    ).join("\n\n");
+    : options.map(option => indent(
+      `Type: ${option.type}\nName: ${option.name}\nValue: ${formatSubCommandValue(option)}`,
+      2,
+      ". "
+    )).join("\n\n");
 
 const formatCommandOptions = (options: Readonly<CommandInteractionOption<CacheType>[]>): string => {
   let output: string = "";
 
   options.forEach((option, index) => {
-    output += `\nCommand Option #${index + 1}:
-      > Type: ${option.type}
-      > Name: ${option.name}`;
+    output += `\nCommand Option #${index + 1}:\n`
+      + indent(`Type: ${option.type}\nName: ${option.name}`, 1, ". ") + "\n\n";
 
     if (option.type === "SUB_COMMAND" && !isEmpty(option.options)) {
-      output += `\n\n> Command Option #${index + 1} Options:
-        ${formatSubCommands(option.options)}`;
+      output += indent(`Command Option #${index + 1} Options:`, 1, ". ")
+        + `\n${formatSubCommands(option.options)}`;
     }
   });
 
@@ -139,7 +138,7 @@ const buildInteractionOutput = (interaction: CommandInteraction, options: Custom
     User: ${user.tag}
     ${formatInteraction(interaction, options)}`;
 
-  return `\n${multilineIndent(output, 2)}`;
+  return `\n${indent(output, 2)}`;
 };
 
 const buildMessageReactionOutput = (data: CustomMessageReaction, options?: CustomLogOptions): string => {
@@ -157,18 +156,12 @@ const buildMessageReactionOutput = (data: CustomMessageReaction, options?: Custo
     Reaction Count: ${count}
     ${formatCustomLogOptions(options)}`;
 
-  return `\n${multilineIndent(output, 2)}`;
+  return `\n${indent(output, 2)}`;
 };
 
 const customLogger = (data: CustomLogData, options?: CustomLogOptions): void => {
   const level: string = Object.keys(data)[0];
-  const isValidLogLevel: boolean = Object.values<string>(CustomLogLevel).includes(level);
-
-  if (!isValidLogLevel) {
-    return logger.warn(`Invalid custom log level: ${level}`);
-  }
-
-  const output: CustomLogOutput = (data as any)[level];
+  const output: CustomLogOutput = Object.values(data)[0];
   const logFn: LogFunction = baseLogger.bind(null, level);
 
   switch (level) {
@@ -180,8 +173,8 @@ const customLogger = (data: CustomLogData, options?: CustomLogOptions): void => 
 };
 
 export const logger = {
-  custom: (data: CustomLogData, options?: CustomLogOptions): void =>
-    customLogger(data, options),
+  custom:
+    customLogger,
   debug: (message: string, ...options: any[]): void =>
     baseLogger(BaseLogLevel.Debug, message, options),
   error: (message: string | Error, ...options: any[]): void =>
