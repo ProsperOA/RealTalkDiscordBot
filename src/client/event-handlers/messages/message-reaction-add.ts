@@ -123,6 +123,9 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const mockInteraction: any = {
     channelId: fullMessage.channelId,
     createdAt: new Date(),
+    deleteReply: async (): Promise<void> => {
+      await reaction.remove();
+    },
     member: getMember(targetUserId),
     options: {
       getUser: (): User => getUser(targetUserId),

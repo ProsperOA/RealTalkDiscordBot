@@ -49,8 +49,8 @@ export default {
   internalError: (): InteractionReplyOptions => withDevLabel(
     quietReply("**#RealTalk**, an error occurred. \:grimacing:")) as InteractionReplyOptions,
 
-  invalidStatementLength: (length: number): InteractionReplyOptions =>
-    quietReply(`**#RealTalk**, the statement must be ${length} characters or less`),
+  invalidStatementLength: (length: number): string =>
+    `**#RealTalk**, the statement must be ${length} characters or less`,
 
   noImagesFound: (topic: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, no images found for topic "${topic}".`),
