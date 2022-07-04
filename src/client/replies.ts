@@ -77,6 +77,9 @@ export default {
       _"${content}"_
       ${hideLinkEmbed(url)}`) as string,
 
+  realTalkNotInVoiceChat: (): InteractionReplyOptions =>
+    quietReply("**#RealTalk**, have to been in a voice chat to make a statement."),
+
   realTalkNoWitnesses: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, you need witnesses (online, in chat, and not deafened) to make a statement."),
 

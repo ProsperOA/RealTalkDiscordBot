@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
-import { isArray, takeRightWhile } from "lodash";
+import { isArray, isEmpty, takeRightWhile } from "lodash";
 
 import {
   Client,
@@ -73,14 +73,19 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   }
 
   let witnesses: Partial<StatementWitnessRecord>[];
-  const member: GuildMember = getMember(interaction.user.id);
+  const { voice }: GuildMember = interaction.member as GuildMember;
 
-  if (!Config.IsDev && requireWitnesses) {
-    witnesses = (await getRealTalkWitnesses(client, member.voice.channelId))
-      ?.filter(user => user.id !== interaction.user.id)
+  if (Config.IsDev && requireWitnesses) {
+    if (!voice.channelId) {
+      return interaction.reply(replies.realTalkNotInVoiceChat());
+    }
+
+
+    witnesses = (await getRealTalkWitnesses(client, voice.channelId))
+      .filter(user => user.id !== interaction.user.id)
       .map(user => ({ userId: user.id }));
 
-    if (!witnesses) {
+    if (isEmpty(witnesses)) {
       return interaction.reply(replies.realTalkNoWitnesses());
     }
   }
