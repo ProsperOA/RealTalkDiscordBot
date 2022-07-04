@@ -73,7 +73,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   let witnesses: Partial<StatementWitnessRecord>[];
   const { voice }: GuildMember = interaction.member as GuildMember;
 
-  if (Config.IsDev && requireWitnesses) {
+  if (!Config.IsDev && requireWitnesses) {
     if (!voice.channelId) {
       return interaction.reply(replies.realTalkNotInVoiceChat());
     }
