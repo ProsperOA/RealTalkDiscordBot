@@ -36,12 +36,10 @@ import {
   Time,
   cache,
   extractUserIdFromMention,
-  getMember,
   isMention,
   logger,
-  nicknameMention,
-  getUser,
   delayDeleteReply,
+  getUsername,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -252,7 +250,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     font,
     10,
     imageHeight - (imageFontSize + 10),
-    `- ${getUser(statement.accusedUserId)?.username ?? nicknameMention(statement.accusedUserId)}`,
+    `- ${getUsername(statement.accusedUserId)}`,
     imageWidth - 10,
     imageHeight + 10,
   );
