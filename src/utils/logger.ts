@@ -1,3 +1,4 @@
+import * as Coralogix from "coralogix-logger";
 import * as chalk from "chalk";
 import { isEmpty, snakeCase } from "lodash";
 import { stripIndents } from "common-tags";
@@ -61,6 +62,27 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
   warn: chalk.yellow,
 };
 
+const coralogixSeverityMap: Readonly<Record<string, Coralogix.Severity>> = {
+  debug: Coralogix.Severity.debug,
+  info: Coralogix.Severity.info,
+  warning: Coralogix.Severity.warning,
+  error: Coralogix.Severity.error,
+  interaction: Coralogix.Severity.verbose,
+  messageReaction: Coralogix.Severity.verbose,
+};
+
+const coralogixLogger = (level: BaseLogLevel | CustomLogLevel, data: any): void => {
+  const category: string = Object.keys(BaseLogLevel).includes(level) ? "Default" : "Custom";
+  const cxLogger: Coralogix.CoralogixLogger = new Coralogix.CoralogixLogger(category);
+
+  cxLogger.addLog({
+    category,
+    severity: coralogixSeverityMap[level],
+    text: data,
+    timestamp: new Date().getTime(),
+  });
+};
+
 const baseLogger = (level: BaseLogLevel | CustomLogLevel, message: string | Error, options: any[] = []): void => {
   const colorFn: chalk.ChalkFunction =
     (COLOR_FUNCTIONS as any)[level] || COLOR_FUNCTIONS.custom;
@@ -70,6 +92,7 @@ const baseLogger = (level: BaseLogLevel | CustomLogLevel, message: string | Erro
 
   const logFn: LogFunction = (console as any)[level] || console.log;
 
+  coralogixLogger(level, output);
   logFn(colorFn(output, ...options));
 };
 

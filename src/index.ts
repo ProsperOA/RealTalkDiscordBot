@@ -1,5 +1,7 @@
+import * as Coralogix from "coralogix-logger";
 import Bugsnag from "@bugsnag/node";
 import fetch from "cross-fetch";
+import { hostname } from "os";
 import { Client, ClientOptions, Intents } from "discord.js";
 import { createApi } from "unsplash-js";
 import { omit } from "lodash";
@@ -10,6 +12,7 @@ import { Config, logger } from "./utils";
 
 const {
   CLIENT_TOKEN,
+  CORALOGIX_API_KEY,
   BUGSNAG_API_KEY,
   SERVICE_ENV,
   UNSPLASH_API_KEY,
@@ -30,6 +33,14 @@ const clientOptions: ClientOptions = {
     "REACTION",
   ]
 };
+
+Coralogix.CoralogixLogger.configure({
+  applicationName: Config.IsDev ? "real-talk-bot-dev" : "real-talk-bot",
+  computerName: hostname(),
+  debug: Config.IsDev,
+  privateKey: CORALOGIX_API_KEY,
+  subsystemName: "main",
+});
 
 Bugsnag.start({
   apiKey: BUGSNAG_API_KEY,

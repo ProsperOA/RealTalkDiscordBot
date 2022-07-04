@@ -18,6 +18,7 @@
     "@discordjs/rest": "^0.2.0-canary.0",
     "chalk": "^4.0.0",
     "common-tags": "^1.8.2",
+    "coralogix-logger": "^1.1.28",
     "cross-fetch": "^3.1.5",
     "discord-api-types": "^0.25.2",
     "discord.js": "^13.3.1",
