@@ -4,7 +4,7 @@ import { memberNicknameMention } from "@discordjs/builders";
 import { Config } from "../utils/config";
 import { client } from "../index";
 
-interface Structure<T = any> {
+interface Structure<T> {
   partial: boolean;
   fetch: (force?: boolean) => Promise<T>;
   [key: string]: any;
@@ -47,8 +47,8 @@ export const nicknameMention = (userId: string): string => {
   return Config.IsDev ? user.tag : memberNicknameMention(userId);
 };
 
-export const completeStructure = async <T = any>(structure: Structure<T>, force: boolean = true): Promise<T> =>
-  structure.partial ? await structure.fetch(force) : structure as any as T;
+export const completeStructure = async <T>(obj: Structure<T>): Promise<T> =>
+  obj.partial ? await obj.fetch() : obj as any as T;
 
 export const delayDeleteReply = (delay: number) =>
   (interaction: CommandInteraction): Promise<void> =>
