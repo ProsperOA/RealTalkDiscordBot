@@ -92,7 +92,7 @@ const baseLogger = (level: BaseLogLevel | CustomLogLevel, message: string | Erro
 
   const logFn: LogFunction = (console as any)[level] || console.log;
 
-  coralogixLogger(level, output);
+  coralogixLogger(level, message);
   logFn(colorFn(output, ...options));
 };
 
