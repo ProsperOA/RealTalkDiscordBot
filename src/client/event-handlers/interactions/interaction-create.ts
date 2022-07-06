@@ -242,7 +242,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
     ctx.fillStyle = "#ffffff";
     ctx.font = `italic ${quoteFontSize} sans-serif`;
-    const wrappedText: string[] = wrapCanvasText(canvas, `"${statement.content}"`, canvas.width - padding * 2);
+    const wrappedText: string[] = wrapCanvasText(canvas, statement.content, canvas.width - padding * 2);
 
     wrappedText.forEach((line, i) => {
       let text: string = line;
