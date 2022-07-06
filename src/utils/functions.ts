@@ -74,16 +74,17 @@ export const wrapCanvasText = (canvas: Canvas.Canvas, text: string, maxWidth: nu
   const lines: string[] = [];
   let currentLine: string = words[0];
 
-  words.forEach(word => {
-    const width: number = context.measureText(`${currentLine} ${word}`).width;
+  for (let i = 1; i < words.length; i++) {
+    const word: string = words[i];
+    const { width }: TextMetrics = context.measureText(`${currentLine} ${word}`);
 
     if (width < maxWidth) {
-      currentLine += ` ${word}`;
+      currentLine += " " + word;
     } else {
       lines.push(currentLine);
       currentLine = word;
     }
-  });
+  }
 
   lines.push(currentLine);
   return lines;
