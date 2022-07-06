@@ -1,5 +1,6 @@
-import * as Jimp from "jimp";
 import * as fs from "fs";
+import * as Canvas from "@napi-rs/canvas";
+import fetch from "cross-fetch";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
@@ -11,6 +12,7 @@ import {
   GuildMember,
   InteractionReplyOptions,
   Message,
+  MessageAttachment,
   MessageCollector,
   User,
   VoiceChannel,
@@ -39,6 +41,8 @@ import {
   logger,
   delayDeleteReply,
   getUsername,
+  getMember,
+  wrapCanvasText,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -196,18 +200,22 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
 const realTalkImage = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   await interaction.deferReply();
 
-  let imageFile: Jimp;
-  let font: any;
+  let canvas: Canvas.Canvas;
   const imagePath: string = "./image.jpeg";
-  const imageHeight: number = 600;
-  const imageWidth: number = 600;
-  const imageFontSize: number = 32;
+  const quoteFontSize: number = 35;
+  const padding: number = 20;
+  const avatarHeight: number = 50;
+  const avatarWidth: number = 50;
 
   const deleteReply: (interaction: CommandInteraction) => Promise<void> =
     delayDeleteReply(Time.Second * 5);
 
   const topic: string = interaction.options.getString("topic") || "";
   const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };
+
+  const accusedUser: User = interaction.options.getUser("who");
+  const statement: StatementRecord =
+    await db.getRandomStatement(accusedUser && { accusedUserId: accusedUser.id });
 
   try {
     const res: UnsplashApiResponse<UnsplashRandomPhoto | UnsplashRandomPhoto[]> =
@@ -223,39 +231,57 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     }
 
     const unsplashPhoto: UnsplashRandomPhoto = isArray(res.response) ? res.response[0] : res.response;
-    imageFile = await Jimp.read(unsplashPhoto.urls.small);
-    imageFile.resize(imageHeight, imageWidth);
-    font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+    const image: Response = await fetch(unsplashPhoto.urls.small);
+    fs.writeFileSync(imagePath, Buffer.from(await image.arrayBuffer()));
+
+    canvas = Canvas.createCanvas(600, 600);
+    const ctx: Canvas.SKRSContext2D = canvas.getContext("2d");
+    const background: Canvas.Image = new Canvas.Image();
+    background.src = fs.readFileSync(imagePath);
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `italic ${quoteFontSize} sans-serif`;
+    const wrappedText: string[] = wrapCanvasText(canvas, `"${statement.content}"`, canvas.width - padding * 2);
+
+    wrappedText.forEach((line, i) => {
+      let text: string = line;
+      const dyOffset: number = i > 0 ? i * quoteFontSize + 5 : 0;
+
+      if (i === 0) {
+        text = "\"" + line;
+      } else if (i === wrappedText.length - 1) {
+        text += "\"";
+      }
+
+      ctx.fillText(text, padding, canvas.height / 2 + dyOffset, canvas.width - padding);
+    });
+
+    const member: GuildMember = getMember(statement.accusedUserId);
+    const displayName: string = `- ${member?.displayName ?? getUsername(statement.accusedUserId)}`;
+    ctx.font = "25px sans-serif";
+    ctx.fillText(displayName, padding, canvas.height - padding, canvas.width - padding);
+
+    if (member) {
+      ctx.beginPath();
+      ctx.arc(padding + avatarWidth / 2, padding + avatarHeight / 2, avatarWidth / 2, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+
+      const avatarResponse: Response = await fetch(member.user.displayAvatarURL({ format: "jpg" }));
+      const avatar: Canvas.Image = new Canvas.Image();
+      avatar.src = Buffer.from(await avatarResponse.arrayBuffer());
+
+      ctx.drawImage(avatar, padding, padding, avatarWidth, avatarHeight);
+    }
   } catch (error) {
     logger.error(error);
     await interaction.editReply(replies.internalError());
     return deleteReply(interaction);
   }
 
-  const accusedUser: User = interaction.options.getUser("who");
-  const statement: StatementRecord =
-    await db.getRandomStatement(accusedUser && { accusedUserId: accusedUser.id });
-
-  imageFile.print(
-    font,
-    10,
-    imageHeight / 2,
-    statement.content,
-    imageWidth - 10,
-    imageHeight - (imageFontSize + 10),
-  );
-
-  imageFile.print(
-    font,
-    10,
-    imageHeight - (imageFontSize + 10),
-    `- ${getUsername(statement.accusedUserId)}`,
-    imageWidth - 10,
-    imageHeight + 10,
-  );
-
-  await imageFile.writeAsync(imagePath);
-  await interaction.editReply({ files: [ imagePath ] });
+  const attachment: MessageAttachment = new MessageAttachment(canvas.toBuffer("image/png"), "image.png");
+  await interaction.editReply({ files: [ attachment] });
 
   try {
     fs.unlinkSync(imagePath);

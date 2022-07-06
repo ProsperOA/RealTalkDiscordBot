@@ -1,3 +1,5 @@
+import * as Canvas from "@napi-rs/canvas";
+
 export type AnyFunction = (...args: any[]) => any;
 
 export interface Timer {
@@ -64,3 +66,25 @@ export const timer = (): Timer => {
 
 export const msConvert = (ms: number, format: keyof typeof Time): number =>
   ms / Time[format];
+
+export const wrapCanvasText = (canvas: Canvas.Canvas, text: string, maxWidth: number): string[] => {
+  const context: Canvas.SKRSContext2D = canvas.getContext("2d");
+
+  const words: string[] = text.split(" ");
+  const lines: string[] = [];
+  let currentLine: string = words[0];
+
+  words.forEach(word => {
+    const width: number = context.measureText(`${currentLine} ${word}`).width;
+
+    if (width < maxWidth) {
+      currentLine += ` ${word}`;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  });
+
+  lines.push(currentLine);
+  return lines;
+};
