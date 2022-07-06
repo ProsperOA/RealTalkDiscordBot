@@ -242,19 +242,11 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
     ctx.fillStyle = "#ffffff";
     ctx.font = `italic ${quoteFontSize} sans-serif`;
-    const wrappedText: string[] = wrapCanvasText(canvas, statement.content, canvas.width - padding * 2);
+    const wrappedText: string[] = wrapCanvasText(canvas, `"${statement.content}"`, canvas.width - padding * 2);
 
     wrappedText.forEach((line, i) => {
-      let text: string = line;
       const dyOffset: number = i > 0 ? i * quoteFontSize + 5 : 0;
-
-      if (i === 0) {
-        text = "\"" + line;
-      } else if (i === wrappedText.length - 1) {
-        text += "\"";
-      }
-
-      ctx.fillText(text, padding, canvas.height / 2 + dyOffset, canvas.width - padding);
+      ctx.fillText(line, padding, canvas.height / 2 + dyOffset, canvas.width - padding);
     });
 
     const member: GuildMember = getMember(statement.accusedUserId);
