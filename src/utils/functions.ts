@@ -67,6 +67,7 @@ export const timer = (): Timer => {
 export const msConvert = (ms: number, format: keyof typeof Time): number =>
   ms / Time[format];
 
+// source: https://stackoverflow.com/a/16599668
 export const wrapCanvasText = (canvas: Canvas.Canvas, text: string, maxWidth: number): string[] => {
   const context: Canvas.SKRSContext2D = canvas.getContext("2d");
 

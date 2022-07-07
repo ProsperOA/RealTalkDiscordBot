@@ -3,7 +3,6 @@ import {
   CommandInteraction,
   InteractionReplyOptions,
   Message,
-  MessageInteraction,
   MessageReaction,
   MessageType,
   TextChannel,
@@ -22,8 +21,8 @@ import { cache, Cache, completeStructure, Config, getMember, getUser, Time } fro
 export type MessageReactionHandler =
   (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
 
-const RESPONSE_CACHE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Hour;
-const ACCEPTED_MESSAGE_TYPES: Readonly<MessageType[]> = [ "DEFAULT", "REPLY" ];
+const RESPONSE_CACHE_DURATION: number = Config.IsDev ? 0 : Time.Hour;
+const ACCEPTED_MESSAGE_TYPES: ReadonlyArray<MessageType> = [ "DEFAULT", "REPLY" ];
 
 const responseCache: Cache = cache.new("responseCache");
 

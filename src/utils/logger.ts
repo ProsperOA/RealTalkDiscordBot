@@ -62,7 +62,7 @@ const COLOR_FUNCTIONS: Readonly<Record<LogColorType, chalk.ChalkFunction>> = {
   warn: chalk.yellow,
 };
 
-const coralogixSeverityMap: Readonly<Record<string, Coralogix.Severity>> = {
+const CORALOGIX_SEVERITY_MAP: Readonly<Record<string, Coralogix.Severity>> = {
   debug: Coralogix.Severity.debug,
   info: Coralogix.Severity.info,
   warning: Coralogix.Severity.warning,
@@ -77,7 +77,7 @@ const coralogixLogger = (level: BaseLogLevel | CustomLogLevel, data: any): void 
 
   cxLogger.addLog({
     category,
-    severity: coralogixSeverityMap[level],
+    severity: CORALOGIX_SEVERITY_MAP[level],
     text: data,
     timestamp: new Date().getTime(),
   });

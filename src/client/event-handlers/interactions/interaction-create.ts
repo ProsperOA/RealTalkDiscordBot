@@ -52,8 +52,8 @@ enum MaxContentLength {
   ResponseBody = 2000,
 }
 
-const THROTTLE_DURATION: Readonly<number> = Config.IsDev ? 0 : Time.Second * 30;
-const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
+const THROTTLE_DURATION: number = Config.IsDev ? 0 : Time.Second * 30;
+const realTalkQuizCache:  Cache = cache.new("realTalkQuizCache");
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
