@@ -28,6 +28,9 @@ const formatUserId = (userId: string): string =>
 export const getUsername = (userId: string): string =>
   getUser(userId)?.username ?? formatUserId(userId);
 
+export const getDisplayName = (userId: string): string =>
+  getMember(userId)?.displayName ?? getUsername(userId);
+
 export const nicknameMention = (userId: string): string => {
   const user: User = getUser(userId);
 

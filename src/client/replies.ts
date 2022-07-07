@@ -4,7 +4,7 @@ import { isEmpty } from "lodash";
 import { stripIndents } from "common-tags";
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
-import { Config, getMember, getUsername, msConvert, nicknameMention, pluralize } from "../utils";
+import { Config, getDisplayName, msConvert, nicknameMention, pluralize } from "../utils";
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
 
@@ -56,12 +56,12 @@ export default {
 
   realTalkHistory: (statements: StatementRecord[]): string =>
     withDevLabel(statements.map(statement => stripIndents`
-      > **#RealTalk** ${getUsername(statement.accusedUserId)} said: _"${statement.content}"_.
-      > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
+      > **#RealTalk** ${getDisplayName(statement.accusedUserId)} said: _"${statement.content}"_.
+      > (provided by ${getDisplayName(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join("\n\n")),
 
   realTalkImageNoStatement: (userId: string): string =>
-    withDevLabel(`${getMember(userId).displayName} has no #RealTalk statements.`),
+    withDevLabel(`${getDisplayName(userId)} has no #RealTalk statements.`),
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
     withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
@@ -96,7 +96,7 @@ export default {
       ${Object.keys(stats).map(userId => {
         const { uses, statements }: RealTalkStats["userId"] = stats[userId];
 
-        let message: string = `> ${getUsername(userId)}: `;
+        let message: string = `> ${getDisplayName(userId)}: `;
         const usesPart: string = `${uses} ${pluralize("use", uses)}`;
         const statementsPart: string = `${statements} ${pluralize("statement", statements)}`;
 
