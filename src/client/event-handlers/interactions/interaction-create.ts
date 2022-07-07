@@ -67,13 +67,10 @@ const getRealTalkWitnesses = async ({ channels }: Client, channelId: string): Pr
     ?? null;
 
 const realTalkRecord = async (client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
-  await interaction.deferReply?.();
-  const reply = interaction.deferred ? interaction.editReply : interaction.reply;
   const targetUser: User = interaction.options.getUser("who");
 
   if (targetUser.id === client.user.id) {
-    await reply(replies.noRealTalkingMe());
-    return;
+    return interaction.reply(replies.noRealTalkingMe());
   }
 
   let witnesses: Partial<StatementWitnessRecord>[];
@@ -81,8 +78,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
 
   if (!Config.IsDev && requireWitnesses) {
     if (!voice.channelId) {
-      await reply(replies.realTalkNotInVoiceChat());
-      return;
+      return interaction.reply(replies.realTalkNotInVoiceChat());
     }
 
     witnesses = (await getRealTalkWitnesses(client, voice.channelId))
@@ -90,20 +86,18 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
       .map(user => ({ userId: user.id }));
 
     if (isEmpty(witnesses)) {
-      await reply(replies.realTalkNoWitnesses());
-      return;
+      return interaction.reply(replies.realTalkNoWitnesses());
     }
   }
 
   const statement: string = interaction.options.getString("what").trim();
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
-    await interaction.user.send(replies.invalidStatementLength(MaxContentLength.InteractionOption));
-    return interaction.deleteReply();
+    await interaction.reply(replies.invalidStatementLength(MaxContentLength.InteractionOption));
   }
 
   const incriminatingEvidence: string = replies.realTalkRecord(targetUser.id, statement);
-  const message: Message = await reply({ content: incriminatingEvidence }) as Message;
+  const message: Message = await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
   const statementRecord: Partial<StatementRecord> = {
     accusedUserId: targetUser.id,
