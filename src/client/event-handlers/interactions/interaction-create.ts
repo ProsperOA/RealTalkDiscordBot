@@ -211,6 +211,11 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const statement: StatementRecord =
     await db.getRandomStatement(accusedUser && { accusedUserId: accusedUser.id });
 
+  if (!statement) {
+    await interaction.editReply(replies.realTalkImageNoStatement(accusedUser.id));
+    return deleteReply(interaction);
+  }
+
   try {
     const res: UnsplashApiResponse<UnsplashRandomPhoto | UnsplashRandomPhoto[]> =
       await unsplash.photos.getRandom(unsplashPayload);

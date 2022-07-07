@@ -4,7 +4,7 @@ import { isEmpty, isObject } from "lodash";
 import { stripIndents } from "common-tags";
 
 import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
-import { Config, getUsername, msConvert, nicknameMention, pluralize } from "../utils";
+import { Config, getMember, getUsername, msConvert, nicknameMention, pluralize } from "../utils";
 
 export const withDevLabel = (message: string | InteractionReplyOptions): string | InteractionReplyOptions => {
   if (!Config.IsDev) {
@@ -68,6 +68,9 @@ export default {
       > **#RealTalk** ${getUsername(statement.accusedUserId)} said: _"${statement.content}"_.
       > (provided by ${getUsername(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join("\n\n")) as string,
+
+  realTalkImageNoStatement: (userId: string): string =>
+    withDevLabel(`${getMember(userId).displayName} has no #RealTalk statements.`) as string,
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
     withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
