@@ -112,7 +112,9 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
 
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const statementsAcc: StatementRecord[] = [];
-  const allStatements: StatementRecord[] = await db.getAllStatements();
+  const allStatements: StatementRecord[] = await db.getAllStatements([
+    { column: "created_at", order: "asc" }
+  ]);
 
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);

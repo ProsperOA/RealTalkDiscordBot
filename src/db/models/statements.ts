@@ -75,10 +75,15 @@ const deleteStatementWhere = (where: any): Promise<number> =>
     .then(head)
     .then(result => result?.id ?? null);
 
-const getAllStatements = (): Knex.QueryBuilder<StatementRecord[]> =>
+const getAllStatements = (orderBy?: any): Knex.QueryBuilder<StatementRecord[]> =>
   knex
     .select()
-    .table("statements");
+    .table("statements")
+    .modify(queryBuilder => {
+      if (orderBy) {
+        queryBuilder.orderBy(orderBy);
+      }
+    });
 
 const getStatementWhere = (where: any): Knex.QueryBuilder =>
   knex("statements")
