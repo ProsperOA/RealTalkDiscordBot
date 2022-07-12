@@ -8,14 +8,10 @@ import { Config, getDisplayName, msConvert, nicknameMention, pluralize } from ".
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
 
-export const withDevLabel = (message: string): string => {
-  if (!Config.IsDev) {
-    return message;
-  }
-
-  return stripIndents`${DEV_MODE_LABEL}
-    ${message}`;
-};
+export const withDevLabel = (message: string): string =>
+  Config.IsDev
+    ? DEV_MODE_LABEL + "\n" + message
+    : message;
 
 export const extractStatementContent = (formattedStatement: string): string => {
   if (!formattedStatement) {
@@ -80,15 +76,11 @@ export default {
       ${nicknameMention(userId)}: _"${statement}"_`),
 
   realTalkEmojiReaction: (userId: string, message: string): string => {
-      const label: string = `**${nicknameMention(userId)} used the #RealTalk emoji**`;
+    const label: string = `**${nicknameMention(userId)} used the #RealTalk emoji**`;
 
-      const modifiedMessage: string = Config.IsDev
-        ? `${DEV_MODE_LABEL}
-          ${message.replace(DEV_MODE_LABEL, label)}`
-        : `${label}
-          ${message}`;
-
-      return stripIndents(modifiedMessage);
+    return Config.IsDev
+      ? DEV_MODE_LABEL + "\n" + message.replace(DEV_MODE_LABEL, label)
+      : label + "\n" + message;
   },
 
   realTalkStats: (stats: RealTalkStats): string =>
