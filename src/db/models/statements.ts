@@ -138,10 +138,21 @@ const updateStatementWhere = (where: any, update: any): Promise<number> =>
     .then(head)
     .then(result => result?.id ?? null);
 
+const getLatestStatement = (where?: any) =>
+  knex("statements")
+    .orderBy("created_at", "desc")
+    .first()
+    .modify(queryBuilder => {
+      if (where) {
+        queryBuilder.where(where);
+      }
+    });
+
 export const statements = {
   createStatement,
   deleteStatementWhere,
   getAllStatements,
+  getLatestStatement,
   getRandomStatement,
   getStatementStats,
   getStatementWhere,

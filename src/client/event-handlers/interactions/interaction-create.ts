@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as Canvas from "@napi-rs/canvas";
 import fetch from "cross-fetch";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
+import { Knex } from "knex";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
 import { isArray, isEmpty, takeRightWhile } from "lodash";
@@ -206,12 +207,16 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const deleteReply: (interaction: CommandInteraction) => Promise<void> =
     delayDeleteReply(Time.Second * 5);
 
+  const accusedUser: User = interaction.options.getUser("who");
+  const shouldGetLastestQuote: boolean = interaction.options.getBoolean("quote");
+
+  const dbQuery: (where?: any) => Knex.QueryBuilder =
+    shouldGetLastestQuote ? db.getLatestStatement : db.getRandomStatement;
+  const statement: StatementRecord =
+    await dbQuery(accusedUser && { accusedUserId: accusedUser.id });
+
   const topic: string = interaction.options.getString("topic") || "";
   const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };
-
-  const accusedUser: User = interaction.options.getUser("who");
-  const statement: StatementRecord =
-    await db.getRandomStatement(accusedUser && { accusedUserId: accusedUser.id });
 
   if (!statement) {
     await interaction.editReply(replies.realTalkImageNoStatement(accusedUser.id));

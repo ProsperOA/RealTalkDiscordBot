@@ -27,11 +27,13 @@ const realTalk = new SlashCommandBuilder()
       .setName(RealTalkSubcommand.Record)
       .setDescription("Record a #RealTalk statement.")
       .addUserOption(option =>
-        option.setName("who")
+        option
+          .setName("who")
           .setDescription("Who they is?")
           .setRequired(true))
       .addStringOption(option =>
-        option.setName("what")
+        option
+          .setName("what")
           .setDescription("What they said?")
           .setRequired(true)))
   .addSubcommand(subcommand =>
@@ -51,11 +53,17 @@ const realTalk = new SlashCommandBuilder()
       .setName(RealTalkSubcommand.Image)
       .setDescription("Put it on cam.")
       .addUserOption(option =>
-        option.setName("who")
+        option
+          .setName("who")
           .setDescription("Who they is?"))
       .addStringOption(option =>
-        option.setName("topic")
-          .setDescription("Image topic")));
+        option
+          .setName("topic")
+          .setDescription("Image topic"))
+      .addBooleanOption(option =>
+        option
+          .setName("quote")
+          .setDescription("Select latest quote?")));
 
 const slashCommands = [
   realTalk,
