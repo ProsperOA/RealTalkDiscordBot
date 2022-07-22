@@ -44,6 +44,8 @@ import {
   getUsername,
   getMember,
   wrapCanvasText,
+  replaceMentions,
+  getDisplayName,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -248,17 +250,17 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
     ctx.fillStyle = "#ffffff";
     ctx.font = `italic ${quoteFontSize} sans-serif`;
-    const wrappedText: string[] = wrapCanvasText(canvas, `"${statement.content}"`, canvas.width - padding * 2);
+    const content: string = replaceMentions(statement.content, getDisplayName);
 
-    wrappedText.forEach((line, i) => {
+    wrapCanvasText(canvas, `"${content}"`, canvas.width - padding * 2).forEach((line, i) => {
       const dyOffset: number = i > 0 ? i * quoteFontSize + 5 : 0;
       ctx.fillText(line, padding, canvas.height / 2 + dyOffset, canvas.width - padding);
     });
 
-    const member: GuildMember = getMember(statement.accusedUserId);
-    const displayName: string = `- ${member?.displayName ?? getUsername(statement.accusedUserId)}`;
+    const displayName: string = "- " +  getDisplayName(statement.accusedUserId);
     ctx.font = "25px sans-serif";
     ctx.fillText(displayName, padding, canvas.height - padding, canvas.width - padding);
+    const member: GuildMember = getMember(statement.accusedUserId);
 
     if (member) {
       ctx.beginPath();

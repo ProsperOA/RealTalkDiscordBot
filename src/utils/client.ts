@@ -41,6 +41,12 @@ export const nicknameMention = (userId: string): string => {
   return Config.IsDev ? user.tag : memberNicknameMention(userId);
 };
 
+export const replaceMentions = (str: string, replacer: (userId: string) => string): string =>
+  str.replace(
+    MessageMentions.USERS_PATTERN,
+    (mention: string): string => replacer(getUserIdFromMention(mention)),
+  );
+
 export const completeStructure = async <T>(obj: Structure<T>): Promise<T> =>
   obj.partial ? await obj.fetch() : obj as any as T;
 
