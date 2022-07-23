@@ -16,12 +16,8 @@ export default knex({
   },
   log: pick(logger, [ "error", "debug", "warn" ]),
   pool: { min: 0, max: 20 },
-  postProcessResponse: result => {
-    if (Array.isArray(result)) {
-      return result.map(camelCaseObj);
-    }
-
-    return camelCaseObj(result);
-  },
-  wrapIdentifier: (value, origImpl, _) => origImpl(snakeCase(value)),
+  postProcessResponse: (result: any): any =>
+    Array.isArray(result) ? result.map(camelCaseObj) : camelCaseObj(result),
+  wrapIdentifier: (value: string, origImpl: (value: string) => string): string =>
+    origImpl(snakeCase(value)),
 });

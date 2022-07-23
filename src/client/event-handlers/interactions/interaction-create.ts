@@ -41,7 +41,6 @@ import {
   getUserIdFromMention,
   logger,
   delayDeleteReply,
-  getUsername,
   getMember,
   wrapCanvasText,
   replaceMentions,
@@ -212,10 +211,10 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const accusedUser: User = interaction.options.getUser("who");
   const shouldGetLastestQuote: boolean = interaction.options.getBoolean("quote");
 
-  const dbQuery: (where?: any) => Knex.QueryBuilder =
+  const getStatement: (where?: any) => Knex.QueryBuilder<StatementRecord> =
     shouldGetLastestQuote ? db.getLatestStatement : db.getRandomStatement;
   const statement: StatementRecord =
-    await dbQuery(accusedUser && { accusedUserId: accusedUser.id });
+    await getStatement(accusedUser && { accusedUserId: accusedUser.id });
 
   const topic: string = interaction.options.getString("topic") || "";
   const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };

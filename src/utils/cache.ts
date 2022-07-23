@@ -43,7 +43,7 @@ const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> 
   ttl: null,
 };
 
-const preCheck = (cacheToCheck: any, callback: AnyFunction, args: any[]): any => {
+const validateOperation = (cacheToCheck: any, callback: AnyFunction, args: any[]): any => {
   if (cacheToCheck === undefined) {
     return OPERATION_DEFAULT_RETURN[callback.name as keyof Cache];
   }
@@ -106,6 +106,7 @@ const newCache = (name: string): Cache => {
 
       return cacheDataTotal;
     },
+
     delete: (key: string): boolean => {
       if (!operations.has(key)) {
         return false;
@@ -119,16 +120,23 @@ const newCache = (name: string): Cache => {
 
       return true;
     },
-    equals: (key: string, value: any): boolean => isEqual(cacheData[name][key], value),
+
+    equals: (key: string, value: any): boolean =>
+      isEqual(cacheData[name][key], value),
+
     free: (): boolean => {
       delete cacheData[name];
       return true;
     },
+
     get: (key: string): any => {
       const item: any = cacheData[name][key] ?? null;
       return isObject(item) ? cloneDeep(item) : item;
     },
-    has: (key: string): boolean => cacheData[name][key] !== undefined,
+
+    has: (key: string): boolean =>
+      cacheData[name][key] !== undefined,
+
     set: (key: string, value: any, ttl?: number): boolean => {
       if (value === undefined || operations.has(key)) {
         return false;
@@ -137,7 +145,7 @@ const newCache = (name: string): Cache => {
       try {
         cacheData[name][key] = isObject(value) ? cloneDeep(value) : value;
 
-        if (ttl && ttl > 0) {
+        if (ttl > 0) {
           ttlData[name][key] = setTimeout(() => operations.delete(key), ttl) as Timeout;
         }
 
@@ -147,15 +155,19 @@ const newCache = (name: string): Cache => {
         return false;
       }
     },
+
     setF: (key: string, value: any, ttl?: number): boolean => {
-      if (value === undefined || (ttl && ttl <= 0)) {
+      if (value === undefined || ttl <= 0) {
         return false;
       }
 
-      operations.delete(key);
+      if (operations.delete(key)) {
+        return operations.set(key, value, ttl);
+      }
 
-      return operations.set(key, value, ttl);
+      return false;
     },
+
     take: (key: string): any => {
       if (!operations.has(key)) {
         return null;
@@ -166,6 +178,7 @@ const newCache = (name: string): Cache => {
 
       return item;
     },
+
     ttl: (key: string): number => {
       const timeout: Timeout = ttlData[name][key];
       return timeout ? getRemainingTimeout(timeout) : null;
@@ -173,7 +186,7 @@ const newCache = (name: string): Cache => {
   };
 
   return mapValues(operations, fn =>
-    (...args: any[]): any => preCheck(cacheData[name], fn, args)
+    (...args: any[]): any => validateOperation(cacheData[name], fn, args)
   );
 };
 

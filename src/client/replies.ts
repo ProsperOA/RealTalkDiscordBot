@@ -78,7 +78,7 @@ export default {
   realTalkEmojiReaction: (userId: string, message: string): string => {
     const label: string = `**${nicknameMention(userId)} used the #RealTalk emoji**`;
 
-    return Config.IsDev
+    return message.indexOf(DEV_MODE_LABEL) > -1
       ? DEV_MODE_LABEL + "\n" + message.replace(DEV_MODE_LABEL, label)
       : label + "\n" + message;
   },

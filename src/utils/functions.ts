@@ -22,11 +22,11 @@ export enum Time {
 
 export const getRemainingTimeout = ({ _idleStart, _idleTimeout }: Timeout): number => {
   const timeout: number = Math.ceil((_idleStart + _idleTimeout) / 1000 - process.uptime());
-  return timeout >= 0 ? timeout * 1000 : 0;
+  return Math.max(0, timeout * 1000);
 };
 
 export const indent = (str: string, length: number = 1, char: string = " "): string => {
-  const indentSize: number = length < 1 ? 1 : length;
+  const indentSize: number = Math.max(1, length);
   const padding: string = Array.from({ length: indentSize }, () => char).join("");
 
   if (str.indexOf("\n") === -1) {
@@ -60,7 +60,8 @@ export const timer = (): Timer => {
 
       return endDate;
     },
-    time: (): number => totalTime,
+    time: (): number =>
+      totalTime,
   };
 };
 
