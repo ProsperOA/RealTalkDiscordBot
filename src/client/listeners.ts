@@ -67,9 +67,9 @@ const onMessageDelete = (client: Client) =>
     const fullMessage: Message = await completeStructure<Message>(message);
     const shouldHardDelete: boolean = message.author.id === client.user.id;
 
-    const handlerFn: MessageDeleteHandler = shouldHardDelete
-      ? messageHandlers.hardDelete as MessageDeleteHandler
-      : messageHandlers.softDelete as MessageDeleteHandler;
+    const handlerFn: MessageDeleteHandler = (
+      shouldHardDelete ? messageHandlers.hardDelete : messageHandlers.softDelete
+    ) as MessageDeleteHandler;
 
     const id: number = await handlerFn(fullMessage);
 
@@ -81,7 +81,7 @@ const onMessageDelete = (client: Client) =>
 
 const onMessageReactionAdd = (client: Client) =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
-    const { emoji: { name: emojiName } }: MessageReaction | PartialMessageReaction = reaction;
+    const { emoji: { name: emojiName }}: MessageReaction | PartialMessageReaction = reaction;
 
     const shouldHaveHandlerFn: boolean = Object.values<string>(MessageReactionName)
       .includes(emojiName);

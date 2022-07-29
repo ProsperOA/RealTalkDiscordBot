@@ -50,11 +50,10 @@ export const replaceMentions = (str: string, replacer: (userId: string) => strin
 export const completeStructure = async <T>(obj: Structure<T>): Promise<T> =>
   obj.partial ? await obj.fetch() : obj as any as T;
 
-export const delayDeleteReply = (delay: number) =>
-  (interaction: CommandInteraction): Promise<void> =>
-    new Promise(resolve => {
-      setTimeout(async () => {
-        await interaction.deleteReply();
-        return resolve();
-      }, delay);
-    });
+export const delayDeleteReply = (delay: number, interaction: CommandInteraction): Promise<void> =>
+  new Promise(resolve => {
+    setTimeout(async () => {
+      await interaction.deleteReply();
+      return resolve();
+    }, delay);
+  });

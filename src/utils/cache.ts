@@ -43,33 +43,30 @@ const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> 
   ttl: null,
 };
 
-const validateOperation = (cacheToCheck: any, callback: AnyFunction, args: any[]): any => {
-  if (cacheToCheck === undefined) {
-    return OPERATION_DEFAULT_RETURN[callback.name as keyof Cache];
-  }
-
-  return callback(...args);
-};
+const validateOperation = (cacheToCheck: any, cb: AnyFunction, args: any[]): any =>
+  cacheToCheck === undefined
+    ? OPERATION_DEFAULT_RETURN[cb.name as keyof Cache]
+    : cb(...args);
 
 const remove = (name: string): boolean => {
   if (cacheData[name] === undefined) {
     return false;
   }
 
-  delete cacheData[name];
+  const isDeleted: boolean = delete cacheData[name];
 
-  if (ttlData[name] !== undefined) {
+  if (isDeleted && ttlData[name] !== undefined) {
     delete ttlData[name];
   }
 
-  return true;
+  return isDeleted;
 };
 
 const flushAll = (): number => {
-  const cacheTotal: number = Object.keys(cacheData).length;
+  const total: number = Object.keys(cacheData).length;
 
-  if (!cacheTotal) {
-    return cacheTotal;
+  if (!total) {
+    return total;
   }
 
   cacheData = {};
@@ -78,13 +75,12 @@ const flushAll = (): number => {
     ttlData = {};
   }
 
-  return cacheTotal;
+  return total;
 };
 
 const newCache = (name: string): Cache => {
   if (cacheData[name]) {
-    logger.error(`${name} cache already exists`);
-    process.exit(1);
+    throw new Error(`Failed to create cache. ${name} already exists`);
   }
 
   cacheData[name] = {};
@@ -92,10 +88,10 @@ const newCache = (name: string): Cache => {
 
   const operations: Record<keyof Cache, AnyFunction> = {
     clear: (): number => {
-      const cacheDataTotal: number = Object.keys(cacheData[name]).length;
+      const total: number = Object.keys(cacheData[name]).length;
 
-      if (!cacheDataTotal) {
-        return cacheDataTotal;
+      if (!total) {
+        return total;
       }
 
       cacheData[name] = {};
@@ -104,7 +100,7 @@ const newCache = (name: string): Cache => {
         ttlData[name] = {};
       }
 
-      return cacheDataTotal;
+      return total;
     },
 
     delete: (key: string): boolean => {
@@ -112,22 +108,20 @@ const newCache = (name: string): Cache => {
         return false;
       }
 
-      delete cacheData[name][key];
+      const isDeleted: boolean = delete cacheData[name][key];
 
-      if (operations.ttl(key)) {
+      if (isDeleted && ttlData[name][key] !== undefined) {
         delete ttlData[name][key];
       }
 
-      return true;
+      return isDeleted;
     },
 
     equals: (key: string, value: any): boolean =>
       isEqual(cacheData[name][key], value),
 
-    free: (): boolean => {
-      delete cacheData[name];
-      return true;
-    },
+    free: (): boolean =>
+      delete cacheData[name],
 
     get: (key: string): any => {
       const item: any = cacheData[name][key] ?? null;
@@ -161,11 +155,9 @@ const newCache = (name: string): Cache => {
         return false;
       }
 
-      if (operations.delete(key)) {
-        return operations.set(key, value, ttl);
-      }
+      operations.delete(key);
 
-      return false;
+      return operations.set(key, value, ttl);
     },
 
     take: (key: string): any => {

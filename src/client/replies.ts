@@ -20,9 +20,7 @@ export const extractStatementContent = (formattedStatement: string): string => {
 
   const result: RegExpMatchArray = formattedStatement.match(/_"(.)*"_/);
 
-  return result
-    ? result[0].replace("_\"", "").replace("\"_", "")
-    : "";
+  return result?.[0].replace("_\"", "").replace("\"_", "") ?? "";
 };
 
 const quietReply = (content: string): InteractionReplyOptions =>
@@ -30,7 +28,7 @@ const quietReply = (content: string): InteractionReplyOptions =>
 
 const formatStatementUrl = (statement: StatementRecord): string =>
   statement.deletedAt
-    ? `deleted on ${time(statement.deletedAt)}`
+    ? "deleted on " + time(statement.deletedAt)
     : hideLinkEmbed(statement.url);
 
 export default {

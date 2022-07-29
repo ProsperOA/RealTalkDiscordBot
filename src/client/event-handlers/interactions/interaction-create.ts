@@ -55,7 +55,7 @@ enum MaxContentLength {
 }
 
 const THROTTLE_DURATION: number = Config.IsDev ? 0 : Time.Second * 30;
-const realTalkQuizCache:  Cache = cache.new("realTalkQuizCache");
+const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
@@ -199,14 +199,22 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   await interaction.deferReply();
 
   let canvas: Canvas.Canvas;
-  const imagePath: string = "./image.jpeg";
+  const imagePath: string = "image.jpeg";
   const quoteFontSize: number = 35;
   const padding: number = 20;
   const avatarHeight: number = 50;
   const avatarWidth: number = 50;
 
+  const deleteImageFile = (): void => {
+    try {
+      fs.unlinkSync(imagePath);
+    } catch (error) {
+      logger.error(error);
+    }
+  };
+
   const deleteReply: (interaction: CommandInteraction) => Promise<void> =
-    delayDeleteReply(Time.Second * 5);
+    delayDeleteReply.bind(null, Time.Second * 5);
 
   const accusedUser: User = interaction.options.getUser("who");
   const shouldGetLastestQuote: boolean = interaction.options.getBoolean("quote");
@@ -256,7 +264,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
       ctx.fillText(line, padding, canvas.height / 2 + dyOffset, canvas.width - padding);
     });
 
-    const displayName: string = "- " +  getDisplayName(statement.accusedUserId);
+    const displayName: string = "- " + getDisplayName(statement.accusedUserId);
     ctx.font = "25px sans-serif";
     ctx.fillText(displayName, padding, canvas.height - padding, canvas.width - padding);
     const member: GuildMember = getMember(statement.accusedUserId);
@@ -275,18 +283,16 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     }
   } catch (error) {
     logger.error(error);
+    deleteImageFile();
+
     await interaction.editReply(replies.internalError());
     return deleteReply(interaction);
   }
 
-  const attachment: MessageAttachment = new MessageAttachment(canvas.toBuffer("image/png"), "image.png");
+  const attachment: MessageAttachment = new MessageAttachment(canvas.toBuffer("image/png"), imagePath);
   await interaction.editReply({ files: [ attachment] });
 
-  try {
-    fs.unlinkSync(imagePath);
-  } catch (error) {
-    logger.error(error);
-  }
+  deleteImageFile();
 };
 
 export default {

@@ -6,10 +6,10 @@ import { cache, Cache } from "../utils";
 
 const throttleCache: Cache = cache.new("throttleCache");
 
-export const useThrottle = (callback: InteractionCreateHandler, duration: number): InteractionCreateHandler =>
+export const useThrottle = (cb: InteractionCreateHandler, duration: number): InteractionCreateHandler =>
   async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     if (duration <= 0) {
-      return callback(client, interaction, ...args);
+      return cb(client, interaction, ...args);
     }
 
     const userId: string = interaction.user.id;
@@ -21,5 +21,5 @@ export const useThrottle = (callback: InteractionCreateHandler, duration: number
 
     throttleCache.setF(userId, new Date().toISOString(), duration);
 
-    await callback(client, interaction, ...args);
+    await cb(client, interaction, ...args);
   };
