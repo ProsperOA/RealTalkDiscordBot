@@ -68,6 +68,9 @@ const getRealTalkWitnesses = async ({ channels }: Client, channelId: string): Pr
     .filter(user => !user.bot)
     ?? null;
 
+const cleanStatement = (statement: string): string =>
+  statement.trim().replace(/["]+/g, "");
+
 const realTalkRecord = async (client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
   const targetUser: User = interaction.options.getUser("who");
 
@@ -92,7 +95,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     }
   }
 
-  const statement: string = interaction.options.getString("what").trim();
+  const statement: string = cleanStatement(interaction.options.getString("what"));
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
     await interaction.reply(replies.invalidStatementLength(MaxContentLength.InteractionOption));

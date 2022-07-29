@@ -24,7 +24,7 @@ export type MessageReactionHandler =
 const RESPONSE_CACHE_DURATION: number = Config.IsDev ? 0 : Time.Hour;
 const ACCEPTED_MESSAGE_TYPES: ReadonlyArray<MessageType> = [ "DEFAULT", "REPLY" ];
 
-const responseCache: Cache = cache.new("responseCache");
+const emojiReactionCache: Cache = cache.new("responseCache");
 
 const calcCapThreshold = (max: number): number =>
   Config.IsDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
@@ -111,9 +111,9 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
       existingStatement.url,
     );
 
-    if (responseCache.equals(user.id, existingRealTalk)) {
+    if (emojiReactionCache.equals(user.id, existingRealTalk)) {
       await channel.send(existingRealTalk);
-      responseCache.setF(user.id, existingRealTalk, RESPONSE_CACHE_DURATION);
+      emojiReactionCache.setF(user.id, existingRealTalk, RESPONSE_CACHE_DURATION);
     }
 
     return;
