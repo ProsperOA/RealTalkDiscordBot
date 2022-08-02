@@ -5,7 +5,7 @@ import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/res
 import { Knex } from "knex";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
-import { isArray, isEmpty, takeRightWhile } from "lodash";
+import { isArray, isEmpty, sumBy, takeRightWhile } from "lodash";
 
 import {
   Client,
@@ -135,7 +135,8 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
 
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
-  const message: string = replies.realTalkStats(stats);
+  const totalStatements = sumBy(Object.values(stats), stat => stat.statements);
+  const message: string = replies.realTalkStats(stats, totalStatements);
 
   if (!hasValidContentLength(message, "ResponseBody")) {
     const compactStats: RealTalkStatsCompact = { uniqueUsers: 0, uses: 0 };
