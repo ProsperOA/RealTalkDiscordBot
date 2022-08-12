@@ -61,8 +61,7 @@ const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength)
   str.length <= MaxContentLength[type];
 
 const getRealTalkWitnesses = async ({ channels }: Client, channelId: string): Promise<User[]> =>
-  (await channels.fetch(channelId) as VoiceChannel)
-    ?.members
+  (await channels.fetch(channelId) as VoiceChannel)?.members
     .filter(({ voice }) => !voice.serverDeaf && !voice.selfDeaf)
     .map(({ user }) => user)
     .filter(user => !user.bot)
@@ -123,11 +122,7 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
 
   const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
-
-    return hasValidContentLength(
-      replies.realTalkHistory(statementsAcc),
-      "ResponseBody"
-    );
+    return hasValidContentLength(replies.realTalkHistory(statementsAcc), "ResponseBody");
   });
 
   await interaction.reply(replies.realTalkHistory(statementsSlice));
@@ -135,7 +130,7 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
 
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
-  const totalStatements = sumBy(Object.values(stats), stat => stat.statements);
+  const totalStatements: number = sumBy(Object.values(stats), stat => stat.statements);
   const message: string = replies.realTalkStats(stats, totalStatements);
 
   if (!hasValidContentLength(message, "ResponseBody")) {

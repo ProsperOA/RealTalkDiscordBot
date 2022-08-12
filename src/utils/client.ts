@@ -44,7 +44,7 @@ export const nicknameMention = (userId: string): string => {
 export const replaceMentions = (str: string, replacer: (userId: string) => string): string =>
   str.replace(
     MessageMentions.USERS_PATTERN,
-    (mention: string): string => replacer(getUserIdFromMention(mention)),
+    mention => replacer(getUserIdFromMention(mention)),
   );
 
 export const completeStructure = async <T>(obj: Structure<T>): Promise<T> =>

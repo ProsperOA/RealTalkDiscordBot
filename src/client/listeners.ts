@@ -29,7 +29,7 @@ import {
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
   const options: CustomLogOptions = {
-    "Response Time": `${responseTime}ms`,
+    "Response Time": responseTime + "ms",
   };
 
   logger.custom(data, options);
