@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { head, isEmpty, merge } from "lodash";
+import { head, merge } from "lodash";
 
 import knex from "../../db/db";
 import { StatementWitnessRecord } from "../../db/models/statement-witnesses";
@@ -96,9 +96,10 @@ const transformUses = (uses: RealTalkUsageRecord[]): RealTalkUsage[] =>
   }));
 
 const transformStatements = (userStatements: RealTalkUserStatementRecord[]): RealTalkUserStatement[] =>
-  userStatements.map(statement => ({
-    [statement.accusedUserId]: { statements: Number(statement.count) }
-  }));
+  userStatements
+    .map(statement => ({ ...statement, count: Number(statement.count) }))
+    .sort((a, b) => b.count - a.count)
+    .map(statement => ({ [statement.accusedUserId]: { statements: statement.count } }));
 
 const getStatementUses = (): Knex.QueryBuilder<RealTalkUsageRecord[]> =>
   knex("statements")
@@ -116,7 +117,7 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
   const uses: RealTalkUsage[] = transformUses(await getStatementUses());
   const userStatements: RealTalkUserStatement[] = transformStatements(await getStatementAccusations());
 
-  return merge({}, ...uses, ...userStatements);
+  return merge({}, ...userStatements, ...uses);
 };
 
 const getRandomStatement = (where?: any): Knex.QueryBuilder<StatementRecord> =>
