@@ -83,10 +83,10 @@ export default {
 
   realTalkStats: (stats: RealTalkStats, totalStatements: number): string =>
     withDevLabel(stripIndents`**#RealTalk Stats**: ${totalStatements} Total Statements
-      ${Object.keys(stats).map(userId => {
+      ${Object.keys(stats).map((userId, i) => {
         const { uses, statements }: RealTalkStats["userId"] = stats[userId];
 
-        let message: string = `> ${getDisplayName(userId)}: `;
+        let message: string = `> #${i + 1}. ${getDisplayName(userId)}: `;
         const usesPart: string = `${uses} ${pluralize("use", uses)}`;
         const percentagePart: string = `(${(statements / totalStatements * 100).toFixed(2)}%)`;
         const statementsPart: string = `${statements} ${pluralize("statement", statements)} ${percentagePart}`;
