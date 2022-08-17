@@ -99,6 +99,10 @@ export default {
           message += statementsPart;
         }
 
+        if (i === 0) {
+          message += " \:clap:";
+        }
+
         return message;
       }).join("\n")}`),
 
