@@ -9,6 +9,7 @@ export enum RealTalkCommand {
 }
 
 export enum RealTalkSubcommand {
+  Convo = "convo",
   History = "history",
   Image = "image",
   Quiz = "quiz",
@@ -35,6 +36,20 @@ const realTalk = new SlashCommandBuilder()
         option
           .setName("what")
           .setDescription("What they said?")
+          .setRequired(true)))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(RealTalkSubcommand.Convo)
+      .setDescription("Quotes from two users, conversation style!")
+      .addUserOption(option =>
+        option
+          .setName("user1")
+          .setDescription("First user")
+          .setRequired(true))
+      .addUserOption(option =>
+        option
+          .setName("user2")
+          .setDescription("Second user")
           .setRequired(true)))
   .addSubcommand(subcommand =>
     subcommand

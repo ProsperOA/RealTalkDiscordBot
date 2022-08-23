@@ -45,6 +45,15 @@ export default {
   noRealTalkingMe: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
 
+  realTalkConvo: (statements: StatementRecord[]): string =>
+    withDevLabel(statements.map(({ accusedUserId, content }, i) =>
+      `${i % 2 > 0 ? "> " : ""}**${getDisplayName(accusedUserId)}**: _${content}_`
+    ).join("\n")),
+
+    realTalkConvoTooLong: (userIds: string[], length: number): string =>
+      withDevLabel(stripIndents`**RealTalk** the convo between ${userIds.map(getDisplayName).join(", ")} is too long!
+        (must be less than ${length} characters)`),
+
   realTalkExists: (userId: string, url: string): string =>
     withDevLabel(`Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`),
 
@@ -54,8 +63,8 @@ export default {
       > (provided by ${getDisplayName(statement.userId)}) ${formatStatementUrl(statement)}`
     ).join("\n\n")),
 
-  realTalkImageNoStatement: (userId: string): string =>
-    withDevLabel(`${getDisplayName(userId)} has no #RealTalk statements.`),
+  realTalkNoStatements: (userIds: string[]): InteractionReplyOptions =>
+    quietReply(`The following user(s) have no #RealTalk statements: ${userIds.map(getDisplayName).join(", ")}`),
 
   realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
     withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:

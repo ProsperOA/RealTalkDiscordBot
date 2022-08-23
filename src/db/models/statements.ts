@@ -120,12 +120,11 @@ const getStatementStats = async (): Promise<RealTalkStats> => {
   return merge({}, ...userStatements, ...uses);
 };
 
-const getRandomStatement = (where?: any): Knex.QueryBuilder<StatementRecord> =>
+const getRandomStatement = (where?: any, limit: number = 1): Knex.QueryBuilder<StatementRecord[]> =>
   knex("statements")
     .select()
     .orderByRaw("RANDOM()")
-    .limit(1)
-    .first()
+    .limit(limit)
     .modify(queryBuilder => {
       if (where) {
         queryBuilder.where(where);

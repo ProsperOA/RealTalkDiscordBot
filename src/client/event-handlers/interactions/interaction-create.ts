@@ -5,7 +5,7 @@ import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/res
 import { Knex } from "knex";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
-import { isArray, isEmpty, sumBy, takeRightWhile } from "lodash";
+import { dropRight, flatten, isArray, isEmpty, sumBy, takeRightWhile, uniq, zip } from "lodash";
 
 import {
   Client,
@@ -114,6 +114,62 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   await db.createStatement(statementRecord, witnesses);
 };
 
+const realTalkConvo = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  await interaction.deferReply();
+
+  const deleteReply: (interaction: CommandInteraction) => Promise<void> =
+    delayDeleteReply.bind(null, Time.Second * 5);
+
+  const users: [User, User] = [
+    interaction.options.getUser("user1", true),
+    interaction.options.getUser("user2", true),
+  ];
+
+  const statementsGroup: StatementRecord[][] = [
+    await db.getRandomStatement({ accusedUserId: users[0].id }, 3),
+    await db.getRandomStatement({ accusedUserId: users[1].id }, 3),
+  ];
+
+  const noStatementsUserIds: string[] = [];
+
+  statementsGroup.forEach((statements, i) => {
+    if (!statements.length) {
+      noStatementsUserIds.push(users[i].id);
+    }
+  });
+
+  if (noStatementsUserIds.length) {
+    await interaction.editReply(
+      replies.realTalkNoStatements(uniq(noStatementsUserIds))
+    );
+
+    return deleteReply(interaction);
+  }
+
+  const maxStatementsPerUser: number = Math.min(statementsGroup[0].length, statementsGroup[1].length);
+  const filteredStatementsGroup: StatementRecord[][] =
+    statementsGroup.map(statements => dropRight(statements, statements.length - maxStatementsPerUser));
+
+  const convo: StatementRecord[] = flatten(zip(...filteredStatementsGroup));
+  const message: string = replies.realTalkConvo(convo);
+
+  if (!hasValidContentLength(message, "ResponseBody")) {
+    const messageSlice: string = replies.realTalkConvo(convo.slice(0, 2));
+
+    if (!hasValidContentLength(messageSlice, "ResponseBody")) {
+      const userIds: string[] = uniq(users.map(user => user.id));
+      await interaction.editReply(replies.realTalkConvoTooLong(userIds, MaxContentLength.ResponseBody));
+
+      return deleteReply(interaction);
+    }
+
+    await interaction.editReply(messageSlice);
+    return;
+  }
+
+  await interaction.editReply(message);
+};
+
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const statementsAcc: StatementRecord[] = [];
   const allStatements: StatementRecord[] = await db.getAllStatements([
@@ -216,18 +272,22 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     delayDeleteReply.bind(null, Time.Second * 5);
 
   const accusedUser: User = interaction.options.getUser("who");
-  const shouldGetLastestQuote: boolean = interaction.options.getBoolean("quote");
+  const shouldGetLatestQuote: boolean = interaction.options.getBoolean("quote");
 
-  const getStatement: (where?: any) => Knex.QueryBuilder<StatementRecord> =
-    shouldGetLastestQuote ? db.getLatestStatement : db.getRandomStatement;
-  const statement: StatementRecord =
+  const getStatement: (where?: any) => Knex.QueryBuilder<StatementRecord | StatementRecord[]> =
+    shouldGetLatestQuote ? db.getLatestStatement : db.getRandomStatement;
+  const statementResult: StatementRecord | StatementRecord[]=
     await getStatement(accusedUser && { accusedUserId: accusedUser.id });
+
+  const statement: StatementRecord = isArray(statementResult)
+    ? statementResult[0]
+    : statementResult;
 
   const topic: string = interaction.options.getString("topic") || "";
   const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };
 
   if (!statement) {
-    await interaction.editReply(replies.realTalkImageNoStatement(accusedUser.id));
+    await interaction.editReply(replies.realTalkNoStatements([ accusedUser.id ]));
     return deleteReply(interaction);
   }
 
@@ -301,6 +361,8 @@ export default {
     switch(subcommand) {
       case RealTalkSubcommand.Record:
         return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction, ...args);
+      case RealTalkSubcommand.Convo:
+        return realTalkConvo(client, interaction);
       case RealTalkSubcommand.History:
         return realTalkHistory(client, interaction);
       case RealTalkSubcommand.Stats:
