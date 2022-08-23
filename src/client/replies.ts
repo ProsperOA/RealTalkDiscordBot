@@ -100,7 +100,7 @@ export default {
         }
 
         if (i === 0) {
-          message += " \:clap:";
+          message += " \:crown:";
         }
 
         return message;
