@@ -97,7 +97,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   const statement: string = cleanStatement(interaction.options.getString("what"));
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
-    await interaction.reply(replies.invalidStatementLength(MaxContentLength.InteractionOption));
+    return interaction.reply(replies.invalidStatementLength(MaxContentLength.InteractionOption));
   }
 
   const incriminatingEvidence: string = replies.realTalkRecord(targetUser.id, statement);
