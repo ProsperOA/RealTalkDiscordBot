@@ -62,7 +62,7 @@ const realTalk = new SlashCommandBuilder()
           .setDescription("Image topic"))
       .addBooleanOption(option =>
         option
-          .setName("quote")
+          .setName("latest")
           .setDescription("Select latest quote?")));
 
 const slashCommands = [

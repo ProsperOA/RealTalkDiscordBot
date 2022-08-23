@@ -57,7 +57,7 @@ export const client: Client = new Client(clientOptions);
 
 slashCommands.init(() => listeners.register(client, Config.IsDev));
 
-client.on("ready", (): void => {
+client.on("ready", () => {
   if (Config.IsDev) {
     client.user.setActivity("Development Mode");
   }
