@@ -116,58 +116,71 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
 
 const realTalkConvo = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   await interaction.deferReply();
+  const maxStatementsToFetch: number = 3;
 
   const deleteReply: (interaction: CommandInteraction) => Promise<void> =
     delayDeleteReply.bind(null, Time.Second * 5);
 
-  const users: [User, User] = [
-    interaction.options.getUser("user1", true),
-    interaction.options.getUser("user2", true),
-  ];
+  const user1: User = interaction.options.getUser("user1", true);
+  const user2: User = interaction.options.getUser("user2");
+  const hasSecondUser: boolean = Boolean(user2);
+
+  const getUserStatements = async (userId: string): Promise<StatementRecord[]> =>
+    await db.getRandomStatement({ accusedUserId: userId }, maxStatementsToFetch);
+
+  const user1Statements: StatementRecord[] = await getUserStatements(user1.id);
+  const user2Statements: StatementRecord[] = hasSecondUser
+    ? await getUserStatements(user2.id)
+    : null;
 
   const statementsGroup: StatementRecord[][] = [
-    await db.getRandomStatement({ accusedUserId: users[0].id }, 3),
-    await db.getRandomStatement({ accusedUserId: users[1].id }, 3),
+    user1Statements,
+    user2Statements || await getUserStatements(user1.id),
   ];
 
   const noStatementsUserIds: string[] = [];
 
-  statementsGroup.forEach((statements, i) => {
-    if (!statements.length) {
-      noStatementsUserIds.push(users[i].id);
-    }
-  });
+  if (!user1Statements.length) {
+    noStatementsUserIds.push(user1.id);
+  }
+
+  if (hasSecondUser && !user2Statements.length) {
+    noStatementsUserIds.push(user2.id);
+  }
 
   if (noStatementsUserIds.length) {
-    await interaction.editReply(
-      replies.realTalkNoStatements(uniq(noStatementsUserIds))
-    );
-
+    await interaction.editReply(replies.realTalkNoStatements(uniq(noStatementsUserIds)));
     return deleteReply(interaction);
   }
 
-  const maxStatementsPerUser: number = Math.min(statementsGroup[0].length, statementsGroup[1].length);
-  const filteredStatementsGroup: StatementRecord[][] =
-    statementsGroup.map(statements => dropRight(statements, statements.length - maxStatementsPerUser));
+  const maxStatementsPerUser: number = hasSecondUser
+    ? Math.min(user1Statements.length, user2Statements.length)
+    : maxStatementsToFetch;
+
+  const filteredStatementsGroup: StatementRecord[][] = hasSecondUser
+    ? statementsGroup.map(statements => dropRight(statements, statements.length - maxStatementsPerUser))
+    : statementsGroup;
 
   const convo: StatementRecord[] = flatten(zip(...filteredStatementsGroup));
   const message: string = replies.realTalkConvo(convo);
+  const hasValidMessageLength: boolean = hasValidContentLength(message, "ResponseBody");
 
-  if (!hasValidContentLength(message, "ResponseBody")) {
-    const messageSlice: string = replies.realTalkConvo(convo.slice(0, 2));
+  const messageSlice: string = hasValidMessageLength
+    ? ""
+    : replies.realTalkConvo(convo.slice(0, 2));
 
-    if (!hasValidContentLength(messageSlice, "ResponseBody")) {
-      const userIds: string[] = uniq(users.map(user => user.id));
-      await interaction.editReply(replies.realTalkConvoTooLong(userIds, MaxContentLength.ResponseBody));
+  if (!(hasValidMessageLength || hasValidContentLength(messageSlice, "ResponseBody"))) {
+    const userIds: string[] = [ user1.id ];
 
-      return deleteReply(interaction);
+    if (user2?.id !== user1.id) {
+      userIds.push(user2.id);
     }
 
-    await interaction.editReply(messageSlice);
-    return;
+    await interaction.editReply(replies.realTalkConvoTooLong(userIds, MaxContentLength.ResponseBody));
+    return deleteReply(interaction);
   }
 
-  await interaction.editReply(message);
+  await interaction.editReply(messageSlice || message);
 };
 
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {

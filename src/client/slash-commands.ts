@@ -49,8 +49,7 @@ const realTalk = new SlashCommandBuilder()
       .addUserOption(option =>
         option
           .setName("user2")
-          .setDescription("Second user")
-          .setRequired(true)))
+          .setDescription("Second user")))
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.History)
