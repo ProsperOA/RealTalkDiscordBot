@@ -362,31 +362,30 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   }
 
   const attachment: MessageAttachment = new MessageAttachment(canvas.toBuffer("image/png"), imagePath);
-  await interaction.editReply({ files: [ attachment] });
+  await interaction.editReply({ files: [ attachment ] });
 
   deleteImageFile();
+};
+
+const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
+  [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, THROTTLE_DURATION),
+  [RealTalkSubcommand.Convo]: realTalkConvo,
+  [RealTalkSubcommand.History]: realTalkHistory,
+  [RealTalkSubcommand.Stats]: realTalkStats,
+  [RealTalkSubcommand.Quiz]: realTalkQuiz,
+  [RealTalkSubcommand.Image]: realTalkImage,
 };
 
 export default {
   [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     const subcommand: string = interaction.options.getSubcommand();
+    const handlerFn: InteractionCreateHandler = interactionHandlers[subcommand];
 
-    switch(subcommand) {
-      case RealTalkSubcommand.Record:
-        return useThrottle(realTalkRecord, THROTTLE_DURATION)(client, interaction, ...args);
-      case RealTalkSubcommand.Convo:
-        return realTalkConvo(client, interaction);
-      case RealTalkSubcommand.History:
-        return realTalkHistory(client, interaction);
-      case RealTalkSubcommand.Stats:
-        return realTalkStats(client, interaction);
-      case RealTalkSubcommand.Quiz:
-        return realTalkQuiz(client, interaction);
-      case RealTalkSubcommand.Image:
-        return realTalkImage(client, interaction);
-      default:
-        logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
-        return interaction.reply(replies.internalError());
+    if (!handlerFn) {
+      logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
+      return interaction.reply(replies.internalError());
     }
-  },
+
+    return handlerFn(client, interaction, ...args);
+  }
 };
