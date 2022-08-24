@@ -65,14 +65,12 @@ const remove = (name: string): boolean => {
 const flushAll = (): number => {
   const total: number = Object.keys(cacheData).length;
 
-  if (!total) {
-    return total;
-  }
+  if (total) {
+    cacheData = {};
 
-  cacheData = {};
-
-  if (Object.keys(ttlData).length) {
-    ttlData = {};
+    if (Object.keys(ttlData).length) {
+      ttlData = {};
+    }
   }
 
   return total;
@@ -90,14 +88,12 @@ const newCache = (name: string): Cache => {
     clear: (): number => {
       const total: number = Object.keys(cacheData[name]).length;
 
-      if (!total) {
-        return total;
-      }
+      if (total) {
+        cacheData[name] = {};
 
-      cacheData[name] = {};
-
-      if (Object.keys(ttlData[name]).length) {
-        ttlData[name] = {};
+        if (Object.keys(ttlData[name]).length) {
+          ttlData[name] = {};
+        }
       }
 
       return total;

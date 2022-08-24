@@ -40,7 +40,7 @@ export const indent = (str: string, length: number = 1, char: string = " "): str
 };
 
 export const pluralize = (str: string, cond: boolean | number): string =>
-  cond === false || cond === 1 ? str : `${str}s`;
+  cond === false || cond === 1 ? str : str + "s";
 
 export const timer = (): Timer => {
   let startDate: Date = null;

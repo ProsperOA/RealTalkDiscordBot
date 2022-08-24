@@ -117,7 +117,7 @@ export default {
 
   realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
     withDevLabel(
-      `**#RealTalk** has been used ${uses} ${pluralize("time", uses)} by ${uniqueUsers} ${pluralize("user", uniqueUsers)}`
+      `**#RealTalk** has been used ${uses} ${pluralize("time", uses)} by ${uniqueUsers} unique ${pluralize("user", uniqueUsers)}`
     ),
 
   realTalkQuiz: (userId: string, statement: string, duration: number): string =>

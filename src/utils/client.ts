@@ -23,7 +23,7 @@ export const getUser = (userId: string): User =>
   getMember(userId)?.user ?? null;
 
 const formatUserId = (userId: string): string =>
-  `UserID::${userId}`;
+  "UserID::" + userId;
 
 export const getUsername = (userId: string): string =>
   getUser(userId)?.username ?? formatUserId(userId);
