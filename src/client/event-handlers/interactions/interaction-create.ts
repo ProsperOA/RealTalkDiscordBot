@@ -370,7 +370,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const targetUser: User = interaction.options.getUser("who", true);
   const statements: StatementUpdootRecord[] = await db.getMostUpdootedStatements({
-    userId: targetUser.id,
+    accusedUserId: targetUser.id,
   });
 
   if (!statements.length) {
