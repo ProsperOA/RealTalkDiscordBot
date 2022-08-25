@@ -14,7 +14,7 @@ import messageHandlers from "./event-handlers/messages";
 import replies from "./replies";
 import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
 import { MessageDeleteHandler } from "./event-handlers/messages/message-delete";
-import { MessageReactionHandler } from "./event-handlers/messages/message-reaction-add";
+import { MessageReactionChangeType, MessageReactionHandler } from "./event-handlers/messages/message-reaction-change";
 import { MessageReactionName } from "../client/message-reactions";
 
 import {
@@ -79,7 +79,7 @@ const onMessageDelete = (client: Client) =>
     }
   };
 
-const onMessageReactionAdd = (client: Client) =>
+const onMessageReactionChange = (client: Client, type: MessageReactionChangeType) =>
   async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): Promise<void> => {
     const { emoji: { name: emojiName }}: MessageReaction | PartialMessageReaction = reaction;
 
@@ -101,7 +101,7 @@ const onMessageReactionAdd = (client: Client) =>
     const t: Timer = timer();
 
     t.start();
-    await handlerFn(client, fullUser, fullReaction);
+    await handlerFn(client, fullUser, fullReaction, type);
     t.stop();
 
     const logData: CustomMessageReaction = {
@@ -122,7 +122,8 @@ const register = (client: Client, debug?: boolean): void => {
 
   client.on("interactionCreate", onInteractionCreate(client));
   client.on("messageDelete", onMessageDelete(client));
-  client.on("messageReactionAdd", onMessageReactionAdd(client));
+  client.on("messageReactionAdd", onMessageReactionChange(client, "add"));
+  client.on("messageReactionRemove", onMessageReactionChange(client, "remove"));
 };
 
 export default { register };

@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { head, merge } from "lodash";
+import { head, mapKeys, merge } from "lodash";
 
 import knex from "../../db/db";
 import { StatementWitnessRecord } from "../../db/models/statement-witnesses";
@@ -13,6 +13,10 @@ export interface StatementRecord {
   isCap: boolean;
   url: string;
   userId: string;
+}
+
+export interface StatementUpdootRecord extends StatementRecord {
+  updoots: number;
 }
 
 export interface RealTalkStats {
@@ -138,7 +142,7 @@ const updateStatementWhere = (where: any, update: any): Promise<number> =>
     .then(head)
     .then(result => result?.id ?? null);
 
-const getLatestStatement = (where?: any) =>
+const getLatestStatement = (where?: any): Promise<StatementRecord> =>
   knex("statements")
     .orderBy("created_at", "desc")
     .first()
@@ -148,11 +152,20 @@ const getLatestStatement = (where?: any) =>
       }
     });
 
+const getMostUpdootedStatements = (where: any, limit: number = 5): Promise<StatementUpdootRecord[]> =>
+  knex("statements")
+    .select(knex.raw("statements.*, count(updoots.id)::int as updoots"))
+    .where(mapKeys(where, (_, key) => "statements." + key))
+    .innerJoin("updoots", "statements.id", "updoots.statement_id")
+    .orderBy("updoots", "desc")
+    .groupBy("statements.id");
+
 export const statements = {
   createStatement,
   deleteStatementWhere,
   getAllStatements,
   getLatestStatement,
+  getMostUpdootedStatements,
   getRandomStatement,
   getStatementStats,
   getStatementWhere,

@@ -3,7 +3,7 @@ import { hideLinkEmbed, time } from "@discordjs/builders";
 import { isEmpty } from "lodash";
 import { stripIndents } from "common-tags";
 
-import { RealTalkStats, RealTalkStatsCompact, StatementRecord } from "../db/models";
+import { RealTalkStats, RealTalkStatsCompact, StatementRecord, StatementUpdootRecord } from "../db/models";
 import { Config, getDisplayName, msConvert, nicknameMention, pluralize } from "../utils";
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
@@ -133,6 +133,16 @@ export default {
     withDevLabel(stripIndents`
       ${isEmpty(userIds) ? "No one" : userIds.map(nicknameMention).join(", ")} got it right.
       ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`),
+
+  realTalkUpdoots: (userId: string, statements: StatementUpdootRecord[]): string =>
+    withDevLabel(`**#RealTalk Most Updooted Statements from ${nicknameMention(userId)}**\n` +
+      statements.map((statement, i) =>
+      stripIndents`
+        #${i + 1}. _"${statement.content}"_ (${statement.updoots} updoots)`
+    ).join("\n")),
+
+  realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
+    quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
 
   throttleCoolDown: (duration: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, chill... ${msConvert(duration, "Second")}s left`),

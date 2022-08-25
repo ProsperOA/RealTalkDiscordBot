@@ -2,7 +2,6 @@ import * as fs from "fs";
 import * as Canvas from "@napi-rs/canvas";
 import fetch from "cross-fetch";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
-import { Knex } from "knex";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
 import { dropRight, flatten, isArray, isEmpty, sumBy, takeRightWhile, uniq, zip } from "lodash";
@@ -30,6 +29,7 @@ import {
   RealTalkStats,
   RealTalkStatsCompact,
   StatementRecord,
+  StatementUpdootRecord,
   StatementWitnessRecord ,
 } from "../../../db/models";
 
@@ -287,9 +287,9 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const accusedUser: User = interaction.options.getUser("who");
   const shouldGetLatestQuote: boolean = interaction.options.getBoolean("quote");
 
-  const getStatement: (where?: any) => Knex.QueryBuilder<StatementRecord | StatementRecord[]> =
+  const getStatement: (where?: any) => Promise<StatementRecord | StatementRecord[]> =
     shouldGetLatestQuote ? db.getLatestStatement : db.getRandomStatement;
-  const statementResult: StatementRecord | StatementRecord[]=
+  const statementResult: StatementRecord | StatementRecord[] =
     await getStatement(accusedUser && { accusedUserId: accusedUser.id });
 
   const statement: StatementRecord = isArray(statementResult)
@@ -367,6 +367,19 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   deleteImageFile();
 };
 
+const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  const targetUser: User = interaction.options.getUser("who", true);
+  const statements: StatementUpdootRecord[] = await db.getMostUpdootedStatements({
+    userId: targetUser.id,
+  });
+
+  if (!statements.length) {
+    return interaction.reply(replies.realTalkUpdootsNotFound(targetUser.id));
+  }
+
+  await interaction.reply(replies.realTalkUpdoots(targetUser.id, statements));
+};
+
 const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, THROTTLE_DURATION),
   [RealTalkSubcommand.Convo]: realTalkConvo,
@@ -374,6 +387,7 @@ const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Stats]: realTalkStats,
   [RealTalkSubcommand.Quiz]: realTalkQuiz,
   [RealTalkSubcommand.Image]: realTalkImage,
+  [RealTalkSubcommand.Updoots]: realTalkUpdoots,
 };
 
 export default {

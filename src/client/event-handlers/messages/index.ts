@@ -1,4 +1,4 @@
-import messageReactionAddHandlers, { MessageReactionHandler } from "./message-reaction-add";
+import messageReactionAddHandlers, { MessageReactionHandler } from "./message-reaction-change";
 import messageDeleteHandlers, { MessageDeleteHandler } from "./message-delete";
 
 interface MessageHandlers {

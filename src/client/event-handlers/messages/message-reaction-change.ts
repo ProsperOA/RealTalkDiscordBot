@@ -11,15 +11,17 @@ import {
 
 import db from "../../../db";
 import interactionHandlers from "../interactions";
-import replies from "../../replies";
+import replies, { extractStatementContent } from "../../replies";
 import { InteractionCreateHandler } from "../interactions/interaction-create";
 import { MessageReactionName } from "../../message-reactions";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { StatementRecord, StatementWitnessRecord } from "../../../db/models";
 import { cache, Cache, completeStructure, Config, getMember, getUser, Time } from "../../../utils";
 
+export type MessageReactionChangeType = "add" | "remove";
+
 export type MessageReactionHandler =
-  (client: Client, user: User, reaction: MessageReaction) => Promise<void>;
+  (client: Client, user: User, reaction: MessageReaction, type: MessageReactionChangeType) => Promise<void>;
 
 const RESPONSE_CACHE_DURATION: number = Config.IsDev ? 0 : Time.Hour;
 const ACCEPTED_MESSAGE_TYPES: ReadonlyArray<MessageType> = [ "DEFAULT", "REPLY" ];
@@ -29,7 +31,11 @@ const emojiReactionCache: Cache = cache.new("responseCache");
 const calcCapThreshold = (max: number): number =>
   Config.IsDev ? 1 : Math.max(1, Math.floor(max * 2 / 3));
 
-const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction): Promise<void> => {
+const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReaction, type: MessageReactionChangeType): Promise<void> => {
+  if (type === "remove") {
+    return;
+  }
+
   const { message }: MessageReaction = reaction;
 
   if (!message.content) {
@@ -75,7 +81,11 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
   }
 };
 
-const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction): Promise<void> => {
+const realTalkEmojiReaction = async (client: Client, user: User, reaction: MessageReaction, type: MessageReactionChangeType): Promise<void> => {
+  if (type === "remove") {
+    return;
+  }
+
   const { message }: MessageReaction = reaction;
 
   if (message.author.id === client.user.id) {
@@ -140,7 +150,33 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   await realTalkCommand(client, mockInteraction as CommandInteraction, false);
 };
 
+const realTalkUpdoot = async (_client: Client, user: User, reaction: MessageReaction, type: MessageReactionChangeType): Promise<void> => {
+  const statement: StatementRecord = await db.getStatementWhere({
+    content: extractStatementContent(reaction.message.content)
+  });
+
+  if (!statement) {
+    return;
+  }
+
+  if (type === "add") {
+    await db.addUpdoot({
+      statementId: statement.id,
+      userId: user.id,
+      createdAt: new Date(),
+    });
+
+    return;
+  }
+
+  await db.deleteUpdoot({
+    userId: user.id,
+    statementId: statement.id,
+  });
+};
+
 export default {
   [MessageReactionName.Cap]: realTalkIsCap,
   [MessageReactionName.RealTalk]: realTalkEmojiReaction,
+  [MessageReactionName.Updoot]: realTalkUpdoot,
 };

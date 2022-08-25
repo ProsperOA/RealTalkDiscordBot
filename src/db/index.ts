@@ -1,6 +1,7 @@
-import { statements, statementWitnesses } from "../db/models";
+import { statements, statementWitnesses, updoots } from "../db/models";
 
 export default {
   ...statements,
   ...statementWitnesses,
+  ...updoots,
 };

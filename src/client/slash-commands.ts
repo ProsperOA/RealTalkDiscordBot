@@ -15,6 +15,7 @@ export enum RealTalkSubcommand {
   Quiz = "quiz",
   Record = "record",
   Stats = "stats",
+  Updoots = "updoots",
 }
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID }: NodeJS.ProcessEnv = process.env;
@@ -77,7 +78,16 @@ const realTalk = new SlashCommandBuilder()
       .addBooleanOption(option =>
         option
           .setName("latest")
-          .setDescription("Select latest quote?")));
+          .setDescription("Select latest quote?")))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(RealTalkSubcommand.Updoots)
+      .setDescription("Show me some updooted content")
+      .addUserOption(option =>
+        option
+          .setName("who")
+          .setDescription("Who they is?")
+          .setRequired(true)));
 
 const slashCommands = [
   realTalk,
