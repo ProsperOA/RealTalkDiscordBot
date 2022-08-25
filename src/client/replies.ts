@@ -135,11 +135,10 @@ export default {
       ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`),
 
   realTalkUpdoots: (userId: string, statements: StatementUpdootRecord[]): string =>
-    withDevLabel(`**#RealTalk Most Updooted Statements from ${nicknameMention(userId)}**\n` +
-      statements.map((statement, i) =>
-      stripIndents`
-        #${i + 1}. _"${statement.content}"_ (${statement.updoots} updoots)`
-    ).join("\n")),
+    withDevLabel(stripIndents`**#RealTalk Most Updooted Statements from ${nicknameMention(userId)}**
+      ${statements.map(({ content, updoots }, i) =>
+        `#${i + 1}. _"${content}"_ (${updoots} ${pluralize("updoot", updoots)})`
+    ).join("\n")}`),
 
   realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
