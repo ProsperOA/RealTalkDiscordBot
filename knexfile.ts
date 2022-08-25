@@ -1,4 +1,4 @@
-import { config } from 'dotenv';
+import { config } from "dotenv";
 
 config({ debug: true });
 
@@ -6,20 +6,20 @@ const { DATABASE_URL }: NodeJS.ProcessEnv = process.env;
 
 export default {
   development: {
-    client: 'pg',
+    client: "pg",
     connection: {
       connectionString: DATABASE_URL,
       ssl: false,
     },
     migrations: {
-      directory: 'db/migrations',
+      directory: "src/db/migrations",
     },
     seeds: {
-      directory: 'db/seeds',
+      directory: "src/db/seeds",
     },
   },
   production: {
-    client: 'pg',
+    client: "pg",
     connection: {
       connectionString: DATABASE_URL,
       ssl: { rejectUnauthorized: false },
@@ -29,7 +29,7 @@ export default {
       max: 20,
     },
     migrations: {
-      directory: 'db/migrations',
+      directory: "src/db/migrations",
     },
   },
 };
