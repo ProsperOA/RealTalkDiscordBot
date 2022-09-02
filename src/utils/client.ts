@@ -3,6 +3,7 @@ import { memberNicknameMention } from "@discordjs/builders";
 
 import { Config } from "../utils/config";
 import { client } from "../index";
+import { AnyFunction } from "./functions";
 
 interface Structure<T> {
   partial: boolean;
@@ -49,6 +50,14 @@ export const replaceMentions = (str: string, replacer: (userId: string) => strin
 
 export const completeStructure = async <T>(obj: Structure<T>): Promise<T> =>
   obj.partial ? await obj.fetch() : obj as any as T;
+
+export const delay = async (time: number, cb: AnyFunction): Promise<void> =>
+  new Promise(resolve => {
+    setTimeout(async () => {
+      await cb();
+      resolve();
+    }, time);
+  });
 
 export const delayDeleteReply = (delay: number, interaction: CommandInteraction): Promise<void> =>
   new Promise(resolve => {

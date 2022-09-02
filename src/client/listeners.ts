@@ -28,28 +28,34 @@ import {
   cache,
   Cache,
   Time,
+  Config,
+  delay,
 } from "../utils";
 
 const INTERACTION_DONATION_LINK_THRESHOLD: number = 2;
 const userInteractionsCache: Cache = cache.new("userInteractionsCache");
 
 const sendDonationLink = async (interaction: CommandInteraction): Promise<void> => {
-    const { user }: CommandInteraction = interaction;
-    const totalUserInteractions: number = (userInteractionsCache.get(user.id) || 0) + 1;
+  const { user }: CommandInteraction = interaction;
+  const totalUserInteractions: number = (userInteractionsCache.get(user.id) || 0) + 1;
 
-    if (userInteractionsCache.set(user.id, totalUserInteractions, Time.Hour * 8)) {
-      return;
-    }
+  if (userInteractionsCache.set(user.id, totalUserInteractions, Time.Hour * 8)) {
+    return;
+  }
 
-    if (totalUserInteractions === INTERACTION_DONATION_LINK_THRESHOLD) {
-      await user.send(replies.donationLink());
-    }
+  let message: Message;
 
-    userInteractionsCache.setF(
-      user.id,
-      totalUserInteractions,
-      userInteractionsCache.ttl(user.id)
-    );
+  if (totalUserInteractions === INTERACTION_DONATION_LINK_THRESHOLD) {
+    message = await user.send(replies.donationLink());
+  }
+
+  userInteractionsCache.setF(
+    user.id,
+    totalUserInteractions,
+    userInteractionsCache.ttl(user.id)
+  );
+
+  delay(Time.Minute * 5, async () => message?.delete());
 };
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -74,7 +80,10 @@ const onInteractionCreate = (client: Client) =>
       return interaction.reply(replies.internalError());
     }
 
-    await sendDonationLink(interaction);
+    if (!Config.IsDev) {
+      await sendDonationLink(interaction);
+    }
+
     const t: Timer = timer();
 
     t.start();
