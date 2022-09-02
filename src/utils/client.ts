@@ -59,10 +59,5 @@ export const delay = async (time: number, cb: AnyFunction): Promise<void> =>
     }, time);
   });
 
-export const delayDeleteReply = (delay: number, interaction: CommandInteraction): Promise<void> =>
-  new Promise(resolve => {
-    setTimeout(async () => {
-      await interaction.deleteReply();
-      return resolve();
-    }, delay);
-  });
+export const delayDeleteReply = async (time: number, interaction: CommandInteraction): Promise<void> =>
+  delay(time, async () => await interaction.deleteReply());

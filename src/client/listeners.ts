@@ -55,7 +55,7 @@ const sendDonationLink = async (interaction: CommandInteraction): Promise<void> 
     userInteractionsCache.ttl(user.id)
   );
 
-  delay(Time.Minute * 5, async () => message?.delete());
+  await delay(Time.Minute * 5, async () => message?.delete());
 };
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
