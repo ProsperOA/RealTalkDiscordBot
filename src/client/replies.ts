@@ -33,6 +33,9 @@ const formatStatementUrl = (statement: StatementRecord): string =>
 
 export default {
 
+  donationLink: (): string =>
+    withDevLabel("**#RealTalk** you should donate pls. \:pray:\n" + Config.DonationURL),
+
   internalError: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, an error occurred. \:grimacing:"),
 
