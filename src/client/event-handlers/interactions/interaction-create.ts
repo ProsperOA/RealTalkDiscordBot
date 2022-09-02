@@ -77,6 +77,18 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     return interaction.reply(replies.noRealTalkingMe());
   }
 
+  const statement: string = cleanStatement(interaction.options.getString("what"));
+  const existingStatement: StatementRecord = await db.getStatementWhere({
+    accusedUserId: targetUser.id,
+    content: statement,
+  });
+
+  if (existingStatement) {
+    return interaction.reply(
+      replies.realTalkExists(interaction.user.id, existingStatement.url)
+    );
+  }
+
   let witnesses: Partial<StatementWitnessRecord>[];
   const { voice }: GuildMember = interaction.member as GuildMember;
 
@@ -93,8 +105,6 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
       return interaction.reply(replies.realTalkNoWitnesses());
     }
   }
-
-  const statement: string = cleanStatement(interaction.options.getString("what"));
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
     return interaction.reply(replies.invalidStatementLength(MaxContentLength.InteractionOption));
