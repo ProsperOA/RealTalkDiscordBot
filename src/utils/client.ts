@@ -1,9 +1,9 @@
-import { CommandInteraction, Guild, GuildMember, MessageMentions, User } from "discord.js";
+import { CommandInteraction, Guild, GuildMember, Message, MessageMentions, User } from "discord.js";
 import { memberNicknameMention } from "@discordjs/builders";
 
 import { Config } from "../utils/config";
 import { client } from "../index";
-import { AnyFunction } from "./functions";
+import { delayObjActionP } from "./functions";
 
 interface Structure<T> {
   partial: boolean;
@@ -51,13 +51,8 @@ export const replaceMentions = (str: string, replacer: (userId: string) => strin
 export const completeStructure = async <T>(obj: Structure<T>): Promise<T> =>
   obj.partial ? await obj.fetch() : obj as any as T;
 
-export const delay = async (time: number, cb: AnyFunction): Promise<void> =>
-  new Promise(resolve => {
-    setTimeout(async () => {
-      await cb();
-      resolve();
-    }, time);
-  });
-
 export const delayDeleteReply = async (time: number, interaction: CommandInteraction): Promise<void> =>
-  delay(time, async () => await interaction.deleteReply());
+  delayObjActionP(time, interaction, "deleteReply");
+
+export const delayDeleteMessage = async (time: number, message: Message): Promise<void> =>
+  delayObjActionP(time, message, "delete");

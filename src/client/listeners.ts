@@ -28,8 +28,7 @@ import {
   cache,
   Cache,
   Time,
-  Config,
-  delay,
+  delayDeleteMessage,
 } from "../utils";
 
 const INTERACTION_DONATION_LINK_THRESHOLD: number = 2;
@@ -55,7 +54,7 @@ const sendDonationLink = async (interaction: CommandInteraction): Promise<void> 
     userInteractionsCache.ttl(user.id)
   );
 
-  await delay(Time.Minute * 5, async () => message?.delete());
+  delayDeleteMessage(Time.Second * 5, message);
 };
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -80,10 +79,7 @@ const onInteractionCreate = (client: Client) =>
       return interaction.reply(replies.internalError());
     }
 
-    if (!Config.IsDev) {
-      await sendDonationLink(interaction);
-    }
-
+    await sendDonationLink(interaction);
     const t: Timer = timer();
 
     t.start();

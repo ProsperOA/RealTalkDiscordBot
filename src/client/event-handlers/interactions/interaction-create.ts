@@ -160,7 +160,9 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
 
   if (noStatementsUserIds.length) {
     await interaction.editReply(replies.realTalkNoStatements(uniq(noStatementsUserIds)));
-    return deleteReply(interaction);
+    deleteReply(interaction);
+
+    return;
   }
 
   const maxStatementsPerUser: number = hasSecondUser
@@ -187,7 +189,9 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
     }
 
     await interaction.editReply(replies.realTalkConvoTooLong(userIds, MaxContentLength.ResponseBody));
-    return deleteReply(interaction);
+    deleteReply(interaction);
+
+    return;
   }
 
   await interaction.editReply(messageSlice || message);
@@ -311,7 +315,9 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
   if (!statement) {
     await interaction.editReply(replies.realTalkNoStatements([ accusedUser.id ]));
-    return deleteReply(interaction);
+    deleteReply(interaction);
+
+    return;
   }
 
   try {
@@ -324,7 +330,9 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
         : replies.internalError();
 
       await interaction.editReply(message);
-      return deleteReply(interaction);
+      deleteReply(interaction);
+
+      return;
     }
 
     const unsplashPhoto: UnsplashRandomPhoto = isArray(res.response) ? res.response[0] : res.response;
@@ -368,7 +376,9 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     deleteImageFile();
 
     await interaction.editReply(replies.internalError());
-    return deleteReply(interaction);
+    deleteReply(interaction);
+
+    return;
   }
 
   const attachment: MessageAttachment = new MessageAttachment(canvas.toBuffer("image/png"), imagePath);

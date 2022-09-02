@@ -1,6 +1,7 @@
 import * as Canvas from "@napi-rs/canvas";
 
 export type AnyFunction = (...args: any[]) => any;
+export type AnyPromiseFunction = (...args: any[]) => Promise<any>;
 
 export interface Timer {
   start: () => Date;
@@ -90,4 +91,27 @@ export const wrapCanvasText = (canvas: Canvas.Canvas, text: string, maxWidth: nu
 
   lines.push(currentLine);
   return lines;
+};
+
+export const sleep = async (time: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, Math.max(0, time)));
+
+export const delay = async (time: number, cb: AnyFunction): Promise<any> => {
+  await sleep(time);
+  return cb();
+};
+
+export const delayP = async (time: number, cb: AnyPromiseFunction): Promise<any> => {
+  await sleep(time);
+  return await cb();
+};
+
+export const delayObjAction = async <T>(time: number, obj: T, key: keyof T): Promise<any> => {
+  await sleep(time);
+  return (obj as any)?.[key]?.();
+};
+
+export const delayObjActionP = async <T>(time: number, obj: T, key: keyof T): Promise<any> => {
+  await sleep(time);
+  return await (obj as any)?.[key]?.();
 };
