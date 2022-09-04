@@ -34,18 +34,19 @@ import {
 const INTERACTION_DONATION_LINK_THRESHOLD: number = 2;
 const userInteractionsCache: Cache = cache.new("userInteractionsCache");
 
-const sendDonationLink = async (interaction: CommandInteraction): Promise<void> => {
-  const { user }: CommandInteraction = interaction;
+const sendDonationLink = async (user: User): Promise<void> => {
   const totalUserInteractions: number = (userInteractionsCache.get(user.id) || 0) + 1;
 
   if (userInteractionsCache.set(user.id, totalUserInteractions, Time.Hour * 8)) {
     return;
   }
 
-  let message: Message;
+  const message: Message = totalUserInteractions === INTERACTION_DONATION_LINK_THRESHOLD
+    ? await user.send(replies.donationLink())
+    : null;
 
-  if (totalUserInteractions === INTERACTION_DONATION_LINK_THRESHOLD) {
-    message = await user.send(replies.donationLink());
+  if (message) {
+    delayDeleteMessage(Time.Minute * 5, message);
   }
 
   userInteractionsCache.setF(
@@ -53,8 +54,6 @@ const sendDonationLink = async (interaction: CommandInteraction): Promise<void> 
     totalUserInteractions,
     userInteractionsCache.ttl(user.id)
   );
-
-  delayDeleteMessage(Time.Second * 5, message);
 };
 
 const logCustom = (data: CustomLogData, responseTime: number): void => {
@@ -79,7 +78,7 @@ const onInteractionCreate = (client: Client) =>
       return interaction.reply(replies.internalError());
     }
 
-    await sendDonationLink(interaction);
+    await sendDonationLink(interaction.user);
     const t: Timer = timer();
 
     t.start();
