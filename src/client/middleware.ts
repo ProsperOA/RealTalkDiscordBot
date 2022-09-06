@@ -11,7 +11,7 @@ export const useThrottle = (cb: InteractionCreateHandler, duration: number): Int
     const userId: string = interaction.user.id;
     const key: string = `${userId}-${cb.name}`;
 
-    if (duration <= 0) {
+    if (duration < 0) {
       logger.warn(`Invalid duration of ${duration} on ${key}`);
     }
 
