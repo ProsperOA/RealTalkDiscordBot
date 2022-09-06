@@ -8,7 +8,6 @@ const throttleCache: Cache = cache.new("throttleCache");
 
 export const useThrottle = (cb: InteractionCreateHandler, duration: number): InteractionCreateHandler =>
   async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
-    const subcommand: string = cb.name.replace("realTalk", "").toLowerCase();
     const userId: string = interaction.user.id;
     const key: string = `${userId}-${cb.name}`;
 
@@ -17,6 +16,7 @@ export const useThrottle = (cb: InteractionCreateHandler, duration: number): Int
     }
 
     const timeout: number = throttleCache.ttl(key);
+    const subcommand: string = interaction.options.getSubcommand();
 
     if (timeout) {
       return interaction.reply(replies.throttleCoolDown(timeout, subcommand));
