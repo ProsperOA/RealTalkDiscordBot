@@ -29,6 +29,7 @@ import {
   Cache,
   Time,
   delayDeleteMessage,
+  Config,
 } from "../utils";
 
 const INTERACTION_DONATION_LINK_THRESHOLD: number = 2;
@@ -78,7 +79,10 @@ const onInteractionCreate = (client: Client) =>
       return interaction.reply(replies.internalError());
     }
 
-    await sendDonationLink(interaction.user);
+    if (!Config.IsDev) {
+      await sendDonationLink(interaction.user);
+    }
+
     const t: Timer = timer();
 
     t.start();
