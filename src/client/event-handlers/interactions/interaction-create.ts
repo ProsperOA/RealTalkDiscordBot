@@ -54,8 +54,16 @@ enum MaxContentLength {
   ResponseBody = 2000,
 }
 
-const THROTTLE_DURATION: number = Config.IsDev ? 0 : Time.Second * 30;
+enum ThrottleDuration {
+  RealTalkRecord = Time.Second * 15,
+  RealTalkImage = Time.Second * 30,
+  RealTalkQuiz = Time.Minute * 1,
+}
+
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
+
+const getThrottleDuration = (key: keyof typeof ThrottleDuration): number =>
+  Config.IsDev ? 0 : ThrottleDuration[key];
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
@@ -401,12 +409,12 @@ const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction)
 };
 
 const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
-  [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, THROTTLE_DURATION),
+  [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, getThrottleDuration("RealTalkRecord")),
   [RealTalkSubcommand.Convo]: realTalkConvo,
   [RealTalkSubcommand.History]: realTalkHistory,
   [RealTalkSubcommand.Stats]: realTalkStats,
-  [RealTalkSubcommand.Quiz]: realTalkQuiz,
-  [RealTalkSubcommand.Image]: realTalkImage,
+  [RealTalkSubcommand.Quiz]: useThrottle(realTalkQuiz, getThrottleDuration("RealTalkQuiz")),
+  [RealTalkSubcommand.Image]: useThrottle(realTalkImage, getThrottleDuration("RealTalkImage")),
   [RealTalkSubcommand.Updoots]: realTalkUpdoots,
 };
 

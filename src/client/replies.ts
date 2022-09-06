@@ -146,7 +146,7 @@ export default {
   realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
 
-  throttleCoolDown: (duration: number): InteractionReplyOptions =>
-    quietReply(`**#RealTalk**, chill... ${msConvert(duration, "Second")}s left`),
+  throttleCoolDown: (duration: number, subcommand: string): InteractionReplyOptions =>
+    quietReply(`**#RealTalk**, chill... ${msConvert(duration, "Second")}s left on /${subcommand}`),
 
 };
