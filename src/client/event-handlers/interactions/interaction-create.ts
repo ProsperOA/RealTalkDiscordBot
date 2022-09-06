@@ -192,7 +192,7 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
   if (!(hasValidMessageLength || hasValidContentLength(messageSlice, "ResponseBody"))) {
     const userIds: string[] = [ user1.id ];
 
-    if (user2?.id !== user1.id) {
+    if (hasSecondUser && user2?.id !== user1.id) {
       userIds.push(user2.id);
     }
 
