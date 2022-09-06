@@ -16,9 +16,9 @@ export const useThrottle = (cb: InteractionCreateHandler, duration: number): Int
     }
 
     const timeout: number = throttleCache.ttl(key);
-    const subcommand: string = interaction.options.getSubcommand();
 
     if (timeout) {
+      const subcommand: string = interaction.options.getSubcommand();
       return interaction.reply(replies.throttleCoolDown(timeout, subcommand));
     }
 
