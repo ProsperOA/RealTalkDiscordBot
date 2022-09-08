@@ -307,10 +307,10 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     delayDeleteReply.bind(null, Time.Second * 5);
 
   const accusedUser: User = interaction.options.getUser("who");
-  const shouldGetLatestQuote: boolean = interaction.options.getBoolean("quote");
+  const shouldGetLatestStatement: boolean = interaction.options.getBoolean("latest");
   const dbQuery: any = accusedUser && { accusedUserId: accusedUser.id };
 
-  const statement: StatementRecord = shouldGetLatestQuote
+  const statement: StatementRecord = shouldGetLatestStatement
     ? await db.getLatestStatement(dbQuery)
     : (await db.getRandomStatements(dbQuery))[0];
 
