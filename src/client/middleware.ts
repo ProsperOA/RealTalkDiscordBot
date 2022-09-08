@@ -9,7 +9,8 @@ const throttleCache: Cache = cache.new("throttleCache");
 export const useThrottle = (cb: InteractionCreateHandler, duration: number): InteractionCreateHandler =>
   async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
     const userId: string = interaction.user.id;
-    const key: string = `${userId}-${cb.name}`;
+    const subcommand: string = interaction.options.getSubcommand();
+    const key: string = `${subcommand}:${userId}`;
 
     if (duration < 0) {
       logger.warn(`Invalid duration of ${duration} on ${key}`);
@@ -18,7 +19,6 @@ export const useThrottle = (cb: InteractionCreateHandler, duration: number): Int
     const timeout: number = throttleCache.ttl(key);
 
     if (timeout) {
-      const subcommand: string = interaction.options.getSubcommand();
       return interaction.reply(replies.throttleCoolDown(timeout, subcommand));
     }
 
