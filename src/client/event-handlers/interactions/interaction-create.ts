@@ -144,7 +144,7 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
   const hasSecondUser: boolean = Boolean(user2);
 
   const getUserStatements = async (userId: string): Promise<StatementRecord[]> =>
-    await db.getRandomStatement({ accusedUserId: userId }, maxStatementsToFetch);
+    await db.getRandomStatements({ accusedUserId: userId }, maxStatementsToFetch);
 
   const user1Statements: StatementRecord[] = await getUserStatements(user1.id);
   const user2Statements: StatementRecord[] = hasSecondUser
@@ -250,7 +250,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
   let statement: RealTalkQuizRecord;
 
   do {
-    statement = await db.getRandomStatement();
+    statement = (await db.getRandomStatements())[0];
   } while (realTalkQuizCache.equals("previousStatement", statement));
 
   const quizTimeout: number = Time.Second * 30;
@@ -308,15 +308,11 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
   const accusedUser: User = interaction.options.getUser("who");
   const shouldGetLatestQuote: boolean = interaction.options.getBoolean("quote");
+  const dbQuery: any = accusedUser && { accusedUserId: accusedUser.id };
 
-  const getStatement: (where?: any) => Promise<StatementRecord | StatementRecord[]> =
-    shouldGetLatestQuote ? db.getLatestStatement : db.getRandomStatement;
-  const statementResult: StatementRecord | StatementRecord[] =
-    await getStatement(accusedUser && { accusedUserId: accusedUser.id });
-
-  const statement: StatementRecord = isArray(statementResult)
-    ? statementResult[0]
-    : statementResult;
+  const statement: StatementRecord = shouldGetLatestQuote
+    ? await db.getLatestStatement(dbQuery)
+    : (await db.getRandomStatements(dbQuery))[0];
 
   const topic: string = interaction.options.getString("topic") || "";
   const unsplashPayload: UnsplashRandomParams = { count: 1, query: topic };
