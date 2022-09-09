@@ -151,7 +151,7 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
     ? await getUserStatements(user2.id)
     : null;
 
-  const statementsGroup: StatementRecord[][] = [
+  const statementsGroup: [StatementRecord[], StatementRecord[]] = [
     user1Statements,
     user2Statements || await getUserStatements(user1.id),
   ];
