@@ -3,7 +3,7 @@ import { hideLinkEmbed, time } from "@discordjs/builders";
 import { isEmpty } from "lodash";
 import { stripIndents } from "common-tags";
 
-import { RealTalkStats, RealTalkStatsCompact, StatementRecord, StatementUpdootRecord } from "../db/models";
+import { RealTalkStats, CompactRealTalkStats, Statement, UpdootedStatement } from "../db/models";
 import { Config, getDisplayName, msConvert, nicknameMention, pluralize } from "../utils";
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
@@ -26,7 +26,7 @@ export const extractStatementContent = (formattedStatement: string): string => {
 const quietReply = (content: string): InteractionReplyOptions =>
   ({ content: withDevLabel(content), ephemeral: true });
 
-const formatStatementUrl = (statement: StatementRecord): string =>
+const formatStatementUrl = (statement: Statement): string =>
   statement.deletedAt
     ? "deleted on " + time(statement.deletedAt)
     : hideLinkEmbed(statement.url);
@@ -48,7 +48,7 @@ export default {
   noRealTalkingMe: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
 
-  realTalkConvo: (statements: StatementRecord[]): string =>
+  realTalkConvo: (statements: Statement[]): string =>
     withDevLabel(statements.map(({ accusedUserId, content }, i) =>
       `${i % 2 > 0 ? "> " : ""}**${getDisplayName(accusedUserId)}**: _${content}_`
     ).join("\n")),
@@ -60,7 +60,7 @@ export default {
   realTalkExists: (userId: string, url: string): string =>
     withDevLabel(`Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`),
 
-  realTalkHistory: (statements: StatementRecord[]): string =>
+  realTalkHistory: (statements: Statement[]): string =>
     withDevLabel(statements.map(statement => stripIndents`
       > **#RealTalk** ${getDisplayName(statement.accusedUserId)} said: _"${statement.content}"_.
       > (provided by ${getDisplayName(statement.userId)}) ${formatStatementUrl(statement)}`
@@ -69,7 +69,7 @@ export default {
   realTalkNoStatements: (userIds: string[]): InteractionReplyOptions =>
     quietReply(`The following user(s) have no #RealTalk statements: ${userIds.map(getDisplayName).join(", ")}`),
 
-  realTalkIsCap: ({ content, url, userId }: StatementRecord): string =>
+  realTalkIsCap: ({ content, url, userId }: Statement): string =>
     withDevLabel(stripIndents`**#RealTalk**, the following statement made by ${nicknameMention(userId)} is cap:
       _"${content}"_
       ${hideLinkEmbed(url)}`),
@@ -115,10 +115,11 @@ export default {
           message += " \:crown:";
         }
 
+        console.log(message);
         return message;
       }).join("\n")}`),
 
-  realTalkStatsCompact: ({ uniqueUsers, uses }: RealTalkStatsCompact): string =>
+  realTalkStatsCompact: ({ uniqueUsers, uses }: CompactRealTalkStats): string =>
     withDevLabel(
       `**#RealTalk** has been used ${uses} ${pluralize("time", uses)} by ${uniqueUsers} unique ${pluralize("user", uniqueUsers)}`
     ),
@@ -137,7 +138,7 @@ export default {
       ${isEmpty(userIds) ? "No one" : userIds.map(nicknameMention).join(", ")} got it right.
       ${nicknameMention(accusedUserId)} is the type of person that would say that tho...`),
 
-  realTalkUpdoots: (userId: string, statements: StatementUpdootRecord[]): string =>
+  realTalkUpdoots: (userId: string, statements: UpdootedStatement[]): string =>
     withDevLabel(stripIndents`**#RealTalk Most Updooted Statements from ${nicknameMention(userId)}**
       ${statements.map(({ content, updoots }, i) =>
         `#${i + 1}. _"${content}"_ (${updoots} ${pluralize("updoot", updoots)})`

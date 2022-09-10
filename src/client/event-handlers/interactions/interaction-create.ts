@@ -1,10 +1,10 @@
 import * as fs from "fs";
-import * as Canvas from "@napi-rs/canvas";
 import fetch from "cross-fetch";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
+import { Canvas, createCanvas, Image, SKRSContext2D } from "@napi-rs/canvas";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
-import { dropRight, flatten, isArray, isEmpty, sumBy, takeRightWhile, uniq, zip } from "lodash";
+import { dropRight, flatten, isArray, isEmpty, takeRightWhile, uniq, zip } from "lodash";
 
 import {
   Client,
@@ -25,12 +25,11 @@ import { useThrottle } from "../../middleware";
 import { unsplash } from "../../../index";
 
 import {
-  RealTalkQuizRecord,
   RealTalkStats,
-  RealTalkStatsCompact,
-  StatementRecord,
-  StatementUpdootRecord,
-  StatementWitnessRecord ,
+  CompactRealTalkStats,
+  Statement,
+  StatementWitness,
+  UpdootedStatement,
 } from "../../../db/models";
 
 import {
@@ -86,7 +85,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   }
 
   const statement: string = cleanStatement(interaction.options.getString("what"));
-  const existingStatement: StatementRecord = await db.getStatementWhere({
+  const existingStatement: Statement = await db.getStatementWhere({
     accusedUserId: targetUser.id,
     content: statement,
   });
@@ -97,7 +96,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
     );
   }
 
-  let witnesses: Partial<StatementWitnessRecord>[];
+  let witnesses: Partial<StatementWitness>[];
   const { voice }: GuildMember = interaction.member as GuildMember;
 
   if (!Config.IsDev && requireWitnesses) {
@@ -121,7 +120,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   const incriminatingEvidence: string = replies.realTalkRecord(targetUser.id, statement);
   const message: Message = await interaction.reply({ content: incriminatingEvidence, fetchReply: true }) as Message;
 
-  const statementRecord: Partial<StatementRecord> = {
+  const statementRecord: Partial<Statement> = {
     accusedUserId: targetUser.id,
     content: statement,
     createdAt: interaction.createdAt,
@@ -143,15 +142,15 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
   const user2: User = interaction.options.getUser("user2");
   const hasSecondUser: boolean = Boolean(user2);
 
-  const getUserStatements = async (userId: string): Promise<StatementRecord[]> =>
+  const getUserStatements = async (userId: string): Promise<Statement[]> =>
     await db.getRandomStatements({ accusedUserId: userId }, maxStatementsToFetch);
 
-  const user1Statements: StatementRecord[] = await getUserStatements(user1.id);
-  const user2Statements: StatementRecord[] = hasSecondUser
+  const user1Statements: Statement[] = await getUserStatements(user1.id);
+  const user2Statements: Statement[] = hasSecondUser
     ? await getUserStatements(user2.id)
     : null;
 
-  const statementsGroup: [StatementRecord[], StatementRecord[]] = [
+  const statementsGroup: [Statement[], Statement[]] = [
     user1Statements,
     user2Statements || await getUserStatements(user1.id),
   ];
@@ -177,11 +176,11 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
     ? Math.min(user1Statements.length, user2Statements.length)
     : maxStatementsToFetch;
 
-  const filteredStatementsGroup: StatementRecord[][] = hasSecondUser
+  const filteredStatementsGroup: Statement[][] = hasSecondUser
     ? statementsGroup.map(statements => dropRight(statements, statements.length - maxStatementsPerUser))
     : statementsGroup;
 
-  const convo: StatementRecord[] = flatten(zip(...filteredStatementsGroup));
+  const convo: Statement[] = flatten(zip(...filteredStatementsGroup));
   const message: string = replies.realTalkConvo(convo);
   const hasValidMessageLength: boolean = hasValidContentLength(message, "ResponseBody");
 
@@ -206,12 +205,12 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
 };
 
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  const statementsAcc: StatementRecord[] = [];
-  const allStatements: StatementRecord[] = await db.getAllStatements([
+  const statementsAcc: Statement[] = [];
+  const allStatements: Statement[] = await db.getAllStatements([
     { column: "created_at", order: "asc" }
   ]);
 
-  const statementsSlice: StatementRecord[] = takeRightWhile(allStatements, s => {
+  const statementsSlice: Statement[] = takeRightWhile(allStatements, s => {
     statementsAcc.push(s);
     return hasValidContentLength(replies.realTalkHistory(statementsAcc), "ResponseBody");
   });
@@ -221,16 +220,18 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
 
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const stats: RealTalkStats = await db.getStatementStats();
-  const totalStatements: number = sumBy(Object.values(stats), stat => stat.statements);
+  const totalStatements: number = await db.getTotalStatements();
   const message: string = replies.realTalkStats(stats, totalStatements);
 
   if (!hasValidContentLength(message, "ResponseBody")) {
-    const compactStats: RealTalkStatsCompact = { uniqueUsers: 0, uses: 0 };
+    const compactStats: CompactRealTalkStats = {
+      uniqueUsers: 0,
+      uses: totalStatements,
+    };
 
     Object.values(stats).forEach(({ uses }) => {
       if (uses) {
         compactStats.uniqueUsers += 1;
-        compactStats.uses += uses;
       }
     });
 
@@ -247,7 +248,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
     return interaction.reply(replies.realTalkQuizActive(previousTimeout));
   }
 
-  let statement: RealTalkQuizRecord;
+  let statement: Statement;
 
   do {
     statement = (await db.getRandomStatements())[0];
@@ -288,7 +289,7 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
 const realTalkImage = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   await interaction.deferReply();
 
-  let canvas: Canvas.Canvas;
+  let canvas: Canvas;
   const imagePath: string = "image.jpeg";
   const quoteFontSize: number = 35;
   const padding: number = 20;
@@ -310,7 +311,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   const shouldGetLatestStatement: boolean = interaction.options.getBoolean("latest");
   const dbQuery: any = accusedUser && { accusedUserId: accusedUser.id };
 
-  const statement: StatementRecord = shouldGetLatestStatement
+  const statement: Statement = shouldGetLatestStatement
     ? await db.getLatestStatement(dbQuery)
     : (await db.getRandomStatements(dbQuery))[0];
 
@@ -343,9 +344,9 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
     const image: Response = await fetch(unsplashPhoto.urls.small);
     fs.writeFileSync(imagePath, Buffer.from(await image.arrayBuffer()));
 
-    canvas = Canvas.createCanvas(600, 600);
-    const ctx: Canvas.SKRSContext2D = canvas.getContext("2d");
-    const background: Canvas.Image = new Canvas.Image();
+    canvas = createCanvas(600, 600);
+    const ctx: SKRSContext2D = canvas.getContext("2d");
+    const background: Image = new Image();
     background.src = fs.readFileSync(imagePath);
     ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
@@ -370,7 +371,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
       ctx.clip();
 
       const avatarResponse: Response = await fetch(member.user.displayAvatarURL({ format: "jpg" }));
-      const avatar: Canvas.Image = new Canvas.Image();
+      const avatar: Image = new Image();
       avatar.src = Buffer.from(await avatarResponse.arrayBuffer());
 
       ctx.drawImage(avatar, padding, padding, avatarWidth, avatarHeight);
@@ -393,7 +394,7 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
 
 const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   const targetUser: User = interaction.options.getUser("who", true);
-  const statements: StatementUpdootRecord[] = await db.getMostUpdootedStatements({
+  const statements: UpdootedStatement[] = await db.getMostUpdootedStatements({
     accusedUserId: targetUser.id,
   });
 

@@ -1,7 +1,10 @@
+import * as pg from "pg";
 import knex from "knex";
 import { camelCase, isEmpty, mapKeys, pick, snakeCase } from "lodash";
 
 import { Config, logger } from "../utils";
+
+pg.defaults.parseInt8 = true;
 
 const camelCaseObj = (obj: any): any => {
   const output: any = mapKeys(obj, (_, key) => camelCase(key));

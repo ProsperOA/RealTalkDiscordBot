@@ -4,6 +4,24 @@ import { random, repeat, uniq } from "lodash";
 
 import { Config } from "../../utils";
 
+export interface Statement {
+  accused_user_id: string;
+  content: string;
+  created_at: Date;
+  deleted_at: Date;
+  id: number;
+  is_cap: boolean;
+  url: string;
+  user_id: string;
+}
+
+export interface StatementWitness {
+  id: string;
+  created_at: Date;
+  statement_id: number;
+  user_id: string;
+}
+
 const today: Date = new Date();
 const unixEpoch: Date = new Date("January 1, 1970");
 
@@ -21,9 +39,9 @@ const lorem = new LoremIpsum({
 const randomDate = (start: Date, end: Date): Date =>
   new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 
-const buildStatementRecords = (userIds: string[]) => {
-  const statements = [];
-  const upperBound = userIds.length - 1;
+const buildStatements = (userIds: string[]): Partial<Statement>[] => {
+  const statements: Partial<Statement>[] = [];
+  const upperBound: number = userIds.length - 1;
 
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j <= upperBound; j++) {
@@ -40,8 +58,8 @@ const buildStatementRecords = (userIds: string[]) => {
   return statements;
 };
 
-const buildWitnesses = (statements: any[], userIds: string[]) => {
-  const witnesses: any[] = [];
+const buildWitnesses = (statements: Statement[], userIds: string[]): Partial<StatementWitness>[] => {
+  const witnesses: Partial<StatementWitness>[] = [];
 
   for (let i = 0; i < statements.length * 2 / 3; i++) {
     for (let j = 0; j < random(1, 5); j++) {
@@ -67,10 +85,10 @@ export const seed = async (knex: Knex): Promise<void> => {
     Array.from({ length: totalUsers }, () => String(random(minUserId, maxUserId)))
   );
 
-  const statements = buildStatementRecords(userIds);
-  await knex("statements").insert(statements);
+  const partialStatements: Partial<Statement>[] = buildStatements(userIds);
+  await knex("statements").insert(partialStatements);
 
-  const statementRecords = await knex("statements").select();
-  const witnesses = buildWitnesses(statementRecords, userIds);
+  const statements: Statement[] = await knex("statements").select();
+  const witnesses: Partial<StatementWitness>[] = buildWitnesses(statements, userIds);
   await knex("statement_witnesses").insert(witnesses);
 };

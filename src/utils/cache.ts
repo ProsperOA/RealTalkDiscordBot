@@ -43,8 +43,8 @@ const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> 
   ttl: null,
 };
 
-const validateOperation = (cacheToCheck: any, cb: AnyFunction, args: any[]): any =>
-  cacheToCheck === undefined
+const validateOperation = (targetCache: {[key: string]: any}, cb: AnyFunction, args: any[]): any =>
+  targetCache === undefined
     ? OPERATION_DEFAULT_RETURN[cb.name as keyof Cache]
     : cb(...args);
 

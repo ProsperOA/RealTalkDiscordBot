@@ -1,12 +1,13 @@
 import knex from "../../db/db";
 
-export interface UpdootRecord {
+export interface Updoot {
+  id: string;
   statementId: number;
   userId: string;
   createdAt: Date;
 }
 
-const addUpdoot = (updoot: UpdootRecord): Promise<any> =>
+const addUpdoot = (updoot: Partial<Updoot>): Promise<any> =>
   knex("updoots")
     .insert(updoot);
 

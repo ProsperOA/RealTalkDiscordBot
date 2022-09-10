@@ -15,7 +15,7 @@ import replies, { extractStatementContent } from "../../replies";
 import { InteractionCreateHandler } from "../interactions/interaction-create";
 import { MessageReactionName } from "../../message-reactions";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
-import { StatementRecord, StatementWitnessRecord } from "../../../db/models";
+import { Statement, StatementWitness } from "../../../db/models";
 import { cache, Cache, completeStructure, Config, getMember, getUser, Time } from "../../../utils";
 
 export type MessageReactionChangeType = "add" | "remove";
@@ -49,7 +49,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
     return;
   }
 
-  const statement: StatementRecord = await db.getStatementWhere({
+  const statement: Statement = await db.getStatementWhere({
     userId: interaction.user.id,
     url: fullMessage.url,
   });
@@ -59,7 +59,7 @@ const realTalkIsCap = async (_client: Client, user: User, reaction: MessageReact
     return;
   }
 
-  const witnesses: StatementWitnessRecord[] = await db.getStatementWitnesses(statement.id);
+  const witnesses: StatementWitness[] = await db.getStatementWitnesses(statement.id);
 
   if (!Config.IsDev) {
     const isWitness: boolean = Boolean(witnesses.find(witness => witness.userId === user.id));
@@ -108,7 +108,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   const targetUserId: string = fullMessage.author.id;
   const messageContent: string = fullMessage.content;
 
-  const existingStatement: StatementRecord = await db.getStatementWhere({
+  const existingStatement: Statement = await db.getStatementWhere({
     accusedUserId: targetUserId,
     content: messageContent,
   });
@@ -151,7 +151,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
 };
 
 const realTalkUpdoot = async (_client: Client, user: User, reaction: MessageReaction, type: MessageReactionChangeType): Promise<void> => {
-  const statement: StatementRecord = await db.getStatementWhere({
+  const statement: Statement = await db.getStatementWhere({
     content: extractStatementContent(reaction.message.content)
   });
 

@@ -1,4 +1,4 @@
-import * as Canvas from "@napi-rs/canvas";
+import { Canvas, SKRSContext2D } from "@napi-rs/canvas";
 
 export type AnyFunction = (...args: any[]) => any;
 export type AnyPromiseFunction = (...args: any[]) => Promise<any>;
@@ -70,8 +70,8 @@ export const msConvert = (ms: number, format: keyof typeof Time): number =>
   ms / Time[format];
 
 // source: https://stackoverflow.com/a/16599668
-export const wrapCanvasText = (canvas: Canvas.Canvas, text: string, maxWidth: number): string[] => {
-  const context: Canvas.SKRSContext2D = canvas.getContext("2d");
+export const wrapCanvasText = (canvas: Canvas, text: string, maxWidth: number): string[] => {
+  const context: SKRSContext2D = canvas.getContext("2d");
 
   const words: string[] = text.split(" ");
   const lines: string[] = [];

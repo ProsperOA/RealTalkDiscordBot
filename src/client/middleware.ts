@@ -24,5 +24,5 @@ export const useThrottle = (cb: InteractionCreateHandler, duration: number): Int
 
     throttleCache.setF(key, new Date().toISOString(), Math.max(0, duration));
 
-    return cb(client, interaction, ...args);
+    await cb(client, interaction, ...args);
   };
