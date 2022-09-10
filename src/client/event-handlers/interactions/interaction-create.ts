@@ -176,8 +176,11 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
     ? Math.min(user1Statements.length, user2Statements.length)
     : maxStatementsToFetch;
 
-  const filteredStatementsGroup: Statement[][] = hasSecondUser
-    ? statementsGroup.map(statements => dropRight(statements, statements.length - maxStatementsPerUser))
+  const dropExcessStatements = (statements: Statement[]): Statement[] =>
+    dropRight(statements, statements.length - maxStatementsPerUser);
+
+  const filteredStatementsGroup: [Statement[], Statement[]] = hasSecondUser
+    ? statementsGroup.map(dropExcessStatements) as typeof statementsGroup
     : statementsGroup;
 
   const convo: Statement[] = flatten(zip(...filteredStatementsGroup));
@@ -191,7 +194,7 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
   if (!(hasValidMessageLength || hasValidContentLength(messageSlice, "ResponseBody"))) {
     const userIds: string[] = [ user1.id ];
 
-    if (hasSecondUser && user2?.id !== user1.id) {
+    if (hasSecondUser && user2.id !== user1.id) {
       userIds.push(user2.id);
     }
 
