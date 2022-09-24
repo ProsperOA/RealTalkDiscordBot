@@ -13,15 +13,13 @@ export const withDevLabel = (message: string): string =>
     ? DEV_MODE_LABEL + "\n" + message
     : message;
 
-export const extractStatementContent = (formattedStatement: string): string => {
-  if (!formattedStatement) {
-    return formattedStatement;
-  }
-
-  const result: RegExpMatchArray = formattedStatement.match(/_"(.)*"_/);
-
-  return result?.[0].replace("_\"", "").replace("\"_", "") ?? "";
-};
+export const extractStatementContent = (formattedStatement: string): string =>
+  formattedStatement
+    ?.match(/_"(.)*"_/)
+    ?.[0]
+    .replace("_\"", "")
+    .replace("\"_", "")
+    ?? "";
 
 const quietReply = (content: string): InteractionReplyOptions =>
   ({ content: withDevLabel(content), ephemeral: true });
@@ -115,7 +113,6 @@ export default {
           message += " \:crown:";
         }
 
-        console.log(message);
         return message;
       }).join("\n")}`),
 
