@@ -209,6 +209,8 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
 };
 
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  await interaction.deferReply();
+
   const messageTimeout: number = Time.Minute * 10;
   const targetUser: User = interaction.options.getUser("user");
   const statements: Statement[] = await db.getAllStatements(
@@ -216,29 +218,28 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
   );
 
   if (!statements) {
-    return interaction.reply(replies.realTalkNoStatements([ targetUser.id ]));
+    await interaction.editReply(replies.realTalkNoStatements([ targetUser.id ]));
+    return;
   }
 
   try {
-    const replyMessage: Message = await interaction.reply({
-      ...replies.realTalkHistory(targetUser?.id, statements),
-      fetchReply: true,
+    const replyMessage: Message = await interaction.editReply({
+      ...replies.realTalkHistory(targetUser?.id, statements)
     }) as Message;
 
     delayDeleteMessage(messageTimeout, replyMessage);
   } catch (error) {
     if (error.issues[0].code === "too_big") {
-        const statementsGroup: Statement[][] = chunk(statements, 6);
+      await interaction.deleteReply();
+      const statementsGroup: Statement[][] = chunk(statements, 6);
 
-        for (let i = 0; i < statementsGroup.length; i++) {
+      for (let i = 0; i < statementsGroup.length; i++) {
         const channelMessage: Message = await interaction.channel.send(
           replies.realTalkHistory(targetUser?.id, statementsGroup[i], i + 1, statementsGroup.length)
         ) as Message;
 
         delayDeleteMessage(messageTimeout, channelMessage);
       }
-
-      return;
     }
   }
 };

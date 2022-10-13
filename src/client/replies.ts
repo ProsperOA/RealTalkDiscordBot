@@ -63,10 +63,10 @@ export default {
       new Embed()
         .setColor(0x0099FF)
         .setTitle(withDevLabel(`**#RealTalk History** (${part}/${total})`))
-        .setDescription(`\`Statements from ${userId ? nicknameMention(userId) : "all users"}\``)
+        .setDescription(userId ? `\`Statements from ${getDisplayName(userId)}\`` : "--")
         .addFields(
           ...statements.map(statement => ({
-            name: `_"${statement.content}"_`,
+            name: `${userId ? "" : getDisplayName(statement.accusedUserId) + ": "} _"${statement.content}"_`,
             value: statement.url,
           }))
         )
