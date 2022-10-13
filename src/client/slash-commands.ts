@@ -54,7 +54,11 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.History)
-      .setDescription("List a history of them joints."))
+      .setDescription("List a history of them joints.")
+      .addUserOption(option =>
+        option
+          .setName("user")
+          .setDescription("user's history")))
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.Stats)

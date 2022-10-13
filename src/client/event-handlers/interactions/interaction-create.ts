@@ -4,7 +4,7 @@ import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/res
 import { Canvas, createCanvas, Image, SKRSContext2D } from "@napi-rs/canvas";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
-import { dropRight, flatten, isArray, isEmpty, takeRightWhile, uniq, zip } from "lodash";
+import { chunk, dropRight, flatten, isArray, isEmpty, uniq, zip } from "lodash";
 
 import {
   Client,
@@ -44,6 +44,7 @@ import {
   wrapCanvasText,
   replaceMentions,
   getDisplayName,
+  delayDeleteMessage,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -208,17 +209,38 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
 };
 
 const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
-  const statementsAcc: Statement[] = [];
-  const allStatements: Statement[] = await db.getAllStatements([
-    { column: "created_at", order: "asc" }
-  ]);
+  const messageTimeout: number = Time.Minute * 10;
+  const targetUser: User = interaction.options.getUser("user");
+  const statements: Statement[] = await db.getAllStatements(
+    targetUser && { accusedUserId: targetUser.id }
+  );
 
-  const statementsSlice: Statement[] = takeRightWhile(allStatements, s => {
-    statementsAcc.push(s);
-    return hasValidContentLength(replies.realTalkHistory(statementsAcc), "ResponseBody");
-  });
+  if (!statements) {
+    return interaction.reply(replies.realTalkNoStatements([ targetUser.id ]));
+  }
 
-  await interaction.reply(replies.realTalkHistory(statementsSlice));
+  try {
+    const replyMessage: Message = await interaction.reply({
+      ...replies.realTalkHistory(targetUser?.id, statements),
+      fetchReply: true,
+    }) as Message;
+
+    delayDeleteMessage(messageTimeout, replyMessage);
+  } catch (error) {
+    if (error.issues[0].code === "too_big") {
+        const statementsGroup: Statement[][] = chunk(statements, 6);
+
+        for (let i = 0; i < statementsGroup.length; i++) {
+        const channelMessage: Message = await interaction.channel.send(
+          replies.realTalkHistory(targetUser?.id, statementsGroup[i], i + 1, statementsGroup.length)
+        ) as Message;
+
+        delayDeleteMessage(messageTimeout, channelMessage);
+      }
+
+      return;
+    }
+  }
 };
 
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {

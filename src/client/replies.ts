@@ -1,5 +1,5 @@
 import { InteractionReplyOptions } from "discord.js";
-import { hideLinkEmbed, time } from "@discordjs/builders";
+import { Embed, hideLinkEmbed, time } from "@discordjs/builders";
 import { isEmpty } from "lodash";
 import { stripIndents } from "common-tags";
 
@@ -58,11 +58,20 @@ export default {
   realTalkExists: (userId: string, url: string): string =>
     withDevLabel(`Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`),
 
-  realTalkHistory: (statements: Statement[]): string =>
-    withDevLabel(statements.map(statement => stripIndents`
-      > **#RealTalk** ${getDisplayName(statement.accusedUserId)} said: _"${statement.content}"_.
-      > (provided by ${getDisplayName(statement.userId)}) ${formatStatementUrl(statement)}`
-    ).join("\n\n")),
+  realTalkHistory: (userId: string, statements: Statement[], part: number = 1, total: number = 1): InteractionReplyOptions => ({
+    embeds: [
+      new Embed()
+        .setColor(0x0099FF)
+        .setTitle(withDevLabel(`**#RealTalk History** (${part}/${total})`))
+        .setDescription(`\`Statements from ${userId ? nicknameMention(userId) : "all users"}\``)
+        .addFields(
+          ...statements.map(statement => ({
+            name: `_"${statement.content}"_`,
+            value: statement.url,
+          }))
+        )
+    ],
+  }),
 
   realTalkNoStatements: (userIds: string[]): InteractionReplyOptions =>
     quietReply(`The following user(s) have no #RealTalk statements: ${userIds.map(getDisplayName).join(", ")}`),
