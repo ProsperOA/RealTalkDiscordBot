@@ -61,6 +61,7 @@ enum ThrottleDuration {
 }
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
+const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
 
 const getThrottleDuration = (key: keyof typeof ThrottleDuration): number =>
   Config.IsDev ? 0 : ThrottleDuration[key];
@@ -213,19 +214,32 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
 
   const messageTimeout: number = Time.Minute * 10;
   const targetUser: User = interaction.options.getUser("user");
+  const userId: string = targetUser?.id ?? "all";
+
   const statements: Statement[] = await db.getAllStatements(
     targetUser && { accusedUserId: targetUser.id }
   );
 
   if (!statements) {
-    await interaction.editReply(replies.realTalkNoStatements([ targetUser.id ]));
+    await interaction.editReply(replies.realTalkNoStatements([ userId ]));
     return;
   }
+
+  if (realTalkHistoryCache.ttl(userId)) {
+    const url: string = realTalkHistoryCache.get(userId);
+    await interaction.editReply(replies.realTalkHistoryLink(url, userId));
+
+    return;
+  }
+
+  let messageUrl: string = null;
 
   try {
     const replyMessage: Message = await interaction.editReply(
       replies.realTalkHistory(targetUser?.id, statements)
     ) as Message;
+
+    messageUrl = replyMessage.url;
 
     delayDeleteMessage(messageTimeout, replyMessage);
   } catch (error) {
@@ -238,10 +252,16 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
           replies.realTalkHistory(targetUser?.id, statementsGroup[i], i + 1, statementsGroup.length)
         );
 
+        if (i === 0) {
+          messageUrl = channelMessage.url;
+        }
+
         delayDeleteMessage(messageTimeout, channelMessage);
       }
     }
   }
+
+  realTalkHistoryCache.set(userId, messageUrl, messageTimeout);
 };
 
 const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {

@@ -73,6 +73,9 @@ export default {
     ],
   }),
 
+  realTalkHistoryLink: (url: string, userId: string): string =>
+    `**#RealTalk History** for ${userId === "all" ? "all users" : getDisplayName(userId)}: ${url}`,
+
   realTalkNoStatements: (userIds: string[]): InteractionReplyOptions =>
     quietReply(`The following user(s) have no #RealTalk statements: ${userIds.map(getDisplayName).join(", ")}`),
 
