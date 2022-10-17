@@ -223,9 +223,9 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
   }
 
   try {
-    const replyMessage: Message = await interaction.editReply({
-      ...replies.realTalkHistory(targetUser?.id, statements)
-    }) as Message;
+    const replyMessage: Message = await interaction.editReply(
+      replies.realTalkHistory(targetUser?.id, statements)
+    ) as Message;
 
     delayDeleteMessage(messageTimeout, replyMessage);
   } catch (error) {
@@ -236,7 +236,7 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
       for (let i = 0; i < statementsGroup.length; i++) {
         const channelMessage: Message = await interaction.channel.send(
           replies.realTalkHistory(targetUser?.id, statementsGroup[i], i + 1, statementsGroup.length)
-        ) as Message;
+        );
 
         delayDeleteMessage(messageTimeout, channelMessage);
       }
