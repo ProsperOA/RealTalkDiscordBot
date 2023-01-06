@@ -32,7 +32,9 @@ import {
   Config,
 } from "../utils";
 
-const INTERACTION_DONATION_LINK_THRESHOLD: number = 2;
+const INTERACTION_DONATION_LINK_THRESHOLD: number =
+  Number(process.env.INTERACTION_DONATION_LINK_THRESHOLD) || 3;
+
 const userInteractionsCache: Cache = cache.new("userInteractionsCache");
 
 const sendDonationLink = async (user: User): Promise<void> => {
