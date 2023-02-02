@@ -19,9 +19,10 @@ import {
 } from "discord.js";
 
 import db from "../../../db";
+import openai from "../../../openai";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
-import { useThrottle } from "../../middleware";
+import { RateLimitOptions, useRateLimit, useThrottle } from "../../middleware";
 import { unsplash } from "../../../index";
 
 import {
@@ -45,6 +46,7 @@ import {
   replaceMentions,
   getDisplayName,
   delayDeleteMessage,
+  chunkString,
 } from "../../../utils";
 
 export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
@@ -57,7 +59,11 @@ enum MaxContentLength {
 enum ThrottleDuration {
   RealTalkRecord = Time.Second * 15,
   RealTalkImage = Time.Second * 30,
-  RealTalkQuiz = Time.Minute * 1,
+  RealTalkQuiz = Time.Minute,
+}
+
+const RateLimit: Readonly<Record<string, RateLimitOptions>> = {
+  realTalkChat: { limit: 5, timeFrame: Time.Hour }
 }
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
@@ -131,6 +137,45 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   };
 
   await db.createStatement(statementRecord, witnesses);
+};
+
+export const realTalkChat = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  await interaction.deferReply();
+  const message: string = interaction.options.getString("message", true);
+  let res = null
+
+  try {
+    res = await openai.createCompletion({
+      model: 'text-davinci-003',
+      prompt: message,
+      max_tokens: 1000,
+    })
+  } catch (error) {
+    await interaction.editReply(replies.internalError());
+    delayDeleteReply(Time.Second * 5, interaction);
+    logger.error(error);
+
+    return;
+  }
+
+  const response = res.data.choices[0].text;
+
+  if (!hasValidContentLength(response, "ResponseBody")) {
+    await interaction.deleteReply();
+    const chunks: string[] = chunkString(response, MaxContentLength.ResponseBody - 100);
+    const totalChunks: number = chunks.length;
+
+    const firstChunk: string = `${chunks.shift()}\n_(1/${totalChunks})_\n`;
+    await interaction.channel.send(replies.realTalkChat(message, firstChunk));
+
+    for (const [i, chunk] of chunks.entries()) {
+      await interaction.channel.send(`${chunk}\n_(${2 + i}/${totalChunks})_\n`);
+    }
+
+    return;
+  }
+
+  await interaction.editReply(replies.realTalkChat(message, response));
 };
 
 const realTalkConvo = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
@@ -453,6 +498,7 @@ const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction)
 
 const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, getThrottleDuration("RealTalkRecord")),
+  [RealTalkSubcommand.Chat]: useRateLimit(realTalkChat, RateLimit.realTalkChat),
   [RealTalkSubcommand.Convo]: realTalkConvo,
   [RealTalkSubcommand.History]: realTalkHistory,
   [RealTalkSubcommand.Stats]: realTalkStats,

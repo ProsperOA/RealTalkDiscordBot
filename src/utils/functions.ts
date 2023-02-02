@@ -115,3 +115,6 @@ export const delayObjActionP = async <T>(time: number, obj: T, key: keyof T): Pr
   await sleep(time);
   return await (obj as any)?.[key]?.();
 };
+
+export const chunkString = (str: string, length: number): string[] =>
+  str.match(new RegExp("(.|[\r\n]){1," + length + "}", "g"));

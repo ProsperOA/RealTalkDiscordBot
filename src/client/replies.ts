@@ -1,6 +1,6 @@
 import { InteractionReplyOptions } from "discord.js";
 import { Embed, hideLinkEmbed, time } from "@discordjs/builders";
-import { isEmpty } from "lodash";
+import { isEmpty, trim } from "lodash";
 import { stripIndents } from "common-tags";
 
 import { RealTalkStats, CompactRealTalkStats, Statement, UpdootedStatement } from "../db/models";
@@ -45,6 +45,11 @@ export default {
 
   noRealTalkingMe: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
+
+  realTalkChat: (message: string, response: string): string =>
+    withDevLabel(stripIndents`**Message**: ${message}
+      **Response:** ${trim(response)}`
+    ),
 
   realTalkConvo: (statements: Statement[]): string =>
     withDevLabel(statements.map(({ accusedUserId, content }, i) =>
@@ -158,5 +163,8 @@ export default {
 
   throttleCoolDown: (duration: number, subcommand: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, chill... ${msConvert(duration, "Second")}s left on /${subcommand}`),
+
+  rateLimitHit: (duration: number): InteractionReplyOptions =>
+    quietReply(stripIndents`**#RealTalk**, chill... you hit your rate limit. Try again at ${time(new Date(Date.now() + duration), "t")}`),
 
 };
