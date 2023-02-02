@@ -142,6 +142,17 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
 export const realTalkChat = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   await interaction.deferReply();
   const message: string = interaction.options.getString("message", true);
+
+  if (!hasValidContentLength(message, "InteractionOption")) {
+    await interaction.editReply(
+      replies.invalidStatementLength(MaxContentLength.InteractionOption).content
+    );
+
+    delayDeleteReply(Time.Second * 5, interaction);
+
+    return;
+  }
+
   let res = null
 
   try {
