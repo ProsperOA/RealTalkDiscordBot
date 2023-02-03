@@ -48,6 +48,7 @@ export default {
 
   realTalkChat: (message: string, response: string): string =>
     withDevLabel(stripIndents`**Message**: ${message}
+
       **Response:** ${trim(response)}`
     ),
 
