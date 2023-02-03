@@ -45,7 +45,7 @@ export const useRateLimit = (cb: InteractionCreateHandler, options: RateLimitOpt
       return interaction.reply(replies.rateLimitHit(timeout));
     }
 
-    rateLimitCache.setF(userId, totalUsage + 1, timeout);
+    rateLimitCache.setF(userId, totalUsage, timeout);
 
     await cb(client, interaction, ...args);
   };

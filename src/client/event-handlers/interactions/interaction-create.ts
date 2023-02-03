@@ -63,7 +63,7 @@ enum ThrottleDuration {
 }
 
 const RateLimit: Readonly<Record<string, RateLimitOptions>> = {
-  realTalkChat: { limit: 5, timeFrame: Time.Hour }
+  realTalkChat: { limit: 10, timeFrame: Time.Hour }
 }
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
