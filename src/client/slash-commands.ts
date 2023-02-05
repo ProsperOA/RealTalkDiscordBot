@@ -52,7 +52,7 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.GenerateImage)
-      .setDescription("Generate an image and put it on cam.")
+      .setDescription("[BETA] Generate an image and put it on cam.")
       .addStringOption(option =>
         option
           .setName("description")
