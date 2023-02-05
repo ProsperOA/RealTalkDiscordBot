@@ -49,14 +49,16 @@ import {
   chunkString,
 } from "../../../utils";
 
-export type InteractionCreateHandler = (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
+export type InteractionCreateHandler =
+  (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
 
 enum MaxContentLength {
-  InteractionOption = 255,
+  InteractionOption = 2000,
   ResponseBody = 2000,
 }
 
 enum ThrottleDuration {
+  RealTalkChat = Time.Minute * 5,
   RealTalkRecord = Time.Second * 15,
   RealTalkImage = Time.Second * 30,
   RealTalkQuiz = Time.Minute,
@@ -122,7 +124,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   }
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
-    return interaction.reply(replies.invalidStatementLength(MaxContentLength.InteractionOption));
+    return interaction.reply(replies.invalidContentLength(MaxContentLength.InteractionOption));
   }
 
   const incriminatingEvidence: string = replies.realTalkRecord(targetUser.id, statement);
@@ -145,7 +147,7 @@ export const realTalkChat = async (_client: Client, interaction: CommandInteract
 
   if (!hasValidContentLength(message, "InteractionOption")) {
     await interaction.editReply(
-      replies.invalidStatementLength(MaxContentLength.InteractionOption).content
+      replies.invalidContentLength(MaxContentLength.InteractionOption)
     );
 
     delayDeleteReply(Time.Second * 5, interaction);
@@ -173,14 +175,23 @@ export const realTalkChat = async (_client: Client, interaction: CommandInteract
 
   if (!hasValidContentLength(response, "ResponseBody")) {
     await interaction.deleteReply();
-    const chunks: string[] = chunkString(response, MaxContentLength.ResponseBody - 100);
+    const maxChunkSize: number =
+      MaxContentLength.ResponseBody - replies.realTalkChat("", "").length - 100;
+
+    const chunks: string[] = chunkString(response, maxChunkSize);
     const totalChunks: number = chunks.length;
 
-    const firstChunk: string = `${chunks.shift()}\n_(1/${totalChunks})_\n`;
+    const firstChunk: string = `${chunks.shift()}\n_(1/${totalChunks})_\n\n`;
     await interaction.channel.send(replies.realTalkChat(message, firstChunk));
 
     for (const [i, chunk] of chunks.entries()) {
-      await interaction.channel.send(`${chunk}\n_(${2 + i}/${totalChunks})_\n`);
+      let msg: string = `${chunk}\n_(${2 + i}/${totalChunks})_\n`;
+
+      if (i !== chunks.length - 1) {
+        msg += "\n";
+      }
+
+      await interaction.channel.send(msg);
     }
 
     return;
@@ -509,7 +520,7 @@ const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction)
 
 const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, getThrottleDuration("RealTalkRecord")),
-  [RealTalkSubcommand.Chat]: useRateLimit(realTalkChat, RateLimit.realTalkChat),
+  [RealTalkSubcommand.Chat]: useThrottle(useRateLimit(realTalkChat, RateLimit.realTalkChat), getThrottleDuration("RealTalkChat")),
   [RealTalkSubcommand.Convo]: realTalkConvo,
   [RealTalkSubcommand.History]: realTalkHistory,
   [RealTalkSubcommand.Stats]: realTalkStats,
