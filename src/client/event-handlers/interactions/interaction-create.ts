@@ -5,6 +5,7 @@ import { Canvas, createCanvas, Image, SKRSContext2D } from "@napi-rs/canvas";
 import { Random as UnsplashRandomPhoto } from "unsplash-js/dist/methods/photos/types";
 import { RandomParams as UnsplashRandomParams } from "unsplash-js/dist/methods/photos";
 import { chunk, dropRight, flatten, isArray, isEmpty, uniq, zip } from "lodash";
+import { randomUUID } from "crypto";
 
 import {
   Client,
@@ -19,11 +20,10 @@ import {
 } from "discord.js";
 
 import db from "../../../db";
-import openai from "../../../openai";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { RateLimitOptions, useRateLimit, useThrottle } from "../../middleware";
-import { unsplash } from "../../../index";
+import { openAI, unsplash } from "../../../index";
 
 import {
   RealTalkStats,
@@ -59,20 +59,25 @@ enum MaxContentLength {
 
 enum ThrottleDuration {
   RealTalkChat = Time.Minute * 5,
+  RealTalkGenerateImage = Time.Minute * 10,
   RealTalkRecord = Time.Second * 15,
   RealTalkImage = Time.Second * 30,
   RealTalkQuiz = Time.Minute,
 }
 
 const RateLimit: Readonly<Record<string, RateLimitOptions>> = {
-  realTalkChat: { limit: 10, timeFrame: Time.Hour }
-}
+  realTalkChat: { limit: 10, timeFrame: Time.Hour },
+  realTalkGenerateImage: { limit: 3, timeFrame: Time.Hour },
+};
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
 
 const getThrottleDuration = (key: keyof typeof ThrottleDuration): number =>
   Config.IsDev ? 0 : ThrottleDuration[key];
+
+const getRateLimit = (key: string): RateLimitOptions =>
+  Config.IsDev ? { limit: Infinity, timeFrame: Infinity } : RateLimit[key];
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
@@ -141,7 +146,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   await db.createStatement(statementRecord, witnesses);
 };
 
-export const realTalkChat = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkChat = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
   await interaction.deferReply();
   const message: string = interaction.options.getString("message", true);
 
@@ -155,14 +160,14 @@ export const realTalkChat = async (_client: Client, interaction: CommandInteract
     return;
   }
 
-  let res = null
+  let res = null;
 
   try {
-    res = await openai.createCompletion({
-      model: 'text-davinci-003',
+    res = await openAI.createCompletion({
+      model: "text-davinci-003",
       prompt: message,
       max_tokens: 1000,
-    })
+    });
   } catch (error) {
     await interaction.editReply(replies.internalError());
     delayDeleteReply(Time.Second * 5, interaction);
@@ -184,8 +189,8 @@ export const realTalkChat = async (_client: Client, interaction: CommandInteract
     const firstChunk: string = `${chunks.shift()}\n_(1/${totalChunks})_\n\n`;
     await interaction.channel.send(replies.realTalkChat(message, firstChunk));
 
-    for (const [i, chunk] of chunks.entries()) {
-      let msg: string = `${chunk}\n_(${2 + i}/${totalChunks})_\n`;
+    for (const [i, piece] of chunks.entries()) {
+      let msg: string = `${piece}\n_(${2 + i}/${totalChunks})_\n`;
 
       if (i !== chunks.length - 1) {
         msg += "\n";
@@ -198,6 +203,38 @@ export const realTalkChat = async (_client: Client, interaction: CommandInteract
   }
 
   await interaction.editReply(replies.realTalkChat(message, response));
+};
+
+const realTalkGenerateImage = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+  await interaction.deferReply();
+  const description: string = interaction.options.getString("description", true);
+  let res = null;
+
+  try {
+    res = await openAI.createImage({
+      prompt: description,
+      size: "1024x1024",
+    });
+  } catch (error) {
+    await interaction.editReply(replies.internalError());
+    delayDeleteReply(Time.Second * 5, interaction);
+    logger.error(error);
+
+    return;
+  }
+
+  const { url } = res.data.data[0];
+  const image: Response = await fetch(url);
+  const imagePath: string = `./image-${randomUUID()}.png`;
+
+  fs.writeFileSync(imagePath, Buffer.from(await image.arrayBuffer()));
+  await interaction.editReply(replies.realTalkGenerateImage(description, imagePath));
+
+  try {
+    fs.unlinkSync(imagePath);
+  } catch (error) {
+    logger.error(error);
+  }
 };
 
 const realTalkConvo = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
@@ -520,8 +557,9 @@ const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction)
 
 const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, getThrottleDuration("RealTalkRecord")),
-  [RealTalkSubcommand.Chat]: useThrottle(useRateLimit(realTalkChat, RateLimit.realTalkChat), getThrottleDuration("RealTalkChat")),
+  [RealTalkSubcommand.Chat]: useThrottle(useRateLimit(realTalkChat, getRateLimit("realTalkChat")), getThrottleDuration("RealTalkChat")),
   [RealTalkSubcommand.Convo]: realTalkConvo,
+  [RealTalkSubcommand.GenerateImage]: useThrottle(useRateLimit(realTalkGenerateImage, getRateLimit("realTalkGenerateImage")), getThrottleDuration("RealTalkGenerateImage")),
   [RealTalkSubcommand.History]: realTalkHistory,
   [RealTalkSubcommand.Stats]: realTalkStats,
   [RealTalkSubcommand.Quiz]: useThrottle(realTalkQuiz, getThrottleDuration("RealTalkQuiz")),

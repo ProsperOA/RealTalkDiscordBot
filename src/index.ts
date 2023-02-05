@@ -2,6 +2,7 @@ import * as Coralogix from "coralogix-logger";
 import Bugsnag from "@bugsnag/node";
 import fetch from "cross-fetch";
 import { hostname } from "os";
+import { Configuration, OpenAIApi } from "openai";
 import { Client, ClientOptions, Intents } from "discord.js";
 import { createApi } from "unsplash-js";
 import { omit } from "lodash";
@@ -52,6 +53,10 @@ export const unsplash = createApi({
   accessKey: UNSPLASH_API_KEY,
   fetch,
 });
+
+export const openAI: OpenAIApi = new OpenAIApi(new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+}));
 
 export const client: Client = new Client(clientOptions);
 

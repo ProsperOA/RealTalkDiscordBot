@@ -41,7 +41,7 @@ export default {
     quietReply(`**#RealTalk**, input must be ${length} characters or less`),
 
   noImagesFound: (topic: string): InteractionReplyOptions =>
-    quietReply(`**#RealTalk**, no images found for topic "${topic}".`),
+    quietReply(`**#RealTalk**, no images found for "${topic}".`),
 
   noRealTalkingMe: (): InteractionReplyOptions =>
     quietReply("**#RealTalk**, you can't real talk the RealTalkBot!"),
@@ -63,6 +63,9 @@ export default {
 
   realTalkExists: (userId: string, url: string): string =>
     withDevLabel(`Yo, ${nicknameMention(userId)}, it's been **#RealTalk'd**: ${hideLinkEmbed(url)}`),
+
+  realTalkGenerateImage: (description: string, path: string): InteractionReplyOptions =>
+    ({ content: withDevLabel(`**Description:** ${description}\n\n`), files: [ path ] }),
 
   realTalkHistory: (userId: string, statements: Statement[], part: number = 1, total: number = 1): InteractionReplyOptions => ({
     embeds: [

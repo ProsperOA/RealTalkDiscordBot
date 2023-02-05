@@ -11,6 +11,7 @@ export enum RealTalkCommand {
 export enum RealTalkSubcommand {
   Chat = "chat",
   Convo = "convo",
+  GenerateImage = "generate_image",
   History = "history",
   Image = "image",
   Quiz = "quiz",
@@ -47,6 +48,15 @@ const realTalk = new SlashCommandBuilder()
         option
           .setName("message")
           .setDescription("What it is?")
+          .setRequired(true)))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(RealTalkSubcommand.GenerateImage)
+      .setDescription("Generate an image and put it on cam.")
+      .addStringOption(option =>
+        option
+          .setName("description")
+          .setDescription("A detailed description")
           .setRequired(true)))
   .addSubcommand(subcommand =>
     subcommand
