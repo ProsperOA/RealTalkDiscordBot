@@ -1,21 +1,21 @@
-import { Client, CommandInteraction } from "discord.js";
+import { CommandInteraction } from "discord.js";
 
 import replies from "./replies";
 import { cache, Cache, getUsername, logger } from "../utils";
+import { merge } from "lodash";
 
 import {
   InteractionCreateHandler,
   InteractionCreateInput,
   ThrottleConfig,
 } from "./event-handlers/interactions/interaction-create";
-import { xor } from "lodash";
 
 export interface Middleware {
   throttle?: {
-    cache: Cache;
+    remove: (interaction: CommandInteraction) => boolean;
   };
   rateLimit?: {
-    cache: Cache;
+    decrement: (interaction: CommandInteraction) => boolean;
   };
 }
 
@@ -29,32 +29,46 @@ export type InteractionCreateMiddleware = (...args: any[]) => Promise<Interactio
 const throttleCache: Cache = cache.new("throttleCache");
 const rateLimitCache: Cache = cache.new("rateLimitUsersCache");
 
-export const buildMiddlewareCacheKey = (interaction: CommandInteraction, userId: string): string =>
-  `${interaction.options.getSubcommand()}:${userId}`;
+export const buildMiddlewareCacheKey = (interaction: CommandInteraction): string =>
+  `${interaction.options.getSubcommand()}:${interaction.user.id}`;
 
-const modifyInput = (input: InteractionCreateInput, middleware: Middleware): InteractionCreateInput =>
-  xor(Object.keys(input.middleware || {}), Object.keys(middleware)).length
-    ? {
-        ...input,
-        middleware: {
-          ...middleware,
-        },
-      }
-    : input;
+const removeThrottle = (interaction: CommandInteraction): boolean =>
+  throttleCache.delete(buildMiddlewareCacheKey(interaction));
+
+const decrementRateLimit = (interaction: CommandInteraction): boolean => {
+  const key: string = buildMiddlewareCacheKey(interaction);
+  const totalUsage: number = rateLimitCache.get(key);
+  const ttl: number = rateLimitCache.ttl(key);
+
+  console.log("decrementRateLimit", { key, totalUsage, ttl });
+
+  return totalUsage === 1
+    ? rateLimitCache.delete(key)
+    : rateLimitCache.setF(key, totalUsage - 1, ttl);
+};
+
+const mergeInput = (input: InteractionCreateInput, middleware: Middleware): InteractionCreateInput => ({
+  ...input,
+  middleware: merge(input.middleware, middleware),
+});
 
 export const applyMiddleware = (middlewares: InteractionCreateMiddleware[], handler: InteractionCreateHandler) =>
   async (input: InteractionCreateInput): Promise<void> => {
     let finalInput: InteractionCreateInput = null;
+    let runHandler: boolean = true;
 
     for (const middleware of middlewares) {
-      finalInput = await middleware(input, handler);
+      const newInput = await middleware(input, handler);
 
-      if (!finalInput) {
+      if (!newInput) {
+        runHandler = false;
         break;
       }
+
+      finalInput = merge(finalInput || {}, newInput);
     }
 
-    if (finalInput) {
+    if (runHandler) {
       await handler(finalInput);
     }
   };
@@ -62,9 +76,10 @@ export const applyMiddleware = (middlewares: InteractionCreateMiddleware[], hand
 export const useThrottle = (configure: (name: keyof typeof ThrottleConfig) => number) =>
   async (input: InteractionCreateInput, handler: InteractionCreateHandler): Promise<InteractionCreateInput> => {
     const { interaction }: InteractionCreateInput = input;
+
     const duration: number = configure(handler.name as keyof typeof ThrottleConfig);
     const userId: string = interaction.user.id;
-    const key: string = buildMiddlewareCacheKey(interaction, userId);
+    const key: string = buildMiddlewareCacheKey(interaction);
 
     if (duration < 0) {
       logger.warn(`Invalid duration of ${duration} on ${key}`);
@@ -82,29 +97,28 @@ export const useThrottle = (configure: (name: keyof typeof ThrottleConfig) => nu
 
     throttleCache.setF(key, new Date().toISOString(), Math.max(0, duration));
 
-    return modifyInput(input, { throttle: { cache: throttleCache }});
+    return mergeInput(input, { throttle: { remove: removeThrottle }});
   };
 
 export const useRateLimit = (configure: (name: string) => RateLimitOptions) =>
   async (input: InteractionCreateInput, handler: InteractionCreateHandler): Promise<InteractionCreateInput> => {
     const { interaction }: InteractionCreateInput = input;
-    const options: RateLimitOptions = configure(handler.name);
-    const userId: string = interaction.user.id;
-    const timeout: number = rateLimitCache.ttl(userId);
-    const totalUsage: number = (rateLimitCache.get(userId) || 0) + 1;
 
-    if (!rateLimitCache.has(userId)) {
-      rateLimitCache.set(userId, totalUsage, options.timeFrame);
-    } else if (timeout && totalUsage > options.limit) {
+    const key: string = buildMiddlewareCacheKey(interaction);
+    const options: RateLimitOptions = configure(handler.name);
+    const totalUsage: number = (rateLimitCache.get(key) || 0) + 1;
+    const timeout: number = rateLimitCache.ttl(key);
+
+    if (timeout && totalUsage > options.limit) {
       await interaction.reply(replies.rateLimitHit(timeout));
       const subcommand: string = interaction.options.getSubcommand();
+      const userId: string = interaction.user.id;
 
       logger.info(`Rate limit reached on /${subcommand} for UserID::${userId} (${getUsername(userId)})`);
       return null;
     }
 
-    const key: string = buildMiddlewareCacheKey(interaction, userId);
-    rateLimitCache.setF(key, totalUsage, timeout);
+    rateLimitCache.setF(key, totalUsage, options.timeFrame);
 
-    return modifyInput(input, { rateLimit: { cache: rateLimitCache }});
+    return mergeInput(input, { rateLimit: { decrement: decrementRateLimit }});
   };

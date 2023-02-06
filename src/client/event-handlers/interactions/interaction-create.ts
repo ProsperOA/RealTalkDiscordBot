@@ -110,6 +110,7 @@ const realTalkRecord = async (input: InteractionCreateInput, requireWitnesses: b
   const targetUser: User = interaction.options.getUser("who");
 
   if (targetUser.id === client.user.id) {
+    middleware.throttle.remove(interaction);
     return interaction.reply(replies.noRealTalkingMe());
   }
 
@@ -120,6 +121,8 @@ const realTalkRecord = async (input: InteractionCreateInput, requireWitnesses: b
   });
 
   if (existingStatement) {
+    middleware.throttle.remove(interaction);
+
     return interaction.reply(
       replies.realTalkExists(interaction.user.id, existingStatement.url)
     );
@@ -129,8 +132,8 @@ const realTalkRecord = async (input: InteractionCreateInput, requireWitnesses: b
   const { voice }: GuildMember = interaction.member as GuildMember;
 
   if (!Config.IsDev && requireWitnesses) {
-
     if (!voice.channelId) {
+      middleware.throttle.remove(interaction);
       return interaction.reply(replies.realTalkNotInVoiceChat());
     }
 
@@ -139,11 +142,13 @@ const realTalkRecord = async (input: InteractionCreateInput, requireWitnesses: b
       .map(user => ({ userId: user.id }));
 
     if (isEmpty(witnesses)) {
+      middleware.throttle.remove(interaction);
       return interaction.reply(replies.realTalkNoWitnesses());
     }
   }
 
   if (!hasValidContentLength(statement, "InteractionOption")) {
+    middleware.throttle.remove(interaction);
     return interaction.reply(replies.invalidContentLength(MaxContentLength.InteractionOption));
   }
 
@@ -162,7 +167,8 @@ const realTalkRecord = async (input: InteractionCreateInput, requireWitnesses: b
 };
 
 const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
-  const { interaction }: InteractionCreateInput = input;
+  const { interaction, middleware }: InteractionCreateInput = input;
+
   await interaction.deferReply();
   const message: string = interaction.options.getString("message", true);
 
@@ -172,6 +178,9 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
     );
 
     delayDeleteReply(Time.Second * 5, interaction);
+
+    middleware.throttle.remove(interaction);
+    middleware.rateLimit.decrement(interaction);
 
     return;
   }
@@ -187,6 +196,9 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
   } catch (error) {
     await interaction.editReply(replies.internalError());
     delayDeleteReply(Time.Second * 5, interaction);
+
+    middleware.throttle.remove(interaction);
+    middleware.rateLimit.decrement(interaction);
 
     logger.error(error);
     return;
@@ -222,7 +234,8 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
 };
 
 const realTalkGenerateImage = async (input: InteractionCreateInput): Promise<void> => {
-  const { interaction }: InteractionCreateInput = input;
+  const { interaction, middleware }: InteractionCreateInput = input;
+
   await interaction.deferReply();
   const description: string = interaction.options.getString("description", true);
   let res = null;
@@ -235,6 +248,9 @@ const realTalkGenerateImage = async (input: InteractionCreateInput): Promise<voi
   } catch (error) {
     await interaction.editReply(replies.internalError());
     delayDeleteReply(Time.Second * 5, interaction);
+
+    middleware.throttle.remove(interaction);
+    middleware.rateLimit.decrement(interaction);
 
     logger.error(error);
     return;
@@ -412,14 +428,15 @@ const realTalkStats = async (input: InteractionCreateInput): Promise<void> => {
 };
 
 const realTalkQuiz = async (input: InteractionCreateInput): Promise<void> => {
-  const { interaction }: InteractionCreateInput = input;
+  const { interaction, middleware }: InteractionCreateInput = input;
   const previousTimeout: number = realTalkQuizCache.ttl("previousStatement");
 
   if (previousTimeout) {
+    middleware.throttle.remove(interaction);
     return interaction.reply(replies.realTalkQuizActive(previousTimeout));
   }
 
-  let statement: Statement;
+  let statement: Statement = null;
 
   do {
     statement = (await db.getRandomStatements())[0];
@@ -458,7 +475,7 @@ const realTalkQuiz = async (input: InteractionCreateInput): Promise<void> => {
 };
 
 const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
-  const { interaction }: InteractionCreateInput = input;
+  const { interaction, middleware }: InteractionCreateInput = input;
   await interaction.deferReply();
 
   let canvas: Canvas;
@@ -493,6 +510,7 @@ const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
   if (!statement) {
     await interaction.editReply(replies.realTalkNoStatements([ accusedUser.id ]));
     deleteReply(interaction);
+    middleware.throttle.remove(interaction);
 
     return;
   }
@@ -508,6 +526,7 @@ const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
 
       await interaction.editReply(message);
       deleteReply(interaction);
+      middleware.throttle.remove(interaction);
 
       return;
     }
@@ -549,11 +568,13 @@ const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
       ctx.drawImage(avatar, padding, padding, avatarWidth, avatarHeight);
     }
   } catch (error) {
-    logger.error(error);
-    deleteImageFile();
-
     await interaction.editReply(replies.internalError());
     deleteReply(interaction);
+
+    logger.error(error);
+    deleteImageFile();
+    middleware.throttle.remove(interaction);
+
 
     return;
   }
