@@ -73,9 +73,9 @@ enum MaxContentLength {
 export enum ThrottleConfig {
   realTalkChat = Time.Minute * 5,
   realTalkGenerateImage = Time.Minute * 10,
-  realTalkRecord = Time.Second * 15,
-  realTalkImage = Time.Minute,
-  realTalkQuiz = Time.Minute,
+  realTalkRecord = Time.Minute,
+  realTalkImage = Time.Minute * 10,
+  realTalkQuiz = Time.Minute * 5,
 }
 
 export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
