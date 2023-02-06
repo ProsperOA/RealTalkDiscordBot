@@ -40,8 +40,6 @@ const decrementRateLimit = (interaction: CommandInteraction): boolean => {
   const totalUsage: number = rateLimitCache.get(key);
   const ttl: number = rateLimitCache.ttl(key);
 
-  console.log("decrementRateLimit", { key, totalUsage, ttl });
-
   return totalUsage === 1
     ? rateLimitCache.delete(key)
     : rateLimitCache.setF(key, totalUsage - 1, ttl);
