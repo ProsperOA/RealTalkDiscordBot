@@ -76,7 +76,7 @@ export default {
         .addFields(
           ...statements.map(statement => ({
             name: `${userId ? "" : getDisplayName(statement.accusedUserId) + ": "} _"${statement.content}"_`,
-            value: statement.url,
+            value: formatStatementUrl(statement),
           }))
         )
     ],
