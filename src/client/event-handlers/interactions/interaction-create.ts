@@ -22,8 +22,15 @@ import {
 import db from "../../../db";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
-import { RateLimitOptions, useRateLimit, useThrottle } from "../../middleware";
 import { openAI, unsplash } from "../../../index";
+
+import {
+  applyMiddleware,
+  Middleware,
+  RateLimitOptions,
+  useRateLimit,
+  useThrottle,
+} from "../../middleware";
 
 import {
   RealTalkStats,
@@ -49,23 +56,29 @@ import {
   chunkString,
 } from "../../../utils";
 
+export interface InteractionCreateInput {
+  client: Client;
+  interaction: CommandInteraction;
+  middleware?: Middleware;
+}
+
 export type InteractionCreateHandler =
-  (client: Client, interaction: CommandInteraction, ...args: any[]) => Promise<void>;
+  (input: InteractionCreateInput, ...args: any[]) => Promise<void>;
 
 enum MaxContentLength {
   InteractionOption = 2000,
   ResponseBody = 2000,
 }
 
-enum ThrottleDuration {
-  RealTalkChat = Time.Minute * 5,
-  RealTalkGenerateImage = Time.Minute * 10,
-  RealTalkRecord = Time.Second * 15,
-  RealTalkImage = Time.Second * 30,
-  RealTalkQuiz = Time.Minute,
+export enum ThrottleConfig {
+  realTalkChat = Time.Minute * 5,
+  realTalkGenerateImage = Time.Minute * 10,
+  realTalkRecord = Time.Second * 15,
+  realTalkImage = Time.Minute,
+  realTalkQuiz = Time.Minute,
 }
 
-const RateLimit: Readonly<Record<string, RateLimitOptions>> = {
+export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
   realTalkChat: { limit: 10, timeFrame: Time.Hour },
   realTalkGenerateImage: { limit: 3, timeFrame: Time.Hour },
 };
@@ -73,11 +86,11 @@ const RateLimit: Readonly<Record<string, RateLimitOptions>> = {
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
 
-const getThrottleDuration = (key: keyof typeof ThrottleDuration): number =>
-  Config.IsDev ? 0 : ThrottleDuration[key];
+const getThrottleConfig = (key: keyof typeof ThrottleConfig): number =>
+  Config.IsDev ? 0 : ThrottleConfig[key];
 
-const getRateLimit = (key: string): RateLimitOptions =>
-  Config.IsDev ? { limit: Infinity, timeFrame: Infinity } : RateLimit[key];
+const getRateLimitConfig = (key: string): RateLimitOptions =>
+  Config.IsDev ? { limit: Infinity, timeFrame: Infinity } : RateLimitConfig[key];
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];
@@ -92,7 +105,8 @@ const getRealTalkWitnesses = async ({ channels }: Client, channelId: string): Pr
 const cleanStatement = (statement: string): string =>
   statement.trim().replace(/["]+/g, "");
 
-const realTalkRecord = async (client: Client, interaction: CommandInteraction, requireWitnesses: boolean = true): Promise<void> => {
+const realTalkRecord = async (input: InteractionCreateInput, requireWitnesses: boolean = true): Promise<void> => {
+  const { client, interaction, middleware }: InteractionCreateInput = input;
   const targetUser: User = interaction.options.getUser("who");
 
   if (targetUser.id === client.user.id) {
@@ -115,6 +129,7 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   const { voice }: GuildMember = interaction.member as GuildMember;
 
   if (!Config.IsDev && requireWitnesses) {
+
     if (!voice.channelId) {
       return interaction.reply(replies.realTalkNotInVoiceChat());
     }
@@ -146,7 +161,8 @@ const realTalkRecord = async (client: Client, interaction: CommandInteraction, r
   await db.createStatement(statementRecord, witnesses);
 };
 
-const realTalkChat = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   await interaction.deferReply();
   const message: string = interaction.options.getString("message", true);
 
@@ -171,8 +187,8 @@ const realTalkChat = async (_client: Client, interaction: CommandInteraction): P
   } catch (error) {
     await interaction.editReply(replies.internalError());
     delayDeleteReply(Time.Second * 5, interaction);
-    logger.error(error);
 
+    logger.error(error);
     return;
   }
 
@@ -205,7 +221,8 @@ const realTalkChat = async (_client: Client, interaction: CommandInteraction): P
   await interaction.editReply(replies.realTalkChat(message, response));
 };
 
-const realTalkGenerateImage = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkGenerateImage = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   await interaction.deferReply();
   const description: string = interaction.options.getString("description", true);
   let res = null;
@@ -218,8 +235,8 @@ const realTalkGenerateImage = async (_client: Client, interaction: CommandIntera
   } catch (error) {
     await interaction.editReply(replies.internalError());
     delayDeleteReply(Time.Second * 5, interaction);
-    logger.error(error);
 
+    logger.error(error);
     return;
   }
 
@@ -237,7 +254,8 @@ const realTalkGenerateImage = async (_client: Client, interaction: CommandIntera
   }
 };
 
-const realTalkConvo = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkConvo = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   await interaction.deferReply();
   const maxStatementsToFetch: number = 3;
 
@@ -313,7 +331,8 @@ const realTalkConvo = async (_client: Client, interaction: CommandInteraction): 
   await interaction.editReply(messageSlice || message);
 };
 
-const realTalkHistory = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkHistory = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   await interaction.deferReply();
 
   const messageTimeout: number = Time.Minute * 10;
@@ -368,7 +387,8 @@ const realTalkHistory = async (_client: Client, interaction: CommandInteraction)
   realTalkHistoryCache.set(userId, messageUrl, messageTimeout);
 };
 
-const realTalkStats = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkStats = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   const stats: RealTalkStats = await db.getStatementStats();
   const totalStatements: number = await db.getTotalStatements();
   const message: string = replies.realTalkStats(stats, totalStatements);
@@ -391,7 +411,8 @@ const realTalkStats = async (_client: Client, interaction: CommandInteraction): 
   await interaction.reply(message);
 };
 
-const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkQuiz = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   const previousTimeout: number = realTalkQuizCache.ttl("previousStatement");
 
   if (previousTimeout) {
@@ -436,7 +457,8 @@ const realTalkQuiz = async (_client: Client, interaction: CommandInteraction): P
   });
 };
 
-const realTalkImage = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   await interaction.deferReply();
 
   let canvas: Canvas;
@@ -542,7 +564,8 @@ const realTalkImage = async (_client: Client, interaction: CommandInteraction): 
   deleteImageFile();
 };
 
-const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction): Promise<void> => {
+const realTalkUpdoots = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
   const targetUser: User = interaction.options.getUser("who", true);
   const statements: UpdootedStatement[] = await db.getMostUpdootedStatements({
     accusedUserId: targetUser.id,
@@ -555,20 +578,36 @@ const realTalkUpdoots = async (_client: Client, interaction: CommandInteraction)
   await interaction.reply(replies.realTalkUpdoots(targetUser.id, statements));
 };
 
-const interactionHandlers: {[name: string]: InteractionCreateHandler} = {
-  [RealTalkSubcommand.Record]: useThrottle(realTalkRecord, getThrottleDuration("RealTalkRecord")),
-  [RealTalkSubcommand.Chat]: useThrottle(useRateLimit(realTalkChat, getRateLimit("realTalkChat")), getThrottleDuration("RealTalkChat")),
+const interactionHandlers: { [name: string]: InteractionCreateHandler } = {
+  [RealTalkSubcommand.Record]: applyMiddleware(
+    [useThrottle(getThrottleConfig)],
+    realTalkRecord
+  ),
+  [RealTalkSubcommand.Chat]: applyMiddleware(
+    [useThrottle(getThrottleConfig), useRateLimit(getRateLimitConfig)],
+    realTalkChat
+  ),
   [RealTalkSubcommand.Convo]: realTalkConvo,
-  [RealTalkSubcommand.GenerateImage]: useThrottle(useRateLimit(realTalkGenerateImage, getRateLimit("realTalkGenerateImage")), getThrottleDuration("RealTalkGenerateImage")),
+  [RealTalkSubcommand.GenerateImage]: applyMiddleware(
+    [useThrottle(getThrottleConfig), useRateLimit(getRateLimitConfig)],
+    realTalkGenerateImage
+  ),
   [RealTalkSubcommand.History]: realTalkHistory,
   [RealTalkSubcommand.Stats]: realTalkStats,
-  [RealTalkSubcommand.Quiz]: useThrottle(realTalkQuiz, getThrottleDuration("RealTalkQuiz")),
-  [RealTalkSubcommand.Image]: useThrottle(realTalkImage, getThrottleDuration("RealTalkImage")),
+  [RealTalkSubcommand.Quiz]: applyMiddleware(
+    [useThrottle(getThrottleConfig)],
+    realTalkQuiz
+  ),
+  [RealTalkSubcommand.Image]: applyMiddleware(
+    [useThrottle(getThrottleConfig)],
+    realTalkImage
+  ),
   [RealTalkSubcommand.Updoots]: realTalkUpdoots,
 };
 
 export default {
-  [RealTalkCommand.RealTalk]: async (client: Client, interaction: CommandInteraction, ...args: any[]): Promise<void> => {
+  [RealTalkCommand.RealTalk]: async (input: InteractionCreateInput, ...args: any[]): Promise<void> => {
+    const { client, interaction }: InteractionCreateInput = input;
     const subcommand: string = interaction.options.getSubcommand();
     const handlerFn: InteractionCreateHandler = interactionHandlers[subcommand];
 
@@ -577,6 +616,6 @@ export default {
       return interaction.reply(replies.internalError());
     }
 
-    return handlerFn(client, interaction, ...args);
+    return handlerFn({ client, interaction }, ...args);
   }
 };

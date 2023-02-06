@@ -147,7 +147,7 @@ const realTalkEmojiReaction = async (client: Client, user: User, reaction: Messa
   };
 
   const realTalkCommand: InteractionCreateHandler = interactionHandlers[RealTalkCommand.RealTalk];
-  await realTalkCommand(client, mockInteraction as CommandInteraction, false);
+  await realTalkCommand({ client, interaction: mockInteraction as CommandInteraction }, false);
 };
 
 const realTalkUpdoot = async (_client: Client, user: User, reaction: MessageReaction, type: MessageReactionChangeType): Promise<void> => {

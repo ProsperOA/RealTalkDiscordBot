@@ -88,7 +88,7 @@ const onInteractionCreate = (client: Client) =>
     const t: Timer = timer();
 
     t.start();
-    await handlerFn(client, interaction);
+    await handlerFn({ client, interaction });
     t.stop();
 
     logCustom({ interaction }, t.time());
