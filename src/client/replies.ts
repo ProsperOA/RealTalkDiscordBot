@@ -166,9 +166,9 @@ export default {
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
 
   throttleCoolDown: (duration: number, subcommand: string): InteractionReplyOptions =>
-    quietReply(`**#RealTalk**, chill... ${msConvert(duration, "Second")}s left on /${subcommand}`),
+    quietReply(`**#RealTalk** chill on /${subcommand}. Try again at ${time(new Date(Date.now() + duration), "t")}`),
 
-  rateLimitHit: (duration: number): InteractionReplyOptions =>
-    quietReply(stripIndents`**#RealTalk**, chill... you hit your rate limit. Try again at ${time(new Date(Date.now() + duration), "t")}`),
+  rateLimitHit: (duration: number, subcommand: string): InteractionReplyOptions =>
+    quietReply(`**#RealTalk** usage limit reached on /${subcommand}. Try again at ${time(new Date(Date.now() + duration), "t")}`),
 
 };

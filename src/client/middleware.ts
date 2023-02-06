@@ -110,8 +110,8 @@ export const useRateLimit = (configure: (name: string) => RateLimitOptions) =>
     const timeout: number = rateLimitCache.ttl(key);
 
     if (timeout && totalUsage > options.limit) {
-      await interaction.reply(replies.rateLimitHit(timeout));
       const subcommand: string = interaction.options.getSubcommand();
+      await interaction.reply(replies.rateLimitHit(timeout, subcommand));
       const userId: string = interaction.user.id;
 
       logger.info(`Rate limit reached on /${subcommand} for UserID::${userId} (${getUsername(userId)})`);
