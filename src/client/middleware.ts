@@ -1,8 +1,8 @@
 import { CommandInteraction } from "discord.js";
+import { merge } from "lodash";
 
 import replies from "./replies";
 import { cache, Cache, getUsername, logger } from "../utils";
-import { merge } from "lodash";
 
 import {
   InteractionCreateHandler,
@@ -24,7 +24,14 @@ export interface RateLimitOptions {
   timeFrame: number;
 }
 
-export type InteractionCreateMiddleware = (...args: any[]) => Promise<InteractionCreateInput>;
+export type InteractionCreateMiddleware =
+  (...args: any[]) => Promise<InteractionCreateInput>;
+
+type ThrottleConfigure =
+  (interaction: CommandInteraction, name: keyof typeof ThrottleConfig) => Promise<number>;
+
+type RateLimitConfigure =
+  (interaction: CommandInteraction, name: string) => Promise<RateLimitOptions>;
 
 const throttleCache: Cache = cache.new("throttleCache");
 const rateLimitCache: Cache = cache.new("rateLimitUsersCache");
@@ -71,11 +78,13 @@ export const applyMiddleware = (middlewares: InteractionCreateMiddleware[], hand
     }
   };
 
-export const useThrottle = (configure: (name: keyof typeof ThrottleConfig) => number) =>
+export const useThrottle = (configure: ThrottleConfigure) =>
   async (input: InteractionCreateInput, handler: InteractionCreateHandler): Promise<InteractionCreateInput> => {
     const { interaction }: InteractionCreateInput = input;
 
-    const duration: number = configure(handler.name as keyof typeof ThrottleConfig);
+    const duration: number =
+      await configure(interaction, handler.name as keyof typeof ThrottleConfig);
+
     const userId: string = interaction.user.id;
     const key: string = buildMiddlewareCacheKey(interaction);
 
@@ -98,12 +107,12 @@ export const useThrottle = (configure: (name: keyof typeof ThrottleConfig) => nu
     return mergeInput(input, { throttle: { remove: removeThrottle }});
   };
 
-export const useRateLimit = (configure: (name: string) => RateLimitOptions) =>
+export const useRateLimit = (configure: RateLimitConfigure) =>
   async (input: InteractionCreateInput, handler: InteractionCreateHandler): Promise<InteractionCreateInput> => {
     const { interaction }: InteractionCreateInput = input;
 
     const key: string = buildMiddlewareCacheKey(interaction);
-    const options: RateLimitOptions = configure(handler.name);
+    const options: RateLimitOptions = await configure(interaction, handler.name);
     const totalUsage: number = (rateLimitCache.get(key) || 0) + 1;
     const timeout: number = rateLimitCache.ttl(key);
 

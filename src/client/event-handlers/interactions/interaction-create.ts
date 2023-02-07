@@ -54,6 +54,7 @@ import {
   getDisplayName,
   delayDeleteMessage,
   chunkString,
+  isOwner,
 } from "../../../utils";
 
 export interface InteractionCreateInput {
@@ -86,11 +87,13 @@ export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
 
-const getThrottleConfig = (key: keyof typeof ThrottleConfig): number =>
-  Config.IsDev ? 0 : ThrottleConfig[key];
+const getThrottleConfig = async (interaction: CommandInteraction, key: keyof typeof ThrottleConfig): Promise<number> =>
+  Config.IsDev || await isOwner(interaction) ? 0 : ThrottleConfig[key];
 
-const getRateLimitConfig = (key: string): RateLimitOptions =>
-  Config.IsDev ? { limit: Infinity, timeFrame: Infinity } : RateLimitConfig[key];
+const getRateLimitConfig = async (interaction: CommandInteraction, key: string): Promise<RateLimitOptions> =>
+  Config.IsDev || await isOwner(interaction)
+    ? { limit: Infinity, timeFrame: Infinity }
+    : RateLimitConfig[key];
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
   str.length <= MaxContentLength[type];

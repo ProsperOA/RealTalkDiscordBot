@@ -30,6 +30,7 @@ import {
   Time,
   delayDeleteMessage,
   Config,
+  isOwner,
 } from "../utils";
 
 const INTERACTION_DONATION_LINK_THRESHOLD: number =
@@ -81,7 +82,7 @@ const onInteractionCreate = (client: Client) =>
       return interaction.reply(replies.internalError());
     }
 
-    if (!Config.IsDev) {
+    if (!(Config.IsDev && await isOwner(interaction))) {
       await sendDonationLink(interaction.user);
     }
 
