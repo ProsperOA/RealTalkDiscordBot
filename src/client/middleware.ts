@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { merge } from "lodash";
 
 import replies from "./replies";
-import { cache, Cache, getUsername, logger } from "../utils";
+import { cache, Cache, formatUserId, getUsername, logger } from "../utils";
 
 import {
   InteractionCreateHandler,
@@ -96,9 +96,9 @@ export const useThrottle = (configure: ThrottleConfigure) =>
 
     if (timeout) {
       const subcommand: string = interaction.options.getSubcommand();
-      await interaction.reply(replies.throttleCoolDown(timeout, subcommand));
+      await interaction.reply(replies.throttleCoolDown(interaction, timeout));
 
-      logger.info(`Throttle limit reached on /${subcommand} for UserID::${userId} (${getUsername(userId)})`);
+      logger.info(`Throttle limit reached on /${subcommand} for ${formatUserId(userId)} (${getUsername(userId)})`);
       return null;
     }
 
@@ -118,10 +118,10 @@ export const useRateLimit = (configure: RateLimitConfigure) =>
 
     if (timeout && totalUsage > options.limit) {
       const subcommand: string = interaction.options.getSubcommand();
-      await interaction.reply(replies.rateLimitHit(timeout, subcommand));
+      await interaction.reply(replies.rateLimitHit(interaction, timeout));
       const userId: string = interaction.user.id;
 
-      logger.info(`Rate limit reached on /${subcommand} for UserID::${userId} (${getUsername(userId)})`);
+      logger.info(`Rate limit reached on /${subcommand} for ${formatUserId(userId)} (${getUsername(userId)})`);
       return null;
     }
 

@@ -79,7 +79,7 @@ const onInteractionCreate = (client: Client) =>
 
     if (!handlerFn) {
       logger.error(`No handler for command ${commandName}`);
-      return interaction.reply(replies.internalError());
+      return interaction.reply(replies.internalError(interaction));
     }
 
     if (!(Config.IsDev || await isOwner(interaction))) {

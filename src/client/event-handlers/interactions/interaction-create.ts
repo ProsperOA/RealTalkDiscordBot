@@ -197,7 +197,7 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
       max_tokens: 1000,
     });
   } catch (error) {
-    await interaction.editReply(replies.internalError());
+    await interaction.editReply(replies.internalError(interaction));
     delayDeleteReply(Time.Second * 5, interaction);
 
     middleware.throttle.remove(interaction);
@@ -249,7 +249,7 @@ const realTalkGenerateImage = async (input: InteractionCreateInput): Promise<voi
       size: "1024x1024",
     });
   } catch (error) {
-    await interaction.editReply(replies.internalError());
+    await interaction.editReply(replies.internalError(interaction));
     delayDeleteReply(Time.Second * 5, interaction);
 
     middleware.throttle.remove(interaction);
@@ -525,7 +525,7 @@ const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
     if (res.status !== 200) {
       const message: string | InteractionReplyOptions = res.status === 404
         ? replies.noImagesFound(topic)
-        : replies.internalError();
+        : replies.internalError(interaction);
 
       await interaction.editReply(message);
       deleteReply(interaction);
@@ -571,7 +571,7 @@ const realTalkImage = async (input: InteractionCreateInput): Promise<void> => {
       ctx.drawImage(avatar, padding, padding, avatarWidth, avatarHeight);
     }
   } catch (error) {
-    await interaction.editReply(replies.internalError());
+    await interaction.editReply(replies.internalError(interaction));
     deleteReply(interaction);
 
     logger.error(error);
@@ -637,7 +637,7 @@ export default {
 
     if (!handlerFn) {
       logger.error(`${subcommand} is an invalid ${RealTalkCommand.RealTalk} subcommand`);
-      return interaction.reply(replies.internalError());
+      return interaction.reply(replies.internalError(interaction));
     }
 
     return handlerFn({ client, interaction }, ...args);

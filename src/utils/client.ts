@@ -7,6 +7,7 @@ import {
   GuildMember,
   Message,
   MessageMentions,
+  Role,
   User,
 } from "discord.js";
 
@@ -23,8 +24,14 @@ interface Structure<T> {
 export const getUserIdFromMention = (mention: string): string =>
   mention.matchAll(MessageMentions.USERS_PATTERN).next().value?.[1];
 
+export const getRoleFromMention = (mention: string): string =>
+  mention.matchAll(MessageMentions.ROLES_PATTERN).next().value?.[1];
+
 export const getGuild = (): Guild =>
   client?.guilds.cache.get(process.env.GUILD_ID) ?? null;
+
+export const getRole = (roleId: string): Role =>
+  getGuild()?.roles.cache.get(roleId) ?? null;
 
 export const getMember = (userId: string): GuildMember =>
   getGuild()?.members.cache.get(userId) ?? null;
@@ -32,7 +39,7 @@ export const getMember = (userId: string): GuildMember =>
 export const getUser = (userId: string): User =>
   getMember(userId)?.user ?? null;
 
-const formatUserId = (userId: string): string =>
+export const formatUserId = (userId: string): string =>
   "UserID::" + userId;
 
 export const getUsername = (userId: string): string =>

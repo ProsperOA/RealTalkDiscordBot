@@ -1,10 +1,34 @@
-import { InteractionReplyOptions } from "discord.js";
-import { Embed, hideLinkEmbed, time } from "@discordjs/builders";
 import { isEmpty, trim } from "lodash";
 import { stripIndents } from "common-tags";
 
-import { RealTalkStats, CompactRealTalkStats, Statement, UpdootedStatement } from "../db/models";
-import { Config, getDisplayName, msConvert, nicknameMention, pluralize } from "../utils";
+import {
+  CommandInteraction,
+  CommandInteractionOption,
+  InteractionReplyOptions,
+} from "discord.js";
+
+import {
+  channelMention,
+  Embed,
+  hideLinkEmbed,
+  time,
+} from "@discordjs/builders";
+
+import {
+  RealTalkStats,
+  CompactRealTalkStats,
+  Statement,
+  UpdootedStatement,
+} from "../db/models";
+
+import {
+  Config,
+  getDisplayName,
+  getRole,
+  msConvert,
+  nicknameMention,
+  pluralize,
+} from "../utils";
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
 
@@ -29,13 +53,42 @@ const formatStatementUrl = (statement: Statement): string =>
     ? "deleted on " + time(statement.deletedAt)
     : hideLinkEmbed(statement.url);
 
+const formatInteractionOption = (option: CommandInteractionOption): string => {
+  let parsedValue: string = String(option.value);
+
+  switch (option.type) {
+    case "USER":
+      parsedValue = `@${getDisplayName(parsedValue)}`;
+      break;
+    case "ROLE":
+      parsedValue = `#${getRole(parsedValue).name}`;
+    case "CHANNEL":
+      parsedValue = channelMention(parsedValue);
+      break;
+    default:
+      break;
+  }
+
+  return parsedValue;
+};
+
+export const formatInteractionInput = (interaction: CommandInteraction): string =>
+  interaction.options.data[0].options
+    .map((option) => `**${option.name}**: \`${formatInteractionOption(option)}\`\n`)
+    .join("");
+
 export default {
 
   donationLink: (): string =>
     withDevLabel("**#RealTalk** you should donate pls. \:pray:\n" + Config.DonationURL),
 
-  internalError: (): InteractionReplyOptions =>
-    quietReply("**#RealTalk**, an error occurred. \:grimacing:"),
+  internalError: (interaction: CommandInteraction): InteractionReplyOptions =>
+    quietReply(stripIndents`
+      **#RealTalk**, an error occurred. \:grimacing:
+
+      Here's what you sent:
+      ${formatInteractionInput(interaction)}
+    `),
 
   invalidContentLength: (length: number): InteractionReplyOptions =>
     quietReply(`**#RealTalk**, input must be ${length} characters or less`),
@@ -165,10 +218,20 @@ export default {
   realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
 
-  throttleCoolDown: (duration: number, subcommand: string): InteractionReplyOptions =>
-    quietReply(`**#RealTalk** chill on /${subcommand}. Try again at ${time(new Date(Date.now() + duration), "t")}`),
+  throttleCoolDown: (interaction: CommandInteraction, duration: number): InteractionReplyOptions =>
+    quietReply(stripIndents`
+      **#RealTalk** chill on /${interaction.options.getSubcommand()}. Try again at ${time(new Date(Date.now() + duration), "t")}
+      Here's what you sent:
 
-  rateLimitHit: (duration: number, subcommand: string): InteractionReplyOptions =>
-    quietReply(`**#RealTalk** usage limit reached on /${subcommand}. Try again at ${time(new Date(Date.now() + duration), "t")}`),
+      ${formatInteractionInput(interaction)}
+    `),
+
+  rateLimitHit: (interaction: CommandInteraction, duration: number): InteractionReplyOptions =>
+    quietReply(stripIndents`
+      **#RealTalk** usage limit reached on /${interaction.options.getSubcommand()}. Try again at ${time(new Date(Date.now() + duration), "t")}
+      Here's what you sent:
+
+      ${formatInteractionInput(interaction)}
+    `),
 
 };
