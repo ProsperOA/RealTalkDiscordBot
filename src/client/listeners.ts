@@ -82,7 +82,7 @@ const onInteractionCreate = (client: Client) =>
       return interaction.reply(replies.internalError());
     }
 
-    if (!(Config.IsDev && await isOwner(interaction))) {
+    if (!(Config.IsDev || await isOwner(interaction))) {
       await sendDonationLink(interaction.user);
     }
 
