@@ -88,11 +88,11 @@ const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
 
 const getThrottleConfig = async (interaction: CommandInteraction, key: keyof typeof ThrottleConfig): Promise<number> =>
-  Config.IsDev || await isOwner(interaction) ? 0 : ThrottleConfig[key];
+  await isOwner(interaction) ? 0 : ThrottleConfig[key];
 
 const getRateLimitConfig = async (interaction: CommandInteraction, key: string): Promise<RateLimitOptions> =>
-  Config.IsDev || await isOwner(interaction)
-    ? { limit: Infinity, timeFrame: Infinity }
+  await isOwner(interaction)
+    ? { limit: Number.MAX_SAFE_INTEGER, timeFrame: Number.MAX_SAFE_INTEGER }
     : RateLimitConfig[key];
 
 const hasValidContentLength = (str: string, type: keyof typeof MaxContentLength): boolean =>
