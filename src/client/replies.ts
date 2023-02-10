@@ -72,7 +72,7 @@ const formatInteractionOption = (option: CommandInteractionOption): string => {
   return parsedValue;
 };
 
-export const formatInteractionInput = (interaction: CommandInteraction): string =>
+const formatInteractionInput = (interaction: CommandInteraction): string =>
   interaction.options.data[0].options
     .map((option) => `**${option.name}**: \`${formatInteractionOption(option)}\`\n`)
     .join("");
