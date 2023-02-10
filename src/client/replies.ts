@@ -62,6 +62,7 @@ const formatInteractionOption = (option: CommandInteractionOption): string => {
       break;
     case "ROLE":
       parsedValue = `#${getRole(parsedValue).name}`;
+      break;
     case "CHANNEL":
       parsedValue = channelMention(parsedValue);
       break;
