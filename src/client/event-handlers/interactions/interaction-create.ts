@@ -191,9 +191,9 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
   let res = null;
 
   try {
-    res = await openAI.createCompletion({
-      model: "text-davinci-003",
-      prompt: message,
+    res = await openAI.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: message }],
       max_tokens: 1000,
     });
   } catch (error) {
@@ -207,7 +207,7 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
     return;
   }
 
-  const response = res.data.choices[0].text;
+  const response: string = res.data.choices[0].message.content;
 
   if (!hasValidContentLength(response, "ResponseBody")) {
     await interaction.deleteReply();
