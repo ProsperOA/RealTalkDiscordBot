@@ -210,7 +210,6 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
   const response: string = res.data.choices[0].message.content;
 
   if (!hasValidContentLength(response, "ResponseBody")) {
-    await interaction.deleteReply();
     const maxChunkSize: number =
       MaxContentLength.ResponseBody - replies.realTalkChat("", "").length - 100;
 
@@ -218,7 +217,7 @@ const realTalkChat = async (input: InteractionCreateInput): Promise<void> => {
     const totalChunks: number = chunks.length;
 
     const firstChunk: string = `${chunks.shift()}\n_(1/${totalChunks})_\n\n`;
-    await interaction.channel.send(replies.realTalkChat(message, firstChunk));
+    await interaction.editReply(replies.realTalkChat(message, firstChunk));
 
     for (const [i, piece] of chunks.entries()) {
       let msg: string = `${piece}\n_(${2 + i}/${totalChunks})_\n`;
