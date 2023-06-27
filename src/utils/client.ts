@@ -73,7 +73,5 @@ export const delayDeleteReply = async (time: number, interaction: CommandInterac
 export const delayDeleteMessage = async (time: number, message: Message): Promise<void> =>
   delayObjActionP(time, message, "delete");
 
-export const isOwner = async (interaction: CommandInteraction): Promise<boolean> => {
-  const clientApp: ClientApplication = await interaction.client.application.fetch();
-  return clientApp.owner.id === interaction.user.id;
-};
+export const isOwner = async (userId: string): Promise<boolean> =>
+  (await client.application.fetch()).owner.id === userId;
