@@ -58,7 +58,7 @@ const mergeInput = (input: InteractionCreateInput, middleware: Middleware): Inte
 });
 
 export const applyMiddleware = (middlewares: InteractionCreateMiddleware[], handler: InteractionCreateHandler) =>
-  async (input: InteractionCreateInput): Promise<void> => {
+  async (input: InteractionCreateInput, ...args: any[]): Promise<void> => {
     let finalInput: InteractionCreateInput = null;
     let runHandler: boolean = true;
 
@@ -74,7 +74,7 @@ export const applyMiddleware = (middlewares: InteractionCreateMiddleware[], hand
     }
 
     if (runHandler) {
-      await handler(finalInput);
+      await handler(finalInput, ...args);
     }
   };
 
