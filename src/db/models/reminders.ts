@@ -5,27 +5,24 @@ import knex from "../../db/db";
 export interface Reminder {
   id: string;
   userId: string;
-  info: string;
+  message: string;
   channelId: string;
   createdAt: Date;
   updatedAt: Date;
-  notifyDate: Date;
+  notifyOn: Date;
 }
 
-export interface ReminderData {
-  userId: string;
-  info: string;
-  notifyDate: Date;
-  channelId: string;
-}
-
-const createReminder = (data: ReminderData): Knex.QueryBuilder<Reminder> =>
+const createReminder = (data: Partial<Reminder>): Knex.QueryBuilder<Reminder> =>
   knex("reminders")
     .insert({ ...data, createdAt: new Date(), updatedAt: new Date() });
 
 const getReminders = (limit: number = 1): Knex.QueryBuilder<Reminder> =>
   knex("reminders")
     .limit(limit);
+
+const getRemindersWhere = (where: Partial<Reminder>): Knex.QueryBuilder<Reminder> =>
+  knex("reminders")
+    .where(where);
 
 const deleteReminder = (id: string, userId: string): Knex.QueryBuilder<Reminder> =>
   knex("reminders")
@@ -36,4 +33,5 @@ export const reminders = {
   createReminder,
   deleteReminder,
   getReminders,
+  getRemindersWhere,
 };

@@ -116,18 +116,17 @@ const realTalk = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName(RealTalkSubcommand.RemindMe)
-      .setDescription("Remind me ong [BETA]")
+      .setDescription("Set a reminder [BETA]")
       .addStringOption(option =>
         option
-          .setName("when")
-          .setDescription("date/time")
+          .setName("time")
+          .setDescription("When to remind you")
           .setRequired(true))
         .addStringOption(option =>
           option
-            .setName("what")
-            .setDescription("wut it is?")
-            .setRequired(true))
-        );
+            .setName("message")
+            .setDescription("What to remind you about")
+            .setRequired(true)));
 
 const slashCommands = [
   realTalk,

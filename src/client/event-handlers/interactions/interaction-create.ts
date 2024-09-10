@@ -1,5 +1,5 @@
 // @ts-ignore
-const chrono = require('chrono-node')
+const chrono = require("chrono-node");
 
 import * as fs from "fs";
 import fetch from "cross-fetch";
@@ -86,6 +86,8 @@ export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
   realTalkChat: { limit: 10, timeFrame: Time.Hour },
   realTalkGenerateImage: { limit: 3, timeFrame: Time.Hour },
 };
+
+const MAX_ACTIVE_REMINDERS: number = 3;
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
@@ -607,37 +609,40 @@ const realTalkUpdoots = async (input: InteractionCreateInput): Promise<void> => 
 
 const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> => {
   const { interaction }: InteractionCreateInput = input;
-  let dateInput: string = interaction.options.getString('when', true);
+  const userId: string = interaction.user.id;
+
+  const totalActiveReminders: number = (await db.getRemindersWhere({ userId })).length;
+
+  if (totalActiveReminders >= MAX_ACTIVE_REMINDERS) {
+    await interaction.reply(replies.realTalkReminderLimit());
+    return;
+  }
+
+  const dateInput: string = interaction.options.getString("time", true);
   let targetDate: Date;
 
   try {
-    targetDate = chrono.parseDate(dateInput)
+    targetDate = chrono.parseDate(dateInput);
   } catch (error) {
-    await interaction.reply(replies.internalError(interaction))
-    return
+    await interaction.reply(replies.internalError(interaction));
+    return;
   }
-
 
   if (targetDate < new Date()) {
-    await interaction.reply('date must be in the future')
-    return
+    await interaction.reply(replies.realTalkReminderPastDate());
+    return;
   }
 
-  const reminder: string = interaction.options.getString('what', true);
+  const message: string = interaction.options.getString("message", true);
 
   await db.createReminder({
     userId: interaction.user.id,
-    info: reminder,
-    notifyDate: targetDate,
+    message,
+    notifyOn: targetDate,
     channelId: interaction.channel.id,
-  })
+  });
 
-  await interaction.reply(`
-    REMINDER CREATED
-
-    Date: ${targetDate}
-    Info: ${reminder}
-  `)
+  await interaction.reply(replies.realTalkReminderSet(targetDate));
 };
 
 const interactionHandlers: { [name: string]: InteractionCreateHandler } = {

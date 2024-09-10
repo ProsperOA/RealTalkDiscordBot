@@ -5,6 +5,8 @@ import {
   CommandInteraction,
   CommandInteractionOption,
   InteractionReplyOptions,
+  MessageActionRow,
+  MessageButton,
 } from "discord.js";
 
 import {
@@ -29,6 +31,7 @@ import {
   nicknameMention,
   pluralize,
 } from "../utils";
+import { MessageButtonStyles } from "discord.js/typings/enums";
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
 
@@ -215,6 +218,27 @@ export default {
       ${statements.map(({ content, updoots }, i) =>
         `#${i + 1}. _"${content}"_ (${updoots} ${pluralize("updoot", updoots)})`
     ).join("\n")}`),
+
+  realTalkReminderSet: (targetDate: Date): InteractionReplyOptions => {
+    const deleteButton = new MessageButton()
+      .setCustomId("delete")
+      .setLabel("Delete")
+      .setStyle(MessageButtonStyles.DANGER);
+
+    const actionRow = new MessageActionRow()
+      .addComponents(deleteButton);
+
+    return {
+      content: `**#RealTalk Reminder Set** for ${time(targetDate, "F")} (${time(targetDate, "R")})\n`,
+      components: [ actionRow ],
+    };
+  },
+
+  realTalkReminderLimit: (): string =>
+    `**#RealTalk** you've reached the reminder limit. \:grimacing:`,
+
+  realTalkReminderPastDate: (): string =>
+    `**#RealTalk** you can't set reminders in the past. \:facepalm:`,
 
   realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
