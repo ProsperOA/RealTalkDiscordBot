@@ -1,3 +1,6 @@
+// @ts-ignore
+const chrono = require('chrono-node')
+
 import * as fs from "fs";
 import fetch from "cross-fetch";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
@@ -390,6 +393,7 @@ const realTalkHistory = async (input: InteractionCreateInput): Promise<void> => 
 
       for (let i = 0; i < statementsGroup.length; i++) {
         const channelMessage: Message = await interaction.channel.send(
+          // @ts-ignore
           replies.realTalkHistory(targetUser?.id, statementsGroup[i], i + 1, statementsGroup.length)
         );
 
@@ -601,6 +605,41 @@ const realTalkUpdoots = async (input: InteractionCreateInput): Promise<void> => 
   await interaction.reply(replies.realTalkUpdoots(targetUser.id, statements));
 };
 
+const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
+  let dateInput: string = interaction.options.getString('when', true);
+  let targetDate: Date;
+
+  try {
+    targetDate = chrono.parseDate(dateInput)
+  } catch (error) {
+    await interaction.reply(replies.internalError(interaction))
+    return
+  }
+
+
+  if (targetDate < new Date()) {
+    await interaction.reply('date must be in the future')
+    return
+  }
+
+  const reminder: string = interaction.options.getString('what', true);
+
+  await db.createReminder({
+    userId: interaction.user.id,
+    info: reminder,
+    notifyDate: targetDate,
+    channelId: interaction.channel.id,
+  })
+
+  await interaction.reply(`
+    REMINDER CREATED
+
+    Date: ${targetDate}
+    Info: ${reminder}
+  `)
+};
+
 const interactionHandlers: { [name: string]: InteractionCreateHandler } = {
   [RealTalkSubcommand.Record]: applyMiddleware(
     [useThrottle(getThrottleConfig)],
@@ -626,6 +665,7 @@ const interactionHandlers: { [name: string]: InteractionCreateHandler } = {
     realTalkImage
   ),
   [RealTalkSubcommand.Updoots]: realTalkUpdoots,
+  [RealTalkSubcommand.RemindMe]: realTalkRemindMe,
 };
 
 export default {

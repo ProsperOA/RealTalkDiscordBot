@@ -9,6 +9,7 @@ import { omit } from "lodash";
 
 import listeners from "./client/listeners";
 import slashCommands from "./client/slash-commands";
+import remindersScheduler from "./client/reminders-scheduler";
 import { Config, logger } from "./utils";
 
 const {
@@ -35,13 +36,14 @@ const clientOptions: ClientOptions = {
   ]
 };
 
-Coralogix.CoralogixLogger.configure({
-  applicationName: Config.IsDev ? "real-talk-bot-dev" : "real-talk-bot",
-  computerName: hostname(),
-  debug: Config.IsDev,
-  privateKey: CORALOGIX_API_KEY,
-  subsystemName: "main",
-});
+// @ts-ignore
+// Coralogix.CoralogixLogger.configure({
+//   applicationName: Config.IsDev ? "real-talk-bot-dev" : "real-talk-bot",
+//   computerName: hostname(),
+//   debug: Config.IsDev,
+//   privateKey: CORALOGIX_API_KEY,
+//   subsystemName: "main",
+// });
 
 Bugsnag.start({
   apiKey: BUGSNAG_API_KEY,
@@ -66,6 +68,8 @@ client.on("ready", () => {
   if (Config.IsDev) {
     client.user.setActivity("Development Mode");
   }
+
+  remindersScheduler.run(client);
 
   logger.info(`Logged in as ${client.user.tag}`);
 });

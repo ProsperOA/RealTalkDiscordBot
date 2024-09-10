@@ -16,6 +16,7 @@ export enum RealTalkSubcommand {
   Image = "image",
   Quiz = "quiz",
   Record = "record",
+  RemindMe = "remind_me",
   Stats = "stats",
   Updoots = "updoots",
 }
@@ -111,7 +112,22 @@ const realTalk = new SlashCommandBuilder()
         option
           .setName("who")
           .setDescription("Who they is?")
-          .setRequired(true)));
+          .setRequired(true)))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(RealTalkSubcommand.RemindMe)
+      .setDescription("Remind me ong [BETA]")
+      .addStringOption(option =>
+        option
+          .setName("when")
+          .setDescription("date/time")
+          .setRequired(true))
+        .addStringOption(option =>
+          option
+            .setName("what")
+            .setDescription("wut it is?")
+            .setRequired(true))
+        );
 
 const slashCommands = [
   realTalk,
