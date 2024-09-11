@@ -21,6 +21,10 @@ export enum RealTalkSubcommand {
   Updoots = "updoots",
 }
 
+export enum MessageComponentId {
+  DeleteReminder = "delete_reminder",
+}
+
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID }: NodeJS.ProcessEnv = process.env;
 const rest: REST = new REST({ version: "9" }).setToken(CLIENT_TOKEN);
 

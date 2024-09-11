@@ -3,12 +3,8 @@ import { merge } from "lodash";
 
 import replies from "./replies";
 import { cache, Cache, formatUserId, getUsername, logger } from "../utils";
-
-import {
-  InteractionCreateHandler,
-  InteractionCreateInput,
-  ThrottleConfig,
-} from "./event-handlers/interactions/interaction-create";
+import { ThrottleConfig } from "./event-handlers/interactions/interaction-create";
+import { InteractionCreateHandler, InteractionCreateInput } from "./event-handlers/interactions";
 
 export interface Middleware {
   throttle?: {

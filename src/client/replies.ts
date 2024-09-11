@@ -1,12 +1,15 @@
 import { isEmpty, trim } from "lodash";
 import { stripIndents } from "common-tags";
 
+import { MessageComponentId } from "./slash-commands";
+
 import {
   CommandInteraction,
   CommandInteractionOption,
   InteractionReplyOptions,
   MessageActionRow,
   MessageButton,
+  MessageEditOptions,
 } from "discord.js";
 
 import {
@@ -86,12 +89,15 @@ export default {
   donationLink: (): string =>
     withDevLabel("**#RealTalk** you should donate pls. \:pray:\n" + Config.DonationURL),
 
-  internalError: (interaction: CommandInteraction): InteractionReplyOptions =>
+  internalError: (interaction?: CommandInteraction): InteractionReplyOptions =>
     quietReply(stripIndents`
       **#RealTalk**, an error occurred. \:grimacing:
-
+      ${interaction
+        ? `
       Here's what you sent:
       ${formatInteractionInput(interaction)}
+        `
+        : ""}
     `),
 
   invalidContentLength: (length: number): InteractionReplyOptions =>
@@ -221,7 +227,7 @@ export default {
 
   realTalkReminderSet: (targetDate: Date): InteractionReplyOptions => {
     const deleteButton = new MessageButton()
-      .setCustomId("delete")
+      .setCustomId(MessageComponentId.DeleteReminder)
       .setLabel("Delete")
       .setStyle(MessageButtonStyles.DANGER);
 
@@ -239,6 +245,16 @@ export default {
 
   realTalkReminderPastDate: (): string =>
     `**#RealTalk** you can't set reminders in the past. \:facepalm:`,
+
+  realTalkReminderSent: (): MessageEditOptions => ({
+    content: "**#RealTalk Reminder has been sent**",
+    components: [],
+  }),
+
+  realTalkReminderDeleted: (): MessageEditOptions => ({
+    content: "**#RealTalk Reminder Deleted**",
+    components: [],
+  }),
 
   realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),

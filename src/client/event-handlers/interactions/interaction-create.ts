@@ -41,6 +41,7 @@ import {
   Statement,
   StatementWitness,
   UpdootedStatement,
+  Reminder,
 } from "../../../db/models";
 
 import {
@@ -59,15 +60,7 @@ import {
   chunkString,
   isOwner,
 } from "../../../utils";
-
-export interface InteractionCreateInput {
-  client: Client;
-  interaction: CommandInteraction;
-  middleware?: Middleware;
-}
-
-export type InteractionCreateHandler =
-  (input: InteractionCreateInput, ...args: any[]) => Promise<void>;
+import { InteractionCreateHandler, InteractionCreateInput } from ".";
 
 enum MaxContentLength {
   InteractionOption = 2000,
@@ -613,7 +606,7 @@ const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> =>
 
   const totalActiveReminders: number = (await db.getRemindersWhere({ userId })).length;
 
-  if (totalActiveReminders >= MAX_ACTIVE_REMINDERS) {
+  if (!isOwner(userId) && totalActiveReminders >= MAX_ACTIVE_REMINDERS) {
     await interaction.reply(replies.realTalkReminderLimit());
     return;
   }
@@ -635,17 +628,30 @@ const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> =>
 
   const message: string = interaction.options.getString("message", true);
 
-  await db.createReminder({
+  const reminder: Reminder = await db.createReminder({
     userId: interaction.user.id,
     message,
     notifyOn: targetDate,
     channelId: interaction.channel.id,
   });
 
-  await interaction.reply(replies.realTalkReminderSet(targetDate));
+  const reply: Message = await interaction.reply({
+    ...replies.realTalkReminderSet(targetDate),
+    fetchReply: true,
+  }) as Message;
+
+  try {
+    await db.updateReminderWhere(
+      { id: reminder.id, userId: reminder.userId },
+      { notificationId: reply.id },
+    );
+  } catch (error) {
+    logger.error(error);
+    await db.deleteReminder(reminder.id, reminder.userId);
+  }
 };
 
-const interactionHandlers: { [name: string]: InteractionCreateHandler } = {
+const interactionHandlers: { [name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Record]: applyMiddleware(
     [useThrottle(getThrottleConfig)],
     realTalkRecord

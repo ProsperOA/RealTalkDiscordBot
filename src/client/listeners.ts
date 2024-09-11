@@ -1,7 +1,9 @@
 import {
   Client,
   CommandInteraction,
+  Interaction,
   Message,
+  MessageComponentInteraction,
   MessageReaction,
   PartialMessage,
   PartialMessageReaction,
@@ -9,13 +11,14 @@ import {
   User,
 } from "discord.js";
 
-import interactionHandlers from "./event-handlers/interactions";
+import interactionHandlers, { InteractionCreateHandler } from "./event-handlers/interactions";
+import messageComponentHandlers from "./event-handlers/interactions/message-components";
 import messageHandlers from "./event-handlers/messages";
 import replies from "./replies";
-import { InteractionCreateHandler } from "./event-handlers/interactions/interaction-create";
 import { MessageDeleteHandler } from "./event-handlers/messages/message-delete";
 import { MessageReactionChangeType, MessageReactionHandler } from "./event-handlers/messages/message-reaction-change";
 import { MessageReactionName } from "../client/message-reactions";
+import { MessageComponentId } from "./slash-commands";
 
 import {
   CustomLogData,
@@ -68,31 +71,53 @@ const logCustom = (data: CustomLogData, responseTime: number): void => {
   logger.custom(data, options);
 };
 
+const handleCommand = async (client: Client, interaction: CommandInteraction): Promise<void> => {
+  const { commandName }: CommandInteraction = interaction;
+  const handlerFn: InteractionCreateHandler = interactionHandlers[commandName];
+
+  if (!handlerFn) {
+    logger.error(`No handler for command ${commandName}`);
+    return interaction.reply(replies.internalError(interaction));
+  }
+
+  if (!(Config.IsDev || await isOwner(interaction.user.id))) {
+    await sendDonationLink(interaction.user);
+  }
+
+  const t: Timer = timer();
+
+  t.start();
+  await handlerFn({ client, interaction });
+  t.stop();
+
+  logCustom({ interaction }, t.time());
+};
+
+const handleMessageComponent = async (client: Client, interaction: MessageComponentInteraction): Promise<void> => {
+  const componentId: MessageComponentId = interaction.customId as MessageComponentId;
+  const handlerFn = messageComponentHandlers[componentId];
+
+  if (!handlerFn) {
+    logger.error(`No handler for message component ${componentId}`);
+    return interaction.reply(replies.internalError());
+  }
+
+  await handlerFn(client, interaction);
+};
+
 const onInteractionCreate = (client: Client) =>
-  async (interaction: CommandInteraction): Promise<void> => {
-    if (!interaction.isCommand()) {
-      return;
+  async (interaction: Interaction): Promise<void> => {
+    switch (interaction.type) {
+      case "APPLICATION_COMMAND":
+        await handleCommand(client, interaction as CommandInteraction);
+        break;
+      case "MESSAGE_COMPONENT":
+        await handleMessageComponent(client, interaction as MessageComponentInteraction);
+        break;
+      default:
+        logger.error(`Invalid interaction type: ${interaction.type}`);
+        return;
     }
-
-    const { commandName }: CommandInteraction = interaction;
-    const handlerFn: InteractionCreateHandler = interactionHandlers[commandName];
-
-    if (!handlerFn) {
-      logger.error(`No handler for command ${commandName}`);
-      return interaction.reply(replies.internalError(interaction));
-    }
-
-    if (!(Config.IsDev || await isOwner(interaction.user.id))) {
-      await sendDonationLink(interaction.user);
-    }
-
-    const t: Timer = timer();
-
-    t.start();
-    await handlerFn({ client, interaction });
-    t.stop();
-
-    logCustom({ interaction }, t.time());
   };
 
 const onMessageDelete = (client: Client) =>

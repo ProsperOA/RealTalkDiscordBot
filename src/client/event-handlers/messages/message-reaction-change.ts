@@ -10,9 +10,8 @@ import {
 } from "discord.js";
 
 import db from "../../../db";
-import interactionHandlers from "../interactions";
+import interactionHandlers, { InteractionCreateHandler } from "../interactions";
 import replies, { extractStatementContent } from "../../replies";
-import { InteractionCreateHandler } from "../interactions/interaction-create";
 import { MessageReactionName } from "../../message-reactions";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { Statement, StatementWitness } from "../../../db/models";
