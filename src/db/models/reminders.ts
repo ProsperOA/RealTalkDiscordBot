@@ -6,7 +6,7 @@ export interface Reminder {
   id: string;
   userId: string;
   channelId: string;
-  notificationId: string;
+  confirmationMessageId: string;
   message: string;
   createdAt: Date;
   updatedAt: Date;

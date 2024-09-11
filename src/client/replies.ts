@@ -10,6 +10,7 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEditOptions,
+  MessageOptions,
 } from "discord.js";
 
 import {
@@ -24,6 +25,7 @@ import {
   CompactRealTalkStats,
   Statement,
   UpdootedStatement,
+  Reminder,
 } from "../db/models";
 
 import {
@@ -245,6 +247,15 @@ export default {
 
   realTalkReminderPastDate: (): string =>
     `**#RealTalk** you can't set reminders in the past. \:facepalm:`,
+
+  realTalkReminderNotification: (reminder: Reminder): MessageOptions => ({
+    embeds: [
+      new Embed()
+        .setColor(0x0099FF)
+        .setTitle(withDevLabel(`**#RealTalk Reminder** for ${nicknameMention(reminder.userId)}`))
+        .setDescription(reminder.message)
+    ],
+  }),
 
   realTalkReminderSent: (): MessageEditOptions => ({
     content: "**#RealTalk Reminder has been sent**",

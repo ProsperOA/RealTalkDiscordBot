@@ -7,14 +7,14 @@ import replies from "../../replies";
 import { Reminder } from "../../../db/models";
 
 const deleteReminder = async (client: Client, interaction: MessageComponentInteraction): Promise<void> => {
-  const notificationMessage: Message = interaction.message as Message;
+  const confirmationMessage: Message = interaction.message as Message;
 
-  if (interaction.user.id !== notificationMessage.interaction.user.id) {
+  if (interaction.user.id !== confirmationMessage.interaction.user.id) {
     return;
   }
 
   const reminder: Reminder = await db.getReminderWhere({
-    notificationId: notificationMessage.id,
+    confirmationMessageId: confirmationMessage.id,
     userId: interaction.user.id,
   });
 

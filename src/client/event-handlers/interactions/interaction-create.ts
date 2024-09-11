@@ -643,7 +643,7 @@ const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> =>
   try {
     await db.updateReminderWhere(
       { id: reminder.id, userId: reminder.userId },
-      { notificationId: reply.id },
+      { confirmationMessageId: reply.id },
     );
   } catch (error) {
     logger.error(error);

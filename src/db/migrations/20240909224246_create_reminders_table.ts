@@ -4,7 +4,7 @@ export const up = async (knex: Knex): Promise<Knex.SchemaBuilder> =>
   knex.schema.createTable("reminders", t => {
     t.increments("id");
     t.string("user_id", 18).notNullable();
-    t.string("notification_id");
+    t.string("confirmation_message_id");
     t.string("message").notNullable();
     t.string("channel_id").notNullable();
     t.dateTime("created_at").notNullable();
