@@ -21,8 +21,13 @@ const addReminder = async (client: Client, reminder: Reminder): Promise<void> =>
     return;
   }
 
-  const ms: number = reminder.notifyOn.getTime() - new Date().getTime();
-  const timeout: NodeJS.Timeout = setTimeout(() => triggerReminder(client, reminder), ms);
+  const msUntilTrigger: number = reminder.notifyOn.getTime() - new Date().getTime();
+
+  if (msUntilTrigger <= 0) {
+    logger.warn(`Stale reminder triggered: ${reminder.id}`);
+  }
+
+  const timeout: NodeJS.Timeout = setTimeout(() => triggerReminder(client, reminder), msUntilTrigger);
   schedulerCache.set(reminder.id, { reminder, timeout });
 };
 
