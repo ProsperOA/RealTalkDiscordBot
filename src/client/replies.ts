@@ -12,6 +12,7 @@ import {
   MessageButton,
   MessageEditOptions,
   MessageOptions,
+  MessagePayload,
 } from "discord.js";
 
 import {
@@ -227,18 +228,27 @@ export default {
         `#${i + 1}. _"${content}"_ (${updoots} ${pluralize("updoot", updoots)})`
     ).join("\n")}`),
 
-  realTalkReminderSet: (targetDate: Date): InteractionReplyOptions => {
+  realTalkReminderConfirmation: (reminder: Reminder, notificationUrl?: string): InteractionReplyOptions | MessagePayload => {
     const deleteButton = new MessageButton()
       .setCustomId(MessageComponentId.DeleteReminder)
       .setLabel("Delete")
       .setStyle(MessageButtonStyles.DANGER);
 
-    const actionRow = new MessageActionRow()
-      .addComponents(deleteButton);
+    const actionRow = new MessageActionRow().addComponents(deleteButton);
+    const { notifyOn, message }: Reminder = reminder;
+
+    const header: string = notificationUrl
+      ? `**#RealTalk** Reminder Sent (${notificationUrl})`
+      : `**#RealTalk** Reminder Set for ${time(notifyOn, "F")} (${time(notifyOn, "R")})`;
+
+    const content: string = withDevLabel(stripIndents`
+      ${header}
+      **Message**: ${message}
+    `);
 
     return {
-      content: withDevLabel(`**#RealTalk Reminder Set** for ${time(targetDate, "F")} (${time(targetDate, "R")})\n`),
-      components: [ actionRow ],
+      content,
+      components: notificationUrl ? [] : [ actionRow ],
     };
   },
 
@@ -257,7 +267,7 @@ export default {
     ],
   }),
 
-  realTalkReminderSent: (notificationUrl: string): MessageEditOptions => ({
+  realTalkReminderSent: (reminder: Reminder, notificationUrl: string): MessageEditOptions => ({
     content: withDevLabel(`**#RealTalk** Reminder has been sent ${notificationUrl}`),
     components: [],
   }),

@@ -636,7 +636,7 @@ const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> =>
   });
 
   const reply: Message = await interaction.reply({
-    ...replies.realTalkReminderSet(targetDate),
+    ...replies.realTalkReminderConfirmation(reminder) as InteractionReplyOptions,
     fetchReply: true,
   }) as Message;
 
@@ -647,6 +647,7 @@ const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> =>
     );
   } catch (error) {
     logger.error(error);
+    await interaction.editReply(replies.internalError(interaction));
     await db.deleteReminder(reminder.id, reminder.userId);
   }
 };

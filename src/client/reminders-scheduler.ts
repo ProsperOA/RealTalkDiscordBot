@@ -1,4 +1,4 @@
-import { Client, Message, TextChannel } from "discord.js";
+import { Client, Message, MessagePayload, TextChannel } from "discord.js";
 
 import db from "../db";
 import replies from "./replies";
@@ -36,7 +36,7 @@ const removeReminder = async (id: string): Promise<void> => {
 const updateConfirmationMessage = async (client: Client, reminder: Reminder, notificationUrl: string): Promise<void> => {
   const channel: TextChannel = await client.channels.fetch(reminder.channelId) as TextChannel;
   const message: Message = await channel.messages.fetch(reminder.confirmationMessageId);
-  await message.edit(replies.realTalkReminderSent(notificationUrl));
+  await message.edit(replies.realTalkReminderConfirmation(reminder, notificationUrl) as MessagePayload);
 };
 
 const notify = async (client: Client, reminderId: string): Promise<Message | null> => {
