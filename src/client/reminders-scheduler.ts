@@ -3,23 +3,26 @@ import { Client, Message, MessagePayload, TextChannel } from "discord.js";
 import db from "../db";
 import replies from "./replies";
 import { Reminder } from "../db/models";
-import { Cache, cache, Config, Time } from "../utils";
+import { Cache, cache, Config, logger, Time } from "../utils";
 
 type CacheData = { reminder: Reminder, timeout: NodeJS.Timeout };
 
 let isInitiated: boolean = false;
-const INITIAL_FETCH_LIMIT: number = 50;
+const FETCH_LIMIT: number = 25;
+const CACHE_LIMIT: number = 50;
 const FETCH_INTERVAL: number = Config.IsDev ? Time.Second * 10 : Time.Minute;
 
-const schedulerCache: Cache = cache.new("schedulerCache");
+const schedulerCache: Cache = cache.new("remindersSchedulerCache");
+
+const isCacheFull = (): boolean => schedulerCache.total() === CACHE_LIMIT;
 
 const addReminder = async (client: Client, reminder: Reminder): Promise<void> => {
-  if (schedulerCache.has(reminder.id)) {
+  if (isCacheFull() || schedulerCache.has(reminder.id)) {
     return;
   }
 
-  const timeoutInMs: number = reminder.notifyOn.getTime() - new Date().getTime();
-  const timeout: NodeJS.Timeout = setTimeout(() => triggerReminder(client, reminder), timeoutInMs);
+  const ms: number = reminder.notifyOn.getTime() - new Date().getTime();
+  const timeout: NodeJS.Timeout = setTimeout(() => triggerReminder(client, reminder), ms);
   schedulerCache.set(reminder.id, { reminder, timeout });
 };
 
@@ -59,12 +62,19 @@ const triggerReminder = async (client: Client, reminder: Reminder): Promise<void
 
   await updateConfirmationMessage(client, reminder, notificationMessage.url);
   await removeReminder(reminder.id);
-  await fillCache(client);
+  await fillCache(client, 1);
 };
 
-const fillCache = async (client: Client, amount?: number) => {
-  const reminders: Reminder[] = (await db.getReminders(amount))
-    .filter((reminder: Reminder) => !schedulerCache.has(reminder.id));
+const fillCache = async (client: Client, amount: number): Promise<void> => {
+  if (isCacheFull()) {
+    return;
+  }
+
+  const keys: string[] = schedulerCache.keys();
+
+  const reminders: Reminder[] = keys.length
+    ? await db.getRemindersWhere(`id NOT IN ${keys.map(k => `'${k}'`).join(",")}`, amount)
+    : await db.getReminders(amount);
 
   await Promise.all(reminders.map(reminder => addReminder(client, reminder)));
 };
@@ -75,8 +85,9 @@ const run = async (client: Client): Promise<void> => {
   }
 
   isInitiated = true;
-  // TODO: do better
-  setInterval(() => fillCache(client, INITIAL_FETCH_LIMIT), FETCH_INTERVAL);
+  logger.info("Reminders scheduler initiated");
+
+  setInterval(() => fillCache(client, FETCH_LIMIT), FETCH_INTERVAL);
 };
 
 export default {

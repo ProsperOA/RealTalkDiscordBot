@@ -238,8 +238,8 @@ export default {
     const { notifyOn, message }: Reminder = reminder;
 
     const header: string = notificationUrl
-      ? `**#RealTalk** Reminder Sent (${notificationUrl})`
-      : `**#RealTalk** Reminder Set for ${time(notifyOn, "F")} (${time(notifyOn, "R")})`;
+      ? `**#RealTalk** Reminder sent (${notificationUrl})`
+      : `**#RealTalk** Reminder set for ${time(notifyOn, "F")} (${time(notifyOn, "R")})`;
 
     const content: string = withDevLabel(stripIndents`
       ${header}
@@ -265,11 +265,6 @@ export default {
         .setTitle(withDevLabel(`**#RealTalk Reminder** for ${nicknameMention(reminder.userId)}`))
         .setDescription(reminder.message)
     ],
-  }),
-
-  realTalkReminderSent: (reminder: Reminder, notificationUrl: string): MessageEditOptions => ({
-    content: withDevLabel(`**#RealTalk** Reminder has been sent ${notificationUrl}`),
-    components: [],
   }),
 
   realTalkReminderDeleted: (): MessageEditOptions => ({
