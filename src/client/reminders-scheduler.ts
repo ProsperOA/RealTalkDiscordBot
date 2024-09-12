@@ -5,62 +5,82 @@ import replies from "./replies";
 import { Reminder } from "../db/models";
 import { Cache, cache, Config, Time } from "../utils";
 
-let initiated: boolean = false;
-const INITIAL_FETCH_LIMIT: number = 30;
+type CacheData = { reminder: Reminder, timeout: NodeJS.Timeout };
+
+let isInitiated: boolean = false;
+const INITIAL_FETCH_LIMIT: number = 50;
 const FETCH_INTERVAL: number = Config.IsDev ? Time.Second * 10 : Time.Minute;
 
-const remindersSchedulerCache: Cache = cache.new("timeoutCache");
+const schedulerCache: Cache = cache.new("schedulerCache");
 
-const deleteReminder = (id: string): void => {
-  const result = remindersSchedulerCache.get(id);
+const addReminder = async (client: Client, reminder: Reminder): Promise<void> => {
+  if (schedulerCache.has(reminder.id)) {
+    return;
+  }
 
-  if (result) {
-    clearTimeout(result.timeout);
-    remindersSchedulerCache.delete(id);
+  const timeoutInMs: number = reminder.notifyOn.getTime() - new Date().getTime();
+  const timeout: NodeJS.Timeout = setTimeout(() => triggerReminder(client, reminder), timeoutInMs);
+  schedulerCache.set(reminder.id, { reminder, timeout });
+};
+
+const removeReminder = async (id: string): Promise<void> => {
+  const data: CacheData = schedulerCache.get(id);
+
+  if (data) {
+    clearTimeout(data.timeout);
+    schedulerCache.delete(id);
+    await db.deleteReminder(id, data.reminder.userId);
   }
 };
 
-const handler = async (client: Client, reminder: Reminder): Promise<void> => {
-  await notify(client, reminder.id);
-
+const updateConfirmationMessage = async (client: Client, reminder: Reminder, notificationUrl: string): Promise<void> => {
   const channel: TextChannel = await client.channels.fetch(reminder.channelId) as TextChannel;
   const message: Message = await channel.messages.fetch(reminder.confirmationMessageId);
-  await message.edit(replies.realTalkReminderSent());
-
-  remindersSchedulerCache.delete(reminder.id);
-  await db.deleteReminder(reminder.id, reminder.userId);
-
-  await fillCache(client);
+  await message.edit(replies.realTalkReminderSent(notificationUrl));
 };
 
-const notify = async (client: Client, reminderId: string): Promise<void> => {
-  const { reminder } = remindersSchedulerCache.get(reminderId);
-  const channel = client.channels.cache.find(c => c.id === reminder.channelId) as TextChannel;
-  await channel.send(replies.realTalkReminderNotification(reminder))
+const notify = async (client: Client, reminderId: string): Promise<Message | null> => {
+  const data: CacheData = schedulerCache.get(reminderId);
+
+  if (!data) {
+    return null;
+  }
+
+  const channel: TextChannel = client.channels.cache.find(c => c.id === data.reminder.channelId) as TextChannel;
+  return await channel.send(replies.realTalkReminderNotification(data.reminder));
+};
+
+const triggerReminder = async (client: Client, reminder: Reminder): Promise<void> => {
+  const notificationMessage: Message = await notify(client, reminder.id);
+
+  if (!notificationMessage) {
+    return;
+  }
+
+  await updateConfirmationMessage(client, reminder, notificationMessage.url);
+  await removeReminder(reminder.id);
+  await fillCache(client);
 };
 
 const fillCache = async (client: Client, amount?: number) => {
   const reminders: Reminder[] = (await db.getReminders(amount))
-    .filter((reminder: Reminder) => !remindersSchedulerCache.has(reminder.id));
+    .filter((reminder: Reminder) => !schedulerCache.has(reminder.id));
 
-  for (const reminder of reminders) {
-    const ttl: number = reminder.notifyOn.getTime() - new Date().getTime();
-    const timeout: NodeJS.Timeout = setTimeout(() => handler(client, reminder), ttl);
-    remindersSchedulerCache.set(reminder.id, { reminder, timeout }, ttl);
-  }
+  await Promise.all(reminders.map(reminder => addReminder(client, reminder)));
 };
 
 const run = async (client: Client): Promise<void> => {
-  if (initiated) {
+  if (isInitiated) {
     return;
   }
 
-  initiated = true;
-  // i don't like this, but it's cheaper than jobs
+  isInitiated = true;
+  // TODO: do better
   setInterval(() => fillCache(client, INITIAL_FETCH_LIMIT), FETCH_INTERVAL);
 };
 
 export default {
   run,
-  deleteReminder,
+  remove: removeReminder,
+  add: addReminder,
 };

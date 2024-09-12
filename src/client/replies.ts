@@ -1,5 +1,6 @@
 import { isEmpty, trim } from "lodash";
 import { stripIndents } from "common-tags";
+import { MessageButtonStyles } from "discord.js/typings/enums";
 
 import { MessageComponentId } from "./slash-commands";
 
@@ -36,7 +37,6 @@ import {
   nicknameMention,
   pluralize,
 } from "../utils";
-import { MessageButtonStyles } from "discord.js/typings/enums";
 
 const DEV_MODE_LABEL: string = "`[DEVELOPMENT MODE]`";
 
@@ -237,16 +237,16 @@ export default {
       .addComponents(deleteButton);
 
     return {
-      content: `**#RealTalk Reminder Set** for ${time(targetDate, "F")} (${time(targetDate, "R")})\n`,
+      content: withDevLabel(`**#RealTalk Reminder Set** for ${time(targetDate, "F")} (${time(targetDate, "R")})\n`),
       components: [ actionRow ],
     };
   },
 
   realTalkReminderLimit: (): string =>
-    `**#RealTalk** you've reached the reminder limit. \:grimacing:`,
+    withDevLabel("**#RealTalk** you've reached the reminder limit \:grimacing:"),
 
   realTalkReminderPastDate: (): string =>
-    `**#RealTalk** you can't set reminders in the past. \:facepalm:`,
+    withDevLabel("**#RealTalk** you can't set reminders in the past. \:facepalm:"),
 
   realTalkReminderNotification: (reminder: Reminder): MessageOptions => ({
     embeds: [
@@ -257,13 +257,13 @@ export default {
     ],
   }),
 
-  realTalkReminderSent: (): MessageEditOptions => ({
-    content: "**#RealTalk Reminder has been sent**",
+  realTalkReminderSent: (notificationUrl: string): MessageEditOptions => ({
+    content: withDevLabel(`**#RealTalk** Reminder has been sent ${notificationUrl}`),
     components: [],
   }),
 
   realTalkReminderDeleted: (): MessageEditOptions => ({
-    content: "**#RealTalk Reminder Deleted**",
+    content: "**#RealTalk** Reminder deleted",
     components: [],
   }),
 

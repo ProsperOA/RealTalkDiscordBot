@@ -26,6 +26,7 @@ import db from "../../../db";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { openAI, unsplash } from "../../../index";
+import { InteractionCreateHandler, InteractionCreateInput } from ".";
 
 import {
   applyMiddleware,
@@ -60,7 +61,6 @@ import {
   chunkString,
   isOwner,
 } from "../../../utils";
-import { InteractionCreateHandler, InteractionCreateInput } from ".";
 
 enum MaxContentLength {
   InteractionOption = 2000,
@@ -80,7 +80,7 @@ export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
   realTalkGenerateImage: { limit: 3, timeFrame: Time.Hour },
 };
 
-const MAX_ACTIVE_REMINDERS: number = 3;
+const MAX_ACTIVE_REMINDERS: number = 5;
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");

@@ -22,8 +22,7 @@ const deleteReminder = async (client: Client, interaction: MessageComponentInter
     return;
   }
 
-  remindersScheduler.deleteReminder(reminder.id);
-  await db.deleteReminder(reminder.id, reminder.userId);
+  await remindersScheduler.remove(reminder.id);
   const originalMessage: Message = await interaction.channel.messages.fetch(interaction.message.id);
   await originalMessage.edit(replies.realTalkReminderDeleted());
 };

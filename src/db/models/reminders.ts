@@ -18,13 +18,12 @@ const createReminder = async (data: Partial<Reminder>): Promise<Reminder> => {
     .insert({ ...data, createdAt: new Date(), updatedAt: new Date() })
     .returning("id");
 
-  return knex("reminders")
-    .where({ id })
-    .first();
+  return await getReminderWhere({ id });
 };
 
 const getReminders = (limit: number = 1): Knex.QueryBuilder<Reminder> =>
   knex("reminders")
+    .orderBy("notifyOn", "asc")
     .limit(limit);
 
 const getReminderWhere = (where: Partial<Reminder>): Knex.QueryBuilder<Reminder> =>
@@ -34,12 +33,17 @@ const getReminderWhere = (where: Partial<Reminder>): Knex.QueryBuilder<Reminder>
 
 const getRemindersWhere = (where: Partial<Reminder>): Knex.QueryBuilder<Reminder[]> =>
   knex("reminders")
+    .orderBy("notifyOn", "asc")
     .where(where);
 
-const updateReminderWhere = (where: Partial<Reminder>, update: any): Knex.QueryBuilder<Reminder> =>
-  knex("reminders")
+const updateReminderWhere = async (where: Partial<Reminder>, update: any): Promise<Reminder> => {
+  const [id] = await knex("reminders")
     .where(where)
-    .update({ ...update, updatedAt: new Date() });
+    .update({ ...update, updatedAt: new Date() })
+    .returning("id");
+
+  return await getReminderWhere({ id });
+};
 
 const deleteReminder = (id: string, userId: string): Knex.QueryBuilder<Reminder> =>
   knex("reminders")
