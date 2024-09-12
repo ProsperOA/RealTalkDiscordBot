@@ -1,4 +1,5 @@
 import { Client, CommandInteraction } from "discord.js";
+
 import interactionCreateHandler from "./interaction-create";
 import { Middleware } from "../../middleware";
 

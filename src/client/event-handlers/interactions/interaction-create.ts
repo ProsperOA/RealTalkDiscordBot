@@ -26,7 +26,7 @@ import db from "../../../db";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { openAI, unsplash } from "../../../index";
-import { InteractionCreateHandler, InteractionCreateInput } from ".";
+import { InteractionCreateHandler, InteractionCreateInput } from "./index";
 
 import {
   applyMiddleware,
@@ -78,9 +78,8 @@ export enum ThrottleConfig {
 export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
   realTalkChat: { limit: 10, timeFrame: Time.Hour },
   realTalkGenerateImage: { limit: 3, timeFrame: Time.Hour },
+  realTalkRemindMe: { limit: 5 },
 };
-
-const MAX_ACTIVE_REMINDERS: number = 5;
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
 const realTalkHistoryCache: Cache = cache.new("realTalkHistory");
@@ -606,7 +605,7 @@ const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> =>
 
   const totalActiveReminders: number = (await db.getRemindersWhere({ userId })).length;
 
-  if (!isOwner(userId) && totalActiveReminders >= MAX_ACTIVE_REMINDERS) {
+  if (!isOwner(userId) && totalActiveReminders === RateLimitConfig.realTalkRemindMe.limit) {
     await interaction.reply(replies.realTalkReminderLimit());
     return;
   }

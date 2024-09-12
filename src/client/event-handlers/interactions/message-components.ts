@@ -1,11 +1,11 @@
 import { Client, Message, MessageComponentInteraction } from "discord.js";
-import { MessageComponentId } from "../../slash-commands";
 
 import remindersScheduler from "../../reminders-scheduler";
 import db from "../../../db";
 import replies from "../../replies";
 import { Reminder } from "../../../db/models";
 import { isOwner } from "../../../utils";
+import { MessageComponentId } from "../../slash-commands";
 
 const deleteReminder = async (client: Client, interaction: MessageComponentInteraction): Promise<void> => {
   const confirmationMessage: Message = interaction.message as Message;
