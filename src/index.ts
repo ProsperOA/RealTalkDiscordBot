@@ -37,13 +37,13 @@ const clientOptions: ClientOptions = {
 };
 
 // @ts-ignore
-// Coralogix.CoralogixLogger.configure({
-//   applicationName: Config.IsDev ? "real-talk-bot-dev" : "real-talk-bot",
-//   computerName: hostname(),
-//   debug: Config.IsDev,
-//   privateKey: CORALOGIX_API_KEY,
-//   subsystemName: "main",
-// });
+Coralogix.CoralogixLogger.configure({
+  applicationName: Config.IsDev ? "real-talk-bot-dev" : "real-talk-bot",
+  computerName: hostname(),
+  debug: false,
+  privateKey: CORALOGIX_API_KEY,
+  subsystemName: "main",
+});
 
 Bugsnag.start({
   apiKey: BUGSNAG_API_KEY,
@@ -70,7 +70,6 @@ client.on("ready", () => {
   }
 
   remindersScheduler.run(client);
-
   logger.info(`Logged in as ${client.user.tag}`);
 });
 
