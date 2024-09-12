@@ -17,7 +17,7 @@ export interface Middleware {
 
 export interface RateLimitOptions {
   limit: number;
-  timeFrame: number;
+  timeFrame?: number;
 }
 
 export type InteractionCreateMiddleware =

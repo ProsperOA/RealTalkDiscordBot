@@ -5,11 +5,12 @@ import remindersScheduler from "../../reminders-scheduler";
 import db from "../../../db";
 import replies from "../../replies";
 import { Reminder } from "../../../db/models";
+import { isOwner } from "../../../utils";
 
 const deleteReminder = async (client: Client, interaction: MessageComponentInteraction): Promise<void> => {
   const confirmationMessage: Message = interaction.message as Message;
 
-  if (interaction.user.id !== confirmationMessage.interaction.user.id) {
+  if (!isOwner(interaction.user.id) || interaction.user.id !== confirmationMessage.interaction.user.id) {
     return;
   }
 
