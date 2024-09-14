@@ -11,14 +11,20 @@ let isInitiated: boolean = false;
 const FETCH_LIMIT: number = 25;
 const CACHE_LIMIT: number = 50;
 const FETCH_INTERVAL: number = Config.IsDev ? Time.Second * 10 : Time.Minute;
+const EVICTION_MINIMUM_TTL: number = FETCH_INTERVAL * Time.Second;
+const HEALTH_CHECK_INTERVAL: number = Config.IsDev ? Time.Second * 30 : Time.Hour;
 
 const schedulerCache: Cache = cache.new("remindersSchedulerCache");
 
-const isCacheFull = (): boolean => schedulerCache.total() === CACHE_LIMIT;
+const isCacheFull = (): boolean => schedulerCache.total() >= CACHE_LIMIT;
 
 const addReminder = async (client: Client, reminder: Reminder): Promise<void> => {
-  if (isCacheFull() || schedulerCache.has(reminder.id)) {
+  if (schedulerCache.has(reminder.id)) {
     return;
+  }
+
+  if (isCacheFull()) {
+    maybeEvictLatestReminder();
   }
 
   const msUntilTrigger: number = reminder.notifyOn.getTime() - new Date().getTime();
@@ -69,18 +75,44 @@ const triggerReminder = async (client: Client, reminder: Reminder): Promise<void
   await fillCache(client, 1);
 };
 
-const fillCache = async (client: Client, amount: number): Promise<void> => {
-  if (isCacheFull()) {
+const maybeEvictLatestReminder = (): void => {
+  const keys: string[] = schedulerCache.keys();
+
+  if (!keys.length) {
     return;
   }
 
+  let latestItem: CacheData | null = null;
+
+  keys.forEach(key => {
+    const item: CacheData = schedulerCache.get(key);
+
+    if (!latestItem || item.reminder.notifyOn > latestItem.reminder.notifyOn) {
+      latestItem = item;
+    }
+  });
+
+  if (schedulerCache.ttl(latestItem.reminder.id) > EVICTION_MINIMUM_TTL) {
+    clearTimeout(latestItem.timeout);
+    schedulerCache.delete(latestItem.reminder.id);
+  }
+};
+
+const fillCache = async (client: Client, amount: number): Promise<void> => {
   const keys: string[] = schedulerCache.keys();
 
   const reminders: Reminder[] = keys.length
-    ? await db.getRemindersWhere(`id NOT IN ${keys.map(k => `'${k}'`).join(",")}`, amount)
+    ? await db.getRemindersExcludingIds(keys, amount)
     : await db.getReminders(amount);
 
   await Promise.all(reminders.map(reminder => addReminder(client, reminder)));
+};
+
+const checkCacheHealth = (): void => {
+  if (isCacheFull()) {
+    const diff: number = schedulerCache.total() - CACHE_LIMIT;
+    logger.warn(`Reminders Scheduler has exceeded cache limit by ${diff} entries`);
+  }
 };
 
 const run = async (client: Client): Promise<void> => {
@@ -92,6 +124,7 @@ const run = async (client: Client): Promise<void> => {
   logger.info("Reminders scheduler initiated");
 
   setInterval(() => fillCache(client, FETCH_LIMIT), FETCH_INTERVAL);
+  setInterval(checkCacheHealth, HEALTH_CHECK_INTERVAL);
 };
 
 export default {

@@ -14,7 +14,7 @@ const deleteReminder = async (client: Client, interaction: MessageComponentInter
     return;
   }
 
-  const reminder: Reminder = await db.getReminderWhere({
+  const reminder: Reminder = await db.getReminder({
     confirmationMessageId: confirmationMessage.id,
     userId: interaction.user.id,
   });
@@ -25,7 +25,7 @@ const deleteReminder = async (client: Client, interaction: MessageComponentInter
 
   await remindersScheduler.remove(reminder.id);
   const originalMessage: Message = await interaction.channel.messages.fetch(interaction.message.id);
-  await originalMessage.edit(replies.realTalkReminderDeleted());
+  await originalMessage.edit(replies.realTalkReminderDeleted(reminder.message));
 };
 
 export default {

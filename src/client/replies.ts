@@ -267,8 +267,11 @@ export default {
     ],
   }),
 
-  realTalkReminderDeleted: (): MessageEditOptions => ({
-    content: "**#RealTalk** Reminder deleted",
+  realTalkReminderDeleted: (message: string): MessageEditOptions => ({
+    content: withDevLabel(stripIndents`
+      **#RealTalk** Reminder deleted
+      **Message**: ${message}
+    `),
     components: [],
   }),
 
