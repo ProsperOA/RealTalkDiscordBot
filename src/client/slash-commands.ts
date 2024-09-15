@@ -16,8 +16,13 @@ export enum RealTalkSubcommand {
   Image = "image",
   Quiz = "quiz",
   Record = "record",
+  RemindMe = "remind_me",
   Stats = "stats",
   Updoots = "updoots",
+}
+
+export enum MessageComponentId {
+  DeleteReminder = "delete_reminder",
 }
 
 const { CLIENT_ID, CLIENT_TOKEN, GUILD_ID }: NodeJS.ProcessEnv = process.env;
@@ -111,7 +116,21 @@ const realTalk = new SlashCommandBuilder()
         option
           .setName("who")
           .setDescription("Who they is?")
-          .setRequired(true)));
+          .setRequired(true)))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName(RealTalkSubcommand.RemindMe)
+      .setDescription("Set a reminder [BETA]")
+      .addStringOption(option =>
+        option
+          .setName("time")
+          .setDescription("When to remind you")
+          .setRequired(true))
+        .addStringOption(option =>
+          option
+            .setName("message")
+            .setDescription("What to remind you about")
+            .setRequired(true)));
 
 const slashCommands = [
   realTalk,

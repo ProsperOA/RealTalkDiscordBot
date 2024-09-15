@@ -1,3 +1,6 @@
+// @ts-ignore
+const chrono = require("chrono-node");
+
 import * as fs from "fs";
 import fetch from "cross-fetch";
 import { ApiResponse as UnsplashApiResponse } from "unsplash-js/dist/helpers/response";
@@ -23,6 +26,7 @@ import db from "../../../db";
 import replies from "../../replies";
 import { RealTalkCommand, RealTalkSubcommand } from "../../slash-commands";
 import { openAI, unsplash } from "../../../index";
+import { InteractionCreateHandler, InteractionCreateInput } from "./index";
 
 import {
   applyMiddleware,
@@ -38,6 +42,7 @@ import {
   Statement,
   StatementWitness,
   UpdootedStatement,
+  Reminder,
 } from "../../../db/models";
 
 import {
@@ -57,15 +62,6 @@ import {
   isOwner,
 } from "../../../utils";
 
-export interface InteractionCreateInput {
-  client: Client;
-  interaction: CommandInteraction;
-  middleware?: Middleware;
-}
-
-export type InteractionCreateHandler =
-  (input: InteractionCreateInput, ...args: any[]) => Promise<void>;
-
 enum MaxContentLength {
   InteractionOption = 2000,
   ResponseBody = 2000,
@@ -82,6 +78,7 @@ export enum ThrottleConfig {
 export const RateLimitConfig: Readonly<Record<string, RateLimitOptions>> = {
   realTalkChat: { limit: 10, timeFrame: Time.Hour },
   realTalkGenerateImage: { limit: 3, timeFrame: Time.Hour },
+  realTalkRemindMe: { limit: 5 },
 };
 
 const realTalkQuizCache: Cache = cache.new("realTalkQuizCache");
@@ -390,6 +387,7 @@ const realTalkHistory = async (input: InteractionCreateInput): Promise<void> => 
 
       for (let i = 0; i < statementsGroup.length; i++) {
         const channelMessage: Message = await interaction.channel.send(
+          // @ts-ignore
           replies.realTalkHistory(targetUser?.id, statementsGroup[i], i + 1, statementsGroup.length)
         );
 
@@ -601,7 +599,59 @@ const realTalkUpdoots = async (input: InteractionCreateInput): Promise<void> => 
   await interaction.reply(replies.realTalkUpdoots(targetUser.id, statements));
 };
 
-const interactionHandlers: { [name: string]: InteractionCreateHandler } = {
+const realTalkRemindMe = async (input: InteractionCreateInput): Promise<void> => {
+  const { interaction }: InteractionCreateInput = input;
+  const userId: string = interaction.user.id;
+
+  const totalActiveReminders: number = (await db.getRemindersWhere({ userId })).length;
+
+  if (!isOwner(userId) && totalActiveReminders === RateLimitConfig.realTalkRemindMe.limit) {
+    await interaction.reply(replies.realTalkReminderLimit());
+    return;
+  }
+
+  const dateInput: string = interaction.options.getString("time", true);
+  let targetDate: Date;
+
+  try {
+    targetDate = chrono.parseDate(dateInput);
+  } catch (error) {
+    await interaction.reply(replies.internalError(interaction));
+    return;
+  }
+
+  if (targetDate < new Date()) {
+    await interaction.reply(replies.realTalkReminderPastDate());
+    return;
+  }
+
+  const message: string = interaction.options.getString("message", true);
+
+  const reminder: Reminder = await db.createReminder({
+    userId: interaction.user.id,
+    message,
+    notifyOn: targetDate,
+    channelId: interaction.channel.id,
+  });
+
+  const reply: Message = await interaction.reply({
+    ...replies.realTalkReminderConfirmation(reminder) as InteractionReplyOptions,
+    fetchReply: true,
+  }) as Message;
+
+  try {
+    await db.updateReminderWhere(
+      { id: reminder.id, userId: reminder.userId },
+      { confirmationMessageId: reply.id },
+    );
+  } catch (error) {
+    logger.error(error);
+    await interaction.editReply(replies.internalError(interaction));
+    await db.deleteReminder(reminder.id, reminder.userId);
+  }
+};
+
+const interactionHandlers: { [name: string]: InteractionCreateHandler} = {
   [RealTalkSubcommand.Record]: applyMiddleware(
     [useThrottle(getThrottleConfig)],
     realTalkRecord
@@ -626,6 +676,7 @@ const interactionHandlers: { [name: string]: InteractionCreateHandler } = {
     realTalkImage
   ),
   [RealTalkSubcommand.Updoots]: realTalkUpdoots,
+  [RealTalkSubcommand.RemindMe]: realTalkRemindMe,
 };
 
 export default {

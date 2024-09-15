@@ -9,6 +9,7 @@ import { omit } from "lodash";
 
 import listeners from "./client/listeners";
 import slashCommands from "./client/slash-commands";
+import remindersScheduler from "./client/reminders-scheduler";
 import { Config, logger } from "./utils";
 
 const {
@@ -35,10 +36,11 @@ const clientOptions: ClientOptions = {
   ]
 };
 
+// @ts-ignore
 Coralogix.CoralogixLogger.configure({
   applicationName: Config.IsDev ? "real-talk-bot-dev" : "real-talk-bot",
   computerName: hostname(),
-  debug: Config.IsDev,
+  debug: false,
   privateKey: CORALOGIX_API_KEY,
   subsystemName: "main",
 });
@@ -67,6 +69,7 @@ client.on("ready", () => {
     client.user.setActivity("Development Mode");
   }
 
+  remindersScheduler.run(client);
   logger.info(`Logged in as ${client.user.tag}`);
 });
 

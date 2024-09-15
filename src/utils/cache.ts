@@ -14,6 +14,13 @@ interface TTLData {
   };
 }
 
+interface CacheMetadata {
+  [cacheName: string]: {
+    total: number;
+    keys: string[];
+  };
+}
+
 export interface Cache {
   clear: () => number;
   delete: (key: string) => boolean;
@@ -25,12 +32,15 @@ export interface Cache {
   setF: (key: string, value: any, ttl?: number) => boolean;
   take: (key: string) => any;
   ttl: (key: string) => number;
+  keys: () => string[];
+  total: () => number;
 }
 
 let cacheData: CacheData = {};
 let ttlData: TTLData = {};
+const metadata: CacheMetadata = {};
 
-const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> = {
+const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean | string[]>> = {
   clear: 0,
   delete: false,
   equals: false,
@@ -41,6 +51,8 @@ const OPERATION_DEFAULT_RETURN: Readonly<Record<keyof Cache, number | boolean>> 
   setF: false,
   take: null,
   ttl: null,
+  keys: [] as string[],
+  total: 0,
 };
 
 const validateOperation = (targetCache: {[key: string]: any}, cb: AnyFunction, args: any[]): any =>
@@ -84,12 +96,22 @@ const newCache = (name: string): Cache => {
   cacheData[name] = {};
   ttlData[name] = {};
 
+  metadata[name] = {
+    total: 0,
+    keys: [],
+  };
+
   const operations: Record<keyof Cache, AnyFunction> = {
     clear: (): number => {
       const total: number = Object.keys(cacheData[name]).length;
 
       if (total) {
         cacheData[name] = {};
+
+        metadata[name] = {
+          total: 0,
+          keys: [],
+        };
 
         if (Object.keys(ttlData[name]).length) {
           ttlData[name] = {};
@@ -106,6 +128,12 @@ const newCache = (name: string): Cache => {
 
       const isDeleted: boolean = delete cacheData[name][key];
 
+      metadata[name] = {
+        ...metadata[name],
+        total: metadata[name].total - 1,
+        keys: metadata[name].keys.filter(k => k !== key),
+      };
+
       if (isDeleted && ttlData[name][key] !== undefined) {
         delete ttlData[name][key];
       }
@@ -116,8 +144,11 @@ const newCache = (name: string): Cache => {
     equals: (key: string, value: any): boolean =>
       isEqual(cacheData[name][key], value),
 
-    free: (): boolean =>
-      delete cacheData[name],
+    free: (): void => {
+      delete cacheData[name];
+      delete ttlData[name];
+      delete metadata[name];
+    },
 
     get: (key: string): any => {
       const item: any = cacheData[name][key] ?? null;
@@ -134,6 +165,12 @@ const newCache = (name: string): Cache => {
 
       try {
         cacheData[name][key] = isObject(value) ? cloneDeep(value) : value;
+
+        metadata[name] = {
+          ...metadata[name],
+          total: metadata[name].total + 1,
+          keys: [...metadata[name].keys, key],
+        };
 
         if (ttl > 0) {
           ttlData[name][key] = setTimeout(() => operations.delete(key), ttl) as Timeout;
@@ -171,6 +208,10 @@ const newCache = (name: string): Cache => {
       const timeout: Timeout = ttlData[name][key];
       return timeout ? getRemainingTimeout(timeout) : null;
     },
+
+    keys: (): string[] => metadata[name].keys,
+
+    total: (): number => metadata[name].total,
   };
 
   return mapValues(operations, fn =>

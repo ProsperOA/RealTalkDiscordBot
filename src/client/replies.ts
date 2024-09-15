@@ -1,10 +1,18 @@
 import { isEmpty, trim } from "lodash";
 import { stripIndents } from "common-tags";
+import { MessageButtonStyles } from "discord.js/typings/enums";
+
+import { MessageComponentId } from "./slash-commands";
 
 import {
   CommandInteraction,
   CommandInteractionOption,
   InteractionReplyOptions,
+  MessageActionRow,
+  MessageButton,
+  MessageEditOptions,
+  MessageOptions,
+  MessagePayload,
 } from "discord.js";
 
 import {
@@ -19,6 +27,7 @@ import {
   CompactRealTalkStats,
   Statement,
   UpdootedStatement,
+  Reminder,
 } from "../db/models";
 
 import {
@@ -83,12 +92,15 @@ export default {
   donationLink: (): string =>
     withDevLabel("**#RealTalk** you should donate pls. \:pray:\n" + Config.DonationURL),
 
-  internalError: (interaction: CommandInteraction): InteractionReplyOptions =>
+  internalError: (interaction?: CommandInteraction): InteractionReplyOptions =>
     quietReply(stripIndents`
       **#RealTalk**, an error occurred. \:grimacing:
-
+      ${interaction
+        ? `
       Here's what you sent:
       ${formatInteractionInput(interaction)}
+        `
+        : ""}
     `),
 
   invalidContentLength: (length: number): InteractionReplyOptions =>
@@ -215,6 +227,53 @@ export default {
       ${statements.map(({ content, updoots }, i) =>
         `#${i + 1}. _"${content}"_ (${updoots} ${pluralize("updoot", updoots)})`
     ).join("\n")}`),
+
+  realTalkReminderConfirmation: (reminder: Reminder, notificationUrl?: string): InteractionReplyOptions | MessagePayload => {
+    const deleteButton = new MessageButton()
+      .setCustomId(MessageComponentId.DeleteReminder)
+      .setLabel("Delete")
+      .setStyle(MessageButtonStyles.DANGER);
+
+    const actionRow = new MessageActionRow().addComponents(deleteButton);
+    const { notifyOn, message }: Reminder = reminder;
+
+    const header: string = notificationUrl
+      ? `**#RealTalk** Reminder sent (${notificationUrl})`
+      : `**#RealTalk** Reminder set for ${time(notifyOn, "F")} (${time(notifyOn, "R")})`;
+
+    const content: string = withDevLabel(stripIndents`
+      ${header}
+      **Message**: ${message}
+    `);
+
+    return {
+      content,
+      components: notificationUrl ? [] : [ actionRow ],
+    };
+  },
+
+  realTalkReminderLimit: (): string =>
+    withDevLabel("**#RealTalk** you've reached the reminder limit \:grimacing:"),
+
+  realTalkReminderPastDate: (): string =>
+    withDevLabel("**#RealTalk** you can't set reminders in the past. \:facepalm:"),
+
+  realTalkReminderNotification: (reminder: Reminder): MessageOptions => ({
+    embeds: [
+      new Embed()
+        .setColor(0x0099FF)
+        .setTitle(withDevLabel(`**#RealTalk Reminder** for ${nicknameMention(reminder.userId)}`))
+        .setDescription(reminder.message)
+    ],
+  }),
+
+  realTalkReminderDeleted: (message: string): MessageEditOptions => ({
+    content: withDevLabel(stripIndents`
+      **#RealTalk** Reminder deleted
+      **Message**: ${message}
+    `),
+    components: [],
+  }),
 
   realTalkUpdootsNotFound: (userId: string): InteractionReplyOptions =>
     quietReply(`**#RealTalk** ${getDisplayName(userId)} has no updooted statements`),
