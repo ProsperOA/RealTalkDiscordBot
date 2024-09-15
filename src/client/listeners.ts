@@ -115,8 +115,7 @@ const onInteractionCreate = (client: Client) =>
         await handleMessageComponent(client, interaction as MessageComponentInteraction);
         break;
       default:
-        logger.error(`Invalid interaction type: ${interaction.type}`);
-        return;
+        break;
     }
   };
 
