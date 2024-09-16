@@ -259,13 +259,14 @@ export default {
     withDevLabel("**#RealTalk** you can't set reminders in the past. \:facepalm:"),
 
   realTalkReminderNotification: (reminder: Reminder): MessageOptions => ({
-    embeds: [
-      new Embed()
-        .setColor(0x0099FF)
-        .setTitle(withDevLabel(`**#RealTalk Reminder** for ${nicknameMention(reminder.userId)}`))
-        .setDescription(reminder.message)
-    ],
-  }),
+      embeds: [
+        new Embed()
+          .setColor(0x0099FF)
+          .setTitle(withDevLabel(`**#RealTalk Reminder**`))
+          .addField({ name: "For", value: nicknameMention(reminder.userId) })
+          .addField({ name: "Message", value: reminder.message })
+      ],
+    }),
 
   realTalkReminderDeleted: (message: string): MessageEditOptions => ({
     content: withDevLabel(stripIndents`
