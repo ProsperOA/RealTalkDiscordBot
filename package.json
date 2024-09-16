@@ -5,10 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "tsc": "tsc",
-    "postinstall": "npm run tsc",
+    "postinstall": "npm run tsc && npm run knex:migrate",
     "start": "forever dist/index.js",
     "start:dev": "nodemon -r dotenv/config src/index.ts",
-    "lint": "tslint -c tslint.json 'src/**/*.ts'"
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "knex:migrate": "ts-node -r tsconfig-paths/register ./node_modules/.bin/knex --knexfile ./knexfile.ts 'migrate:latest'"
   },
   "author": "",
   "license": "",
@@ -45,6 +46,7 @@
     "lorem-ipsum": "^2.0.4",
     "nodemon": "^2.0.15",
     "ts-node": "^10.4.0",
+    "tsconfig-paths": "^4.2.0",
     "tslint": "^6.1.3",
     "typescript": "^4.5.4"
   },
